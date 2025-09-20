@@ -708,14 +708,9 @@ class TVArmController:
             self.set_position(default_x, default_y)
         elif teaching_mode:
             logging.info("Teaching mode: skipping default position move")
-            # Just read current position without moving
-            try:
-                logging.info("Reading initial position...")
-                self.current_x_position, self.current_y_position = self.get_current_position()
-                logging.info(f"Initial position: X={self.current_x_position:.1f}%, Y={self.current_y_position:.1f}%")
-            except Exception as e:
-                logging.error(f"Error reading initial position: {e}")
-                self.current_x_position, self.current_y_position = 50.0, 50.0
+            # Skip initial position reading to avoid hangs - will read when needed
+            logging.info("Skipping initial position reading to avoid sensor hangs")
+            self.current_x_position, self.current_y_position = 50.0, 50.0  # Safe defaults
         
         logging.info("TV Arm Controller started")
     
