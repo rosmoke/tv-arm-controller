@@ -252,10 +252,13 @@ class PathRecorder:
                 if hasattr(self, 'manual_step_mode') and self.manual_step_mode:
                     if i + 1 < len(self.current_playback_path):  # Not the last point
                         next_point = self.current_playback_path[i + 1]
-                        print(f"\n🎯 REACHED DATAPOINT {i+1}/{len(self.current_playback_path)}")
+                        print("\n" + "="*60)
+                        print(f"🎯 REACHED DATAPOINT {i+1}/{len(self.current_playback_path)}")
                         print(f"Current: X={current_x:.1f}%, Y={current_y:.1f}%")
                         print(f"Next target: X={next_point.x_position:.1f}%, Y={next_point.y_position:.1f}%")
+                        print("="*60)
                         print("Press Enter to continue to next datapoint, or 'q' to quit...")
+                        print(">>> ", end="", flush=True)
                         
                         try:
                             user_input = input().strip().lower()
@@ -263,13 +266,17 @@ class PathRecorder:
                                 logging.info("Manual step playback stopped by user")
                                 self.is_playing = False
                                 break
+                            else:
+                                print("Continuing to next datapoint...")
                         except EOFError:
                             # Handle case where input is not available
                             logging.info("No input available, continuing automatically")
                             time.sleep(1.0)
                     else:
-                        print(f"\n🎉 COMPLETED! Reached final datapoint {i+1}/{len(self.current_playback_path)}")
+                        print("\n" + "="*60)
+                        print(f"🎉 COMPLETED! Reached final datapoint {i+1}/{len(self.current_playback_path)}")
                         print(f"Final position: X={current_x:.1f}%, Y={current_y:.1f}%")
+                        print("="*60)
                 else:
                     logging.info(f"Proceeding to next datapoint...")
                     # Small pause between datapoints in automatic mode
