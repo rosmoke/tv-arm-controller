@@ -48,23 +48,23 @@ hardware:
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 50.0  # Increased to accommodate voltage range changes
-      enable_filtering: true   # Re-enable filtering to catch erratic readings
+      enable_filtering: false  # Temporarily disable for closed-loop control testing
     y_axis:
       min_voltage: 0.1
       max_voltage: 3.2
       min_position: 0
       max_position: 100
       max_drift_percent: 50.0  # Increased to accommodate voltage range changes
-      enable_filtering: true   # Re-enable filtering to catch erratic readings
+      enable_filtering: false  # Temporarily disable for closed-loop control testing
   
   # Actual TV mount positions (calibrated)
   positions:
     wall:
-      x: 100.0      # X position when physically at wall
-      y: 25.0       # Y position when physically at wall
+      x: 97.0      # X position when physically at wall
+      y: 23.0       # Y position when physically at wall
     extended:
-      x: 57.4       # X position when physically extended
-      y: 80.6       # Y position when physically extended
+      x: 62.4       # X position when physically extended
+      y: 88.6       # Y position when physically extended
 
 # Home Assistant Integration
 home_assistant:
