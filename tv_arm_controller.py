@@ -270,7 +270,7 @@ class PositionSensor:
                 voltage = self.analog_in.voltage
                 
                 # For the first reading, accept any reasonable voltage to establish baseline
-                if self.last_valid_voltage is None and self.min_voltage * 0.5 <= voltage <= self.max_voltage * 1.5:
+                if self.last_valid_voltage is None and self.min_voltage * 0.2 <= voltage <= self.max_voltage * 2.0:
                     logging.info(f"Initial voltage reading for channel {self.channel}: {voltage:.3f}V")
                     self.last_valid_voltage = voltage
                     self.consecutive_errors = 0
@@ -303,9 +303,12 @@ class PositionSensor:
     
     def _is_voltage_valid(self, voltage: float) -> bool:
         """Check if voltage reading is valid (not a drift/error)"""
-        # Check if voltage is within expected range (with more generous bounds)
-        if voltage < self.min_voltage * 0.8 or voltage > self.max_voltage * 1.2:
-            logging.debug(f"Voltage {voltage:.3f}V outside range [{self.min_voltage * 0.8:.3f}V - {self.max_voltage * 1.2:.3f}V]")
+        # Check if voltage is within expected range (with very generous bounds)
+        min_allowed = self.min_voltage * 0.5
+        max_allowed = self.max_voltage * 1.5
+        
+        if voltage < min_allowed or voltage > max_allowed:
+            logging.debug(f"Voltage {voltage:.3f}V outside range [{min_allowed:.3f}V - {max_allowed:.3f}V]")
             return False
         
         # If we have a previous reading, check for sudden drift

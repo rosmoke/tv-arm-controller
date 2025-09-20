@@ -38,8 +38,8 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 0.05   # Minimum potentiometer voltage
-      max_voltage: 3.3    # Maximum potentiometer voltage (increased to accommodate readings)
+      min_voltage: 0.8    # Minimum potentiometer voltage (based on your actual readings)
+      max_voltage: 3.15   # Maximum potentiometer voltage (based on your 3.10V readings)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 15.0  # Maximum allowed position drift (%) - reduced for better filtering
