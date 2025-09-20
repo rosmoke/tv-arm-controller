@@ -2,7 +2,7 @@
   "name": "retract",
   "recorded_at": 1758361940.3412278,
   "duration": 14.165381669998169,
-  "point_count": 17,
+  "point_count": 33,
   "points": [
     {
       "timestamp": 1758361924.9939215,
@@ -11,10 +11,22 @@
       "duration_from_start": 0.0
     },
     {
+      "timestamp": 1758361928.8556833,
+      "x_position": 57.63709677419355,
+      "y_position": 84.78629032258065,
+      "duration_from_start": 3.8617618083953857
+    },
+    {
       "timestamp": 1758361929.0721352,
       "x_position": 66.04435483870968,
       "y_position": 81.70161290322581,
       "duration_from_start": 4.078213691711426
+    },
+    {
+      "timestamp": 1758361929.2884805,
+      "x_position": 55.40725806451613,
+      "y_position": 78.90322580645162,
+      "duration_from_start": 4.294559001922607
     },
     {
       "timestamp": 1758361929.504922,
@@ -23,10 +35,22 @@
       "duration_from_start": 4.511000394821167
     },
     {
+      "timestamp": 1758361929.8293297,
+      "x_position": 84.95564516129032,
+      "y_position": 72.86693548387095,
+      "duration_from_start": 4.8354082107543945
+    },
+    {
       "timestamp": 1758361930.1545274,
       "x_position": 85.37903225806451,
       "y_position": 70.25806451612902,
       "duration_from_start": 5.1606059074401855
+    },
+    {
+      "timestamp": 1758361930.3712265,
+      "x_position": 85.54032258064515,
+      "y_position": 68.12499999999999,
+      "duration_from_start": 5.377305030822754
     },
     {
       "timestamp": 1758361930.5878286,
@@ -35,10 +59,22 @@
       "duration_from_start": 5.593907117843628
     },
     {
+      "timestamp": 1758361930.8043194,
+      "x_position": 81.49193548387098,
+      "y_position": 64.14919354838709,
+      "duration_from_start": 5.8103978633880615
+    },
+    {
       "timestamp": 1758361931.020883,
       "x_position": 83.10887096774194,
       "y_position": 61.02016129032257,
       "duration_from_start": 6.0269615650177
+    },
+    {
+      "timestamp": 1758361931.237198,
+      "x_position": 83.89919354838709,
+      "y_position": 58.04032258064517,
+      "duration_from_start": 6.243276596069336
     },
     {
       "timestamp": 1758361931.453543,
@@ -47,10 +83,22 @@
       "duration_from_start": 6.459621429443359
     },
     {
+      "timestamp": 1758361931.6699035,
+      "x_position": 95.08467741935483,
+      "y_position": 52.149193548387096,
+      "duration_from_start": 6.6759819984436035
+    },
+    {
       "timestamp": 1758361931.9944327,
       "x_position": 95.51209677419355,
       "y_position": 48.9516129032258,
       "duration_from_start": 7.000511169433594
+    },
+    {
+      "timestamp": 1758361932.211085,
+      "x_position": 96.66532258064515,
+      "y_position": 47.096774193548384,
+      "duration_from_start": 7.217163562774658
     },
     {
       "timestamp": 1758361932.5354714,
@@ -59,10 +107,22 @@
       "duration_from_start": 7.541549921035767
     },
     {
+      "timestamp": 1758361932.8599043,
+      "x_position": 97.14516129032256,
+      "y_position": 42.927419354838705,
+      "duration_from_start": 7.8659827709198
+    },
+    {
       "timestamp": 1758361933.0762365,
       "x_position": 92.57661290322581,
       "y_position": 41.37096774193548,
       "duration_from_start": 8.08231496810913
+    },
+    {
+      "timestamp": 1758361933.2924902,
+      "x_position": 88.40725806451613,
+      "y_position": 39.79032258064516,
+      "duration_from_start": 8.298568725585938
     },
     {
       "timestamp": 1758361933.508914,
@@ -71,10 +131,22 @@
       "duration_from_start": 8.514992475509644
     },
     {
+      "timestamp": 1758361933.7216463,
+      "x_position": 91.14112903225808,
+      "y_position": 37.82258064516129,
+      "duration_from_start": 8.72772479057312
+    },
+    {
       "timestamp": 1758361933.9347289,
       "x_position": 84.9758064516129,
       "y_position": 37.274193548387096,
       "duration_from_start": 8.940807342529297
+    },
+    {
+      "timestamp": 1758361934.1475444,
+      "x_position": 92.25403225806453,
+      "y_position": 36.08467741935484,
+      "duration_from_start": 9.15362286567688
     },
     {
       "timestamp": 1758361934.3604014,
@@ -83,10 +155,22 @@
       "duration_from_start": 9.366479873657227
     },
     {
+      "timestamp": 1758361934.5732644,
+      "x_position": 82.5524193548387,
+      "y_position": 34.27016129032258,
+      "duration_from_start": 9.57934284210205
+    },
+    {
       "timestamp": 1758361934.7869077,
       "x_position": 89.53225806451613,
       "y_position": 33.78629032258064,
       "duration_from_start": 9.792986154556274
+    },
+    {
+      "timestamp": 1758361934.9997122,
+      "x_position": 85.27016129032258,
+      "y_position": 32.95564516129032,
+      "duration_from_start": 10.005790710449219
     },
     {
       "timestamp": 1758361935.5316896,
@@ -95,10 +179,22 @@
       "duration_from_start": 10.537768125534058
     },
     {
+      "timestamp": 1758361935.8507397,
+      "x_position": 100.0,
+      "y_position": 30.596774193548388,
+      "duration_from_start": 10.856818199157715
+    },
+    {
       "timestamp": 1758361936.4902577,
       "x_position": 98.02419354838709,
       "y_position": 29.028225806451612,
       "duration_from_start": 11.496336221694946
+    },
+    {
+      "timestamp": 1758361936.9158475,
+      "x_position": 100.0,
+      "y_position": 27.637096774193548,
+      "duration_from_start": 11.921926021575928
     },
     {
       "timestamp": 1758361939.1593032,
@@ -108,6 +204,6 @@
     }
   ],
   "cleaned": true,
-  "cleaned_at": "2025-09-20T11:31:40.533186",
-  "original_point_count": 33
+  "cleaned_at": "2025-09-20T11:12:38.290177",
+  "original_point_count": 69
 }

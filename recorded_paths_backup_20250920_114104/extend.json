@@ -1,0 +1,209 @@
+{
+  "name": "extend",
+  "recorded_at": 1758361858.520299,
+  "duration": 17.38430905342102,
+  "point_count": 33,
+  "points": [
+    {
+      "timestamp": 1758361839.0045588,
+      "x_position": 99.75,
+      "y_position": 23.092741935483872,
+      "duration_from_start": 0.0
+    },
+    {
+      "timestamp": 1758361844.785836,
+      "x_position": 93.68145161290322,
+      "y_position": 23.112903225806452,
+      "duration_from_start": 5.781277179718018
+    },
+    {
+      "timestamp": 1758361845.2111645,
+      "x_position": 73.91935483870968,
+      "y_position": 23.18548387096774,
+      "duration_from_start": 6.206605672836304
+    },
+    {
+      "timestamp": 1758361845.8500824,
+      "x_position": 78.08064516129032,
+      "y_position": 23.23790322580645,
+      "duration_from_start": 6.8455235958099365
+    },
+    {
+      "timestamp": 1758361847.5726156,
+      "x_position": 67.73790322580645,
+      "y_position": 23.40725806451613,
+      "duration_from_start": 8.56805682182312
+    },
+    {
+      "timestamp": 1758361847.8971195,
+      "x_position": 71.93548387096774,
+      "y_position": 23.725806451612904,
+      "duration_from_start": 8.892560720443726
+    },
+    {
+      "timestamp": 1758361848.4378624,
+      "x_position": 62.10887096774192,
+      "y_position": 26.431451612903228,
+      "duration_from_start": 9.433303594589233
+    },
+    {
+      "timestamp": 1758361848.654909,
+      "x_position": 70.6975806451613,
+      "y_position": 27.979838709677416,
+      "duration_from_start": 9.650350093841553
+    },
+    {
+      "timestamp": 1758361848.8712547,
+      "x_position": 70.7016129032258,
+      "y_position": 30.407258064516125,
+      "duration_from_start": 9.866695880889893
+    },
+    {
+      "timestamp": 1758361849.3040743,
+      "x_position": 70.48387096774194,
+      "y_position": 34.04838709677419,
+      "duration_from_start": 10.29951548576355
+    },
+    {
+      "timestamp": 1758361849.520452,
+      "x_position": 76.39919354838709,
+      "y_position": 35.850806451612904,
+      "duration_from_start": 10.51589322090149
+    },
+    {
+      "timestamp": 1758361849.8449714,
+      "x_position": 71.03629032258064,
+      "y_position": 39.21774193548387,
+      "duration_from_start": 10.840412616729736
+    },
+    {
+      "timestamp": 1758361850.0614185,
+      "x_position": 70.77016129032258,
+      "y_position": 41.604838709677416,
+      "duration_from_start": 11.056859731674194
+    },
+    {
+      "timestamp": 1758361850.278095,
+      "x_position": 73.63709677419354,
+      "y_position": 43.887096774193544,
+      "duration_from_start": 11.273536205291748
+    },
+    {
+      "timestamp": 1758361850.6027431,
+      "x_position": 73.31854838709677,
+      "y_position": 46.729838709677416,
+      "duration_from_start": 11.59818434715271
+    },
+    {
+      "timestamp": 1758361850.819016,
+      "x_position": 75.60887096774194,
+      "y_position": 48.310483870967744,
+      "duration_from_start": 11.814457178115845
+    },
+    {
+      "timestamp": 1758361851.1436148,
+      "x_position": 73.85483870967742,
+      "y_position": 51.366935483870954,
+      "duration_from_start": 12.139055967330933
+    },
+    {
+      "timestamp": 1758361851.360233,
+      "x_position": 72.61290322580645,
+      "y_position": 54.29838709677419,
+      "duration_from_start": 12.355674266815186
+    },
+    {
+      "timestamp": 1758361851.5769372,
+      "x_position": 65.48790322580645,
+      "y_position": 57.52016129032257,
+      "duration_from_start": 12.572378396987915
+    },
+    {
+      "timestamp": 1758361851.7932088,
+      "x_position": 66.76209677419354,
+      "y_position": 60.24193548387097,
+      "duration_from_start": 12.788650035858154
+    },
+    {
+      "timestamp": 1758361852.0097423,
+      "x_position": 67.43145161290322,
+      "y_position": 62.935483870967744,
+      "duration_from_start": 13.005183458328247
+    },
+    {
+      "timestamp": 1758361852.2261353,
+      "x_position": 69.34677419354838,
+      "y_position": 65.07661290322581,
+      "duration_from_start": 13.221576452255249
+    },
+    {
+      "timestamp": 1758361852.4427924,
+      "x_position": 70.08467741935483,
+      "y_position": 67.21774193548387,
+      "duration_from_start": 13.438233613967896
+    },
+    {
+      "timestamp": 1758361852.6591556,
+      "x_position": 70.56854838709677,
+      "y_position": 69.66532258064517,
+      "duration_from_start": 13.65459680557251
+    },
+    {
+      "timestamp": 1758361852.9811726,
+      "x_position": 71.21370967741936,
+      "y_position": 72.45161290322581,
+      "duration_from_start": 13.976613759994507
+    },
+    {
+      "timestamp": 1758361853.300323,
+      "x_position": 71.38306451612902,
+      "y_position": 74.99596774193549,
+      "duration_from_start": 14.295764207839966
+    },
+    {
+      "timestamp": 1758361853.8329558,
+      "x_position": 73.16129032258064,
+      "y_position": 77.375,
+      "duration_from_start": 14.828397035598755
+    },
+    {
+      "timestamp": 1758361854.1523564,
+      "x_position": 83.5524193548387,
+      "y_position": 78.97983870967742,
+      "duration_from_start": 15.147797584533691
+    },
+    {
+      "timestamp": 1758361854.4715614,
+      "x_position": 87.02822580645162,
+      "y_position": 80.85887096774194,
+      "duration_from_start": 15.467002630233765
+    },
+    {
+      "timestamp": 1758361854.8983982,
+      "x_position": 87.54435483870967,
+      "y_position": 83.18145161290322,
+      "duration_from_start": 15.893839359283447
+    },
+    {
+      "timestamp": 1758361855.430322,
+      "x_position": 62.43548387096774,
+      "y_position": 85.57661290322581,
+      "duration_from_start": 16.42576313018799
+    },
+    {
+      "timestamp": 1758361856.0697098,
+      "x_position": 62.891129032258064,
+      "y_position": 88.14919354838709,
+      "duration_from_start": 17.06515097618103
+    },
+    {
+      "timestamp": 1758361856.3888679,
+      "x_position": 65.22177419354838,
+      "y_position": 88.68145161290322,
+      "duration_from_start": 17.38430905342102
+    }
+  ],
+  "cleaned": true,
+  "cleaned_at": "2025-09-20T11:12:38.297497",
+  "original_point_count": 87
+}
