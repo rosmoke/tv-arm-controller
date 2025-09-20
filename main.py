@@ -563,7 +563,7 @@ class TVArmApplication:
         """Play a specific recorded path (command line mode)"""
         if not self.controller:
             self.controller = TVArmController(self.config)
-            self.controller.start()
+            self.controller.start(teaching_mode=True)  # Use teaching mode to prevent auto-movement
         
         self.path_recorder = PathRecorder(self.controller, self.config)
         
