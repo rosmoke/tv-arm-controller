@@ -220,7 +220,7 @@ class PathRecorder:
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
             tolerance = 2.0  # 2% tolerance - motors need more realistic tolerance to confirm arrival
-            max_wait_per_point = 25.0  # Increased timeout for Y motor to reach targets
+            max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
                 if not self.is_playing:
