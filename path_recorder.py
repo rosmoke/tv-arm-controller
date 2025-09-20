@@ -386,26 +386,43 @@ class PathRecorder:
                 
                 logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%)")
                 
-                # Check if both axes are within tolerance
-                if x_error <= tolerance and y_error <= tolerance:
+                # Check each axis independently
+                x_at_target = x_error <= tolerance
+                y_at_target = y_error <= tolerance
+                
+                # Stop motors that have reached their targets
+                if x_at_target and not hasattr(self, 'x_stopped'):
+                    self.controller.x_motor.stop_motor()
+                    logging.info(f"🎯 X axis reached target {target_x:.1f}% - STOPPED")
+                    self.x_stopped = True
+                
+                if y_at_target and not hasattr(self, 'y_stopped'):
+                    self.controller.y_motor.stop_motor()
+                    logging.info(f"🎯 Y axis reached target {target_y:.1f}% - STOPPED")
+                    self.y_stopped = True
+                
+                # Check if both axes are at target
+                if x_at_target and y_at_target:
                     consecutive_good_readings += 1
-                    logging.info(f"✅ Both axes within tolerance ({consecutive_good_readings}/{required_readings} checks)")
+                    logging.info(f"✅ Both axes at target ({consecutive_good_readings}/{required_readings} checks)")
                     
                     if consecutive_good_readings >= required_readings:
-                        # Stop both motors
-                        self.controller.x_motor.stop_motor()
-                        self.controller.y_motor.stop_motor()
                         logging.info(f"🎯 Both axes confirmed at target!")
+                        # Reset flags for next datapoint
+                        if hasattr(self, 'x_stopped'):
+                            delattr(self, 'x_stopped')
+                        if hasattr(self, 'y_stopped'):
+                            delattr(self, 'y_stopped')
                         return True
                         
                     time.sleep(1.0)  # Wait before next check
                 else:
                     consecutive_good_readings = 0
                     
-                    # Send correction commands with progressive speed control
+                    # Send correction commands only for axes that need adjustment
                     corrections_sent = False
                     
-                    if x_error > tolerance:
+                    if x_error > tolerance and not x_at_target:
                         # Simple speed control based on error size
                         if x_error > 10.0:
                             speed = 70.0  # High speed for large movements
@@ -414,13 +431,13 @@ class PathRecorder:
                         else:
                             speed = 30.0  # Slow speed for fine adjustments
                         
-                        wait_time = 2.0  # Fixed wait time
-                        
                         logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%)")
                         self.controller.set_x_position(target_x, use_closed_loop=False)
                         corrections_sent = True
+                    elif x_at_target:
+                        logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
                     
-                    if y_error > tolerance:
+                    if y_error > tolerance and not y_at_target:
                         # Simple speed control based on error size
                         if y_error > 10.0:
                             speed = 70.0  # High speed for large movements
@@ -432,6 +449,8 @@ class PathRecorder:
                         logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
                         self.controller.set_y_position(target_y, use_closed_loop=False)
                         corrections_sent = True
+                    elif y_at_target:
+                        logging.info(f"Y axis OK: {current_y:.1f}% (within {tolerance}% of {target_y:.1f}%)")
                     
                     if corrections_sent:
                         time.sleep(2.0)  # Fixed wait time
