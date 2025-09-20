@@ -1,0 +1,48 @@
+{
+  "name": "extending",
+  "recorded_at": 1758397640.5128098,
+  "duration": 9.556536197662354,
+  "point_count": 6,
+  "points": [
+    {
+      "timestamp": 1758397623.6553693,
+      "x_position": 36.7340425531915,
+      "y_position": 24.108870967741936,
+      "duration_from_start": 0.0
+    },
+    {
+      "timestamp": 1758397629.3527563,
+      "x_position": 47.01595744680852,
+      "y_position": 33.052419354838705,
+      "duration_from_start": 5.697386980056763
+    },
+    {
+      "timestamp": 1758397630.4186091,
+      "x_position": 55.62234042553192,
+      "y_position": 44.69354838709677,
+      "duration_from_start": 6.763239860534668
+    },
+    {
+      "timestamp": 1758397631.6971571,
+      "x_position": 65.37765957446808,
+      "y_position": 56.10887096774193,
+      "duration_from_start": 8.04178786277771
+    },
+    {
+      "timestamp": 1758397632.6696377,
+      "x_position": 73.38829787234043,
+      "y_position": 66.35483870967741,
+      "duration_from_start": 9.014268398284912
+    },
+    {
+      "timestamp": 1758397633.2119055,
+      "x_position": 77.72872340425533,
+      "y_position": 72.24999999999999,
+      "duration_from_start": 9.556536197662354
+    }
+  ],
+  "cleaned": true,
+  "cleaned_at": "2025-09-20T20:49:01.535576",
+  "original_point_count": 20,
+  "simplified": true
+}

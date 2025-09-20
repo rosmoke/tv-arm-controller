@@ -1,0 +1,47 @@
+{
+  "name": "retracting_simple",
+  "recorded_at": 1758402254.6573849,
+  "duration": 9.556536197662354,
+  "point_count": 6,
+  "points": [
+    {
+      "timestamp": 1758402254.6573849,
+      "x_position": 77.72872340425533,
+      "y_position": 72.24999999999999,
+      "duration_from_start": 0.0
+    },
+    {
+      "timestamp": 1758402255.1996527,
+      "x_position": 73.38829787234043,
+      "y_position": 66.35483870967741,
+      "duration_from_start": 0.5422677993774417
+    },
+    {
+      "timestamp": 1758402256.1721332,
+      "x_position": 65.37765957446808,
+      "y_position": 56.10887096774193,
+      "duration_from_start": 1.514748334884644
+    },
+    {
+      "timestamp": 1758402257.4506812,
+      "x_position": 55.62234042553192,
+      "y_position": 44.69354838709677,
+      "duration_from_start": 2.793296337127686
+    },
+    {
+      "timestamp": 1758402258.516534,
+      "x_position": 47.01595744680852,
+      "y_position": 33.052419354838705,
+      "duration_from_start": 3.8591492176055904
+    },
+    {
+      "timestamp": 1758402264.213921,
+      "x_position": 36.7340425531915,
+      "y_position": 24.108870967741936,
+      "duration_from_start": 9.556536197662354
+    }
+  ],
+  "generated_from": "extending_simple.json",
+  "simplified": true,
+  "original_point_count": 20
+}

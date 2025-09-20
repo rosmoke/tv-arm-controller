@@ -406,41 +406,63 @@ class PathRecorder:
                     corrections_sent = False
                     
                     if x_error > tolerance:
-                        # Use slower speed when close to target
+                        # Use different control strategies based on error size
                         if x_error > 10.0:
                             speed = 80.0  # Full speed for large movements
                             wait_time = 2.0
-                        elif x_error > 5.0:
-                            speed = 50.0  # Medium speed for medium movements
+                            logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (LARGE move, speed: {speed:.0f}%)")
+                            self.controller.x_motor.move_to_position(target_x, speed, position_callback=None)
+                        elif x_error > 3.0:
+                            speed = 40.0  # Medium speed for medium movements
                             wait_time = 1.5
+                            logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (MEDIUM move, speed: {speed:.0f}%)")
+                            self.controller.x_motor.move_to_position(target_x, speed, position_callback=None)
                         else:
-                            speed = 30.0  # Slow speed for fine adjustments
-                            wait_time = 1.0
+                            # Pulse control for fine adjustments
+                            pulse_duration = 0.3  # Short pulse
+                            speed = 25.0  # Very slow speed
+                            wait_time = 0.8
+                            logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (FINE pulse, {pulse_duration}s)")
+                            
+                            # Send short pulse movement
+                            if current_x < target_x:
+                                self.controller.x_motor.set_direction_forward()
+                            else:
+                                self.controller.x_motor.set_direction_reverse()
+                            self.controller.x_motor.set_speed(speed)
+                            time.sleep(pulse_duration)  # Short pulse
+                            self.controller.x_motor.stop_motor()  # Stop immediately
                         
-                        logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%)")
-                        
-                        # Use the controller's movement logic that handles inversion
-                        logging.info(f"Sending X movement command...")
-                        self.controller.x_motor.move_to_position(target_x, speed, position_callback=None)
                         corrections_sent = True
                     
                     if y_error > tolerance:
-                        # Use slower speed when close to target
+                        # Use different control strategies based on error size
                         if y_error > 10.0:
                             speed = 80.0  # Full speed for large movements
                             wait_time = 2.0
-                        elif y_error > 5.0:
-                            speed = 50.0  # Medium speed for medium movements
+                            logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (LARGE move, speed: {speed:.0f}%)")
+                            self.controller.y_motor.move_to_position(target_y, speed, position_callback=None)
+                        elif y_error > 3.0:
+                            speed = 40.0  # Medium speed for medium movements
                             wait_time = 1.5
+                            logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (MEDIUM move, speed: {speed:.0f}%)")
+                            self.controller.y_motor.move_to_position(target_y, speed, position_callback=None)
                         else:
-                            speed = 30.0  # Slow speed for fine adjustments
-                            wait_time = 1.0
+                            # Pulse control for fine adjustments
+                            pulse_duration = 0.3  # Short pulse
+                            speed = 25.0  # Very slow speed
+                            wait_time = 0.8
+                            logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (FINE pulse, {pulse_duration}s)")
+                            
+                            # Send short pulse movement
+                            if current_y < target_y:
+                                self.controller.y_motor.set_direction_forward()
+                            else:
+                                self.controller.y_motor.set_direction_reverse()
+                            self.controller.y_motor.set_speed(speed)
+                            time.sleep(pulse_duration)  # Short pulse
+                            self.controller.y_motor.stop_motor()  # Stop immediately
                         
-                        logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
-                        
-                        # Use the controller's movement logic that handles inversion
-                        logging.info(f"Sending Y movement command...")
-                        self.controller.y_motor.move_to_position(target_y, speed, position_callback=None)
                         corrections_sent = True
                     
                     if corrections_sent:
