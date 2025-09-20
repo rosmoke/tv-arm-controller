@@ -418,12 +418,15 @@ class TVArmApplication:
                     print(f"Moving to WALL position: X={wall_x:.1f}%, Y={wall_y:.1f}%")
                     print("Using closed-loop control - will wait for actual position...")
                     try:
-                        x_success = self.controller.set_x_position(wall_x)
-                        y_success = self.controller.set_y_position(wall_y)
+                        print("Moving X axis to wall position...")
+                        x_success = self.controller.set_x_position(wall_x, use_closed_loop=False)  # Use open-loop for now
+                        print("Moving Y axis to wall position...")
+                        y_success = self.controller.set_y_position(wall_y, use_closed_loop=False)  # Use open-loop for now
                         if x_success and y_success:
-                            print("✅ Reached WALL position!")
+                            print("✅ Movement commands sent to WALL position!")
+                            print("Check current position to verify arrival...")
                         else:
-                            print("❌ Failed to reach WALL position")
+                            print("❌ Failed to send movement commands")
                     except Exception as e:
                         print(f"❌ Error moving to wall: {e}")
                 
@@ -434,12 +437,15 @@ class TVArmApplication:
                     print(f"Moving to EXTENDED position: X={ext_x:.1f}%, Y={ext_y:.1f}%")
                     print("Using closed-loop control - will wait for actual position...")
                     try:
-                        x_success = self.controller.set_x_position(ext_x)
-                        y_success = self.controller.set_y_position(ext_y)
+                        print("Moving X axis to extended position...")
+                        x_success = self.controller.set_x_position(ext_x, use_closed_loop=False)  # Use open-loop for now
+                        print("Moving Y axis to extended position...")
+                        y_success = self.controller.set_y_position(ext_y, use_closed_loop=False)  # Use open-loop for now
                         if x_success and y_success:
-                            print("✅ Reached EXTENDED position!")
+                            print("✅ Movement commands sent to EXTENDED position!")
+                            print("Check current position to verify arrival...")
                         else:
-                            print("❌ Failed to reach EXTENDED position")
+                            print("❌ Failed to send movement commands")
                     except Exception as e:
                         print(f"❌ Error moving to extended: {e}")
                 
