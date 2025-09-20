@@ -1,0 +1,106 @@
+# TV Arm Controller Configuration
+
+# Hardware Configuration
+hardware:
+  # DC Motor GPIO pins for TB6612FNG driver (BCM numbering)
+  # Motor A (X-axis)
+  motor_x_ain1_pin: 17  # Pin 11 - Motor A direction 1
+  motor_x_ain2_pin: 27  # Pin 13 - Motor A direction 2  
+  motor_x_pwm_pin: 18   # Pin 12 - Motor A speed (PWM)
+  
+  # Motor B (Y-axis)
+  motor_y_ain1_pin: 22  # Pin 15 - Motor B direction 1
+  motor_y_ain2_pin: 23  # Pin 16 - Motor B direction 2
+  motor_y_pwm_pin: 19   # Pin 35 - Motor B speed (PWM)
+  
+  # Shared standby pin (optional - set to null if not used)
+  motor_stby_pin: 24    # Pin 18 - Standby (HIGH to enable motors)
+  
+  # ADS1115 ADC configuration
+  ads1115:
+    address: 0x48  # Default I2C address
+    gain: 1        # ±4.096V range
+    data_rate: 860 # Samples per second
+  
+  # Potentiometer channels on ADS1115
+  potentiometer:
+    x_axis_channel: 0  # A0 - X-axis position feedback
+    y_axis_channel: 2  # A2 - Y-axis position feedback
+  
+  # DC Motor configuration
+  dc_motor:
+    frequency: 1000   # PWM frequency for speed control (Hz)
+    min_position: 0   # Minimum position (%)
+    max_position: 100 # Maximum position (%)
+    default_speed: 50 # Default motor speed (%)
+    movement_timeout: 10  # Maximum time for movement (seconds)
+    
+  # Position limits and calibration
+  calibration:
+    x_axis:
+      min_voltage: 0.1    # Minimum potentiometer voltage
+      max_voltage: 3.2    # Maximum potentiometer voltage
+      min_position: 0     # Minimum position (%)
+      max_position: 100   # Maximum position (%)
+    y_axis:
+      min_voltage: 0.1
+      max_voltage: 3.2
+      min_position: 0
+      max_position: 100
+  
+  # Actual TV mount positions (calibrated)
+  positions:
+    wall:
+      x: 100.0      # X position when physically at wall
+      y: 25.0       # Y position when physically at wall
+    extended:
+      x: 57.4       # X position when physically extended
+      y: 80.6       # Y position when physically extended
+
+# Home Assistant Integration
+home_assistant:
+  mqtt:
+    broker: "192.168.1.100"    # Your Home Assistant IP
+    port: 1883
+    username: "mqtt_user"       # Your MQTT username
+    password: "mqtt_password"   # Your MQTT password
+    client_id: "tv_arm_controller"
+    
+  # Device configuration for Home Assistant discovery
+  device:
+    name: "TV Arm Controller"
+    identifier: "tv_arm_001"
+    manufacturer: "DIY"
+    model: "Pi Zero 2W TV Arm"
+    sw_version: "1.0.0"
+    
+  # MQTT topics
+  topics:
+    base: "homeassistant/cover/tv_arm"
+    command: "homeassistant/cover/tv_arm/set"
+    state: "homeassistant/cover/tv_arm/state"
+    position: "homeassistant/cover/tv_arm/position"
+    x_position: "homeassistant/number/tv_arm_x/set"
+    y_position: "homeassistant/number/tv_arm_y/set"
+    x_state: "homeassistant/number/tv_arm_x/state"
+    y_state: "homeassistant/number/tv_arm_y/state"
+
+# System Configuration
+system:
+  # Logging configuration
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  log_file: "/var/log/tv-arm-controller.log"
+  
+  # Control loop timing
+  position_update_interval: 0.1  # seconds
+  mqtt_publish_interval: 1.0     # seconds
+  
+  # Safety settings
+  max_move_time: 30.0           # Maximum time for any movement (seconds)
+  position_tolerance: 2.0       # Position tolerance (%)
+  emergency_stop_enabled: true
+  
+  # Startup behavior
+  restore_position_on_startup: true
+  default_x_position: 50        # Default X position (%)
+  default_y_position: 50        # Default Y position (%)

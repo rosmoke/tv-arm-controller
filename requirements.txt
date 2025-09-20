@@ -1,0 +1,15 @@
+# TV Arm Controller Dependencies
+# Core libraries for Raspberry Pi
+RPi.GPIO>=0.7.1
+adafruit-circuitpython-ads1x15>=2.2.21
+adafruit-blinka>=8.22.1
+
+# MQTT and Home Assistant integration
+paho-mqtt>=1.6.1
+PyYAML>=6.0.1
+
+# System and utilities
+psutil>=5.9.5
+
+# Note: board and busio are provided by adafruit-blinka
+# time, threading, json, signal, sys, os are built-in Python modules
