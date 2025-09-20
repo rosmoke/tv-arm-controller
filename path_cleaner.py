@@ -60,13 +60,13 @@ class PathCleaner:
     
     def make_unidirectional(self, points: List[Dict]) -> List[Dict]:
         """
-        Make path unidirectional by detecting the main movement direction
-        and removing return movements
+        Remove outlier datapoints that don't follow linear progression
+        Keeps only points that maintain smooth movement from previous point
         """
         if len(points) < 3:
             return points
         
-        # Analyze movement direction by comparing start and end positions
+        # Analyze overall movement
         start_point = points[0]
         end_point = points[-1]
         
@@ -75,34 +75,65 @@ class PathCleaner:
         
         print(f"   Movement analysis: X={x_movement:.1f}%, Y={y_movement:.1f}%")
         
-        # Determine primary movement direction
-        if abs(x_movement) > abs(y_movement):
-            primary_axis = 'x'
-            movement_direction = 1 if x_movement > 0 else -1
-            position_key = 'x_position'
-        else:
-            primary_axis = 'y'
-            movement_direction = 1 if y_movement > 0 else -1
-            position_key = 'y_position'
+        # Start with first point
+        cleaned_points = [points[0]]
         
-        print(f"   Primary axis: {primary_axis.upper()}, direction: {'forward' if movement_direction > 0 else 'reverse'}")
+        # Threshold for detecting outliers (percentage change that's too large)
+        outlier_threshold = 15.0  # If movement changes by more than 15% from expected, it's likely an outlier
         
-        # Filter points to keep only those moving in the primary direction
-        cleaned_points = [points[0]]  # Always keep first point
-        last_position = points[0][position_key]
-        
-        for point in points[1:]:
-            current_position = point[position_key]
+        for i in range(1, len(points)):
+            current_point = points[i]
+            last_valid_point = cleaned_points[-1]
             
-            # Check if movement is in the correct direction
-            if movement_direction > 0:  # Moving forward
-                if current_position >= last_position:
-                    cleaned_points.append(point)
-                    last_position = current_position
-            else:  # Moving backward
-                if current_position <= last_position:
-                    cleaned_points.append(point)
-                    last_position = current_position
+            # Calculate expected linear progression
+            if len(cleaned_points) >= 2:
+                # Use trend from last two valid points to predict expected values
+                prev_point = cleaned_points[-2]
+                
+                # Calculate velocity (change per unit time)
+                time_diff = last_valid_point['timestamp'] - prev_point['timestamp']
+                if time_diff > 0:
+                    x_velocity = (last_valid_point['x_position'] - prev_point['x_position']) / time_diff
+                    y_velocity = (last_valid_point['y_position'] - prev_point['y_position']) / time_diff
+                    
+                    # Predict where we should be at current timestamp
+                    current_time_diff = current_point['timestamp'] - last_valid_point['timestamp']
+                    expected_x = last_valid_point['x_position'] + (x_velocity * current_time_diff)
+                    expected_y = last_valid_point['y_position'] + (y_velocity * current_time_diff)
+                    
+                    # Check if current point is close to expected position
+                    x_deviation = abs(current_point['x_position'] - expected_x)
+                    y_deviation = abs(current_point['y_position'] - expected_y)
+                    
+                    # If deviation is too large, it's likely an outlier
+                    if x_deviation > outlier_threshold or y_deviation > outlier_threshold:
+                        print(f"   Outlier detected at point {i}: X deviation {x_deviation:.1f}%, Y deviation {y_deviation:.1f}%")
+                        continue  # Skip this outlier point
+            
+            else:
+                # For the second point, just check if movement is reasonable
+                x_change = abs(current_point['x_position'] - last_valid_point['x_position'])
+                y_change = abs(current_point['y_position'] - last_valid_point['y_position'])
+                
+                # If change is extremely large, it's likely an outlier
+                if x_change > 30.0 or y_change > 30.0:
+                    print(f"   Large jump detected at point {i}: X change {x_change:.1f}%, Y change {y_change:.1f}%")
+                    continue  # Skip this outlier point
+            
+            # Point passed validation, add it
+            cleaned_points.append(current_point)
+        
+        # Ensure we have the final destination if it's reasonable
+        if len(points) > 1 and points[-1] not in cleaned_points:
+            final_point = points[-1]
+            last_valid = cleaned_points[-1]
+            
+            # Check if final point is a reasonable end position
+            x_change = abs(final_point['x_position'] - last_valid['x_position'])
+            y_change = abs(final_point['y_position'] - last_valid['y_position'])
+            
+            if x_change <= 30.0 and y_change <= 30.0:  # Reasonable final movement
+                cleaned_points.append(final_point)
         
         # Recalculate duration_from_start for cleaned points
         if cleaned_points:
@@ -111,7 +142,7 @@ class PathCleaner:
                 point['duration_from_start'] = point['timestamp'] - start_time
         
         reduction = len(points) - len(cleaned_points)
-        print(f"   Unidirectional: {len(points)} → {len(cleaned_points)} points (removed {reduction} return movements)")
+        print(f"   Outlier removal: {len(points)} → {len(cleaned_points)} points (removed {reduction} outliers)")
         
         return cleaned_points
     
