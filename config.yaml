@@ -38,17 +38,19 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 0.1    # Minimum potentiometer voltage
-      max_voltage: 3.2    # Maximum potentiometer voltage
+      min_voltage: 0.05   # Minimum potentiometer voltage
+      max_voltage: 3.3    # Maximum potentiometer voltage (increased to accommodate readings)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 25.0  # Maximum allowed position drift (%)
+      enable_filtering: false  # Temporarily disable filtering for debugging
     y_axis:
       min_voltage: 0.1
       max_voltage: 3.2
       min_position: 0
       max_position: 100
       max_drift_percent: 25.0  # Maximum allowed position drift (%)
+      enable_filtering: false  # Temporarily disable filtering for debugging
   
   # Actual TV mount positions (calibrated)
   positions:

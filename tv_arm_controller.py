@@ -212,12 +212,14 @@ class PositionSensor:
     """Reads position from potentiometer via ADS1115 with filtering for erratic readings"""
     
     def __init__(self, ads: Any, channel: int, min_voltage: float = 0.1, 
-                 max_voltage: float = 3.2, max_drift_percent: float = 10.0):
+                 max_voltage: float = 3.2, max_drift_percent: float = 10.0, 
+                 enable_filtering: bool = True):
         self.ads = ads
         self.channel = channel
         self.min_voltage = min_voltage
         self.max_voltage = max_voltage
         self.max_drift_percent = max_drift_percent
+        self.enable_filtering = enable_filtering
         
         # Filtering variables
         self.last_valid_position = None
@@ -247,6 +249,16 @@ class PositionSensor:
                     voltage = self.last_valid_voltage + random.uniform(-0.1, 0.1)
                     voltage = max(self.min_voltage, min(self.max_voltage, voltage))
             return voltage
+        
+        # If filtering is disabled, just return raw reading
+        if not self.enable_filtering:
+            try:
+                voltage = self.analog_in.voltage
+                logging.debug(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
+                return voltage
+            except Exception as e:
+                logging.error(f"Error reading voltage from channel {self.channel}: {e}")
+                return (self.min_voltage + self.max_voltage) / 2
         
         # Try reading voltage with retries
         for attempt in range(self.max_retries):
@@ -397,7 +409,8 @@ class TVArmController:
             config['hardware']['potentiometer']['x_axis_channel'],
             x_cal['min_voltage'], 
             x_cal['max_voltage'],
-            x_cal.get('max_drift_percent', 10.0)
+            x_cal.get('max_drift_percent', 10.0),
+            x_cal.get('enable_filtering', True)
         )
         
         self.y_sensor = PositionSensor(
@@ -405,7 +418,8 @@ class TVArmController:
             config['hardware']['potentiometer']['y_axis_channel'], 
             y_cal['min_voltage'],
             y_cal['max_voltage'],
-            y_cal.get('max_drift_percent', 10.0)
+            y_cal.get('max_drift_percent', 10.0),
+            y_cal.get('enable_filtering', True)
         )
         
         # Current positions
