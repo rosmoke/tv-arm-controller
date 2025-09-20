@@ -1,0 +1,422 @@
+{
+  "name": "retract",
+  "recorded_at": 1758361940.3412278,
+  "duration": 14.1727774143219,
+  "point_count": 69,
+  "points": [
+    {
+      "timestamp": 1758361924.9939215,
+      "x_position": 62.9274193548387,
+      "y_position": 88.65725806451611,
+      "duration_from_start": 0.007395744323730469
+    },
+    {
+      "timestamp": 1758361927.7713797,
+      "x_position": 61.8508064516129,
+      "y_position": 88.76209677419354,
+      "duration_from_start": 2.784853935241699
+    },
+    {
+      "timestamp": 1758361927.987974,
+      "x_position": 58.95564516129033,
+      "y_position": 88.79435483870968,
+      "duration_from_start": 3.001448154449463
+    },
+    {
+      "timestamp": 1758361928.3144407,
+      "x_position": 56.21370967741935,
+      "y_position": 88.79838709677419,
+      "duration_from_start": 3.3279149532318115
+    },
+    {
+      "timestamp": 1758361928.5308695,
+      "x_position": 54.90725806451613,
+      "y_position": 88.67338709677419,
+      "duration_from_start": 3.5443437099456787
+    },
+    {
+      "timestamp": 1758361928.7473397,
+      "x_position": 55.88306451612903,
+      "y_position": 86.43951612903226,
+      "duration_from_start": 3.7608139514923096
+    },
+    {
+      "timestamp": 1758361928.8556833,
+      "x_position": 57.63709677419355,
+      "y_position": 84.78629032258065,
+      "duration_from_start": 3.869157552719116
+    },
+    {
+      "timestamp": 1758361928.9639442,
+      "x_position": 54.58467741935483,
+      "y_position": 83.46370967741935,
+      "duration_from_start": 3.9774184226989746
+    },
+    {
+      "timestamp": 1758361929.0721352,
+      "x_position": 66.04435483870968,
+      "y_position": 81.70161290322581,
+      "duration_from_start": 4.085609436035156
+    },
+    {
+      "timestamp": 1758361929.1803217,
+      "x_position": 52.387096774193544,
+      "y_position": 80.28629032258064,
+      "duration_from_start": 4.193795919418335
+    },
+    {
+      "timestamp": 1758361929.2884805,
+      "x_position": 55.40725806451613,
+      "y_position": 78.90322580645162,
+      "duration_from_start": 4.301954746246338
+    },
+    {
+      "timestamp": 1758361929.396653,
+      "x_position": 79.7258064516129,
+      "y_position": 77.39919354838709,
+      "duration_from_start": 4.41012716293335
+    },
+    {
+      "timestamp": 1758361929.504922,
+      "x_position": 81.64112903225806,
+      "y_position": 76.18145161290323,
+      "duration_from_start": 4.5183961391448975
+    },
+    {
+      "timestamp": 1758361929.613117,
+      "x_position": 84.01209677419355,
+      "y_position": 75.04032258064515,
+      "duration_from_start": 4.626591205596924
+    },
+    {
+      "timestamp": 1758361929.8293297,
+      "x_position": 84.95564516129032,
+      "y_position": 72.86693548387095,
+      "duration_from_start": 4.842803955078125
+    },
+    {
+      "timestamp": 1758361930.0463336,
+      "x_position": 86.29032258064515,
+      "y_position": 71.47177419354838,
+      "duration_from_start": 5.059807777404785
+    },
+    {
+      "timestamp": 1758361930.1545274,
+      "x_position": 85.37903225806451,
+      "y_position": 70.25806451612902,
+      "duration_from_start": 5.168001651763916
+    },
+    {
+      "timestamp": 1758361930.2628074,
+      "x_position": 85.58467741935483,
+      "y_position": 69.23387096774192,
+      "duration_from_start": 5.2762815952301025
+    },
+    {
+      "timestamp": 1758361930.3712265,
+      "x_position": 85.54032258064515,
+      "y_position": 68.12499999999999,
+      "duration_from_start": 5.384700775146484
+    },
+    {
+      "timestamp": 1758361930.4795625,
+      "x_position": 85.74193548387098,
+      "y_position": 67.08870967741935,
+      "duration_from_start": 5.49303674697876
+    },
+    {
+      "timestamp": 1758361930.5878286,
+      "x_position": 78.75806451612904,
+      "y_position": 66.04032258064517,
+      "duration_from_start": 5.601302862167358
+    },
+    {
+      "timestamp": 1758361930.6960983,
+      "x_position": 87.04032258064515,
+      "y_position": 65.06451612903226,
+      "duration_from_start": 5.7095725536346436
+    },
+    {
+      "timestamp": 1758361930.8043194,
+      "x_position": 81.49193548387098,
+      "y_position": 64.14919354838709,
+      "duration_from_start": 5.817793607711792
+    },
+    {
+      "timestamp": 1758361930.9125316,
+      "x_position": 90.15322580645162,
+      "y_position": 62.69758064516129,
+      "duration_from_start": 5.926005840301514
+    },
+    {
+      "timestamp": 1758361931.020883,
+      "x_position": 83.10887096774194,
+      "y_position": 61.02016129032257,
+      "duration_from_start": 6.034357309341431
+    },
+    {
+      "timestamp": 1758361931.1290298,
+      "x_position": 93.68951612903226,
+      "y_position": 59.66129032258064,
+      "duration_from_start": 6.142503976821899
+    },
+    {
+      "timestamp": 1758361931.237198,
+      "x_position": 83.89919354838709,
+      "y_position": 58.04032258064517,
+      "duration_from_start": 6.250672340393066
+    },
+    {
+      "timestamp": 1758361931.3453672,
+      "x_position": 86.75403225806451,
+      "y_position": 56.93145161290323,
+      "duration_from_start": 6.358841419219971
+    },
+    {
+      "timestamp": 1758361931.453543,
+      "x_position": 91.32661290322581,
+      "y_position": 55.016129032258064,
+      "duration_from_start": 6.46701717376709
+    },
+    {
+      "timestamp": 1758361931.5617478,
+      "x_position": 92.45967741935483,
+      "y_position": 53.717741935483865,
+      "duration_from_start": 6.575222015380859
+    },
+    {
+      "timestamp": 1758361931.6699035,
+      "x_position": 95.08467741935483,
+      "y_position": 52.149193548387096,
+      "duration_from_start": 6.683377742767334
+    },
+    {
+      "timestamp": 1758361931.7782106,
+      "x_position": 97.21370967741935,
+      "y_position": 50.979838709677416,
+      "duration_from_start": 6.791684865951538
+    },
+    {
+      "timestamp": 1758361931.9944327,
+      "x_position": 95.51209677419355,
+      "y_position": 48.9516129032258,
+      "duration_from_start": 7.007906913757324
+    },
+    {
+      "timestamp": 1758361932.1029427,
+      "x_position": 98.73387096774194,
+      "y_position": 48.221774193548384,
+      "duration_from_start": 7.116416931152344
+    },
+    {
+      "timestamp": 1758361932.211085,
+      "x_position": 96.66532258064515,
+      "y_position": 47.096774193548384,
+      "duration_from_start": 7.224559307098389
+    },
+    {
+      "timestamp": 1758361932.3193355,
+      "x_position": 98.69354838709677,
+      "y_position": 46.39516129032258,
+      "duration_from_start": 7.332809686660767
+    },
+    {
+      "timestamp": 1758361932.5354714,
+      "x_position": 98.58467741935483,
+      "y_position": 45.016129032258064,
+      "duration_from_start": 7.548945665359497
+    },
+    {
+      "timestamp": 1758361932.6435645,
+      "x_position": 99.68548387096774,
+      "y_position": 44.302419354838705,
+      "duration_from_start": 7.657038688659668
+    },
+    {
+      "timestamp": 1758361932.8599043,
+      "x_position": 97.14516129032256,
+      "y_position": 42.927419354838705,
+      "duration_from_start": 7.87337851524353
+    },
+    {
+      "timestamp": 1758361932.9680917,
+      "x_position": 95.41935483870968,
+      "y_position": 42.375,
+      "duration_from_start": 7.981565952301025
+    },
+    {
+      "timestamp": 1758361933.0762365,
+      "x_position": 92.57661290322581,
+      "y_position": 41.37096774193548,
+      "duration_from_start": 8.089710712432861
+    },
+    {
+      "timestamp": 1758361933.1843567,
+      "x_position": 81.99596774193549,
+      "y_position": 40.528225806451616,
+      "duration_from_start": 8.19783091545105
+    },
+    {
+      "timestamp": 1758361933.2924902,
+      "x_position": 88.40725806451613,
+      "y_position": 39.79032258064516,
+      "duration_from_start": 8.305964469909668
+    },
+    {
+      "timestamp": 1758361933.4006186,
+      "x_position": 85.09274193548386,
+      "y_position": 39.302419354838705,
+      "duration_from_start": 8.414092779159546
+    },
+    {
+      "timestamp": 1758361933.508914,
+      "x_position": 87.1008064516129,
+      "y_position": 38.842741935483865,
+      "duration_from_start": 8.522388219833374
+    },
+    {
+      "timestamp": 1758361933.615305,
+      "x_position": 94.79838709677419,
+      "y_position": 38.104838709677416,
+      "duration_from_start": 8.628779172897339
+    },
+    {
+      "timestamp": 1758361933.7216463,
+      "x_position": 91.14112903225808,
+      "y_position": 37.82258064516129,
+      "duration_from_start": 8.73512053489685
+    },
+    {
+      "timestamp": 1758361933.8282723,
+      "x_position": 86.49596774193549,
+      "y_position": 37.637096774193544,
+      "duration_from_start": 8.84174656867981
+    },
+    {
+      "timestamp": 1758361933.9347289,
+      "x_position": 84.9758064516129,
+      "y_position": 37.274193548387096,
+      "duration_from_start": 8.948203086853027
+    },
+    {
+      "timestamp": 1758361934.0411508,
+      "x_position": 89.48387096774194,
+      "y_position": 36.62903225806451,
+      "duration_from_start": 9.054625034332275
+    },
+    {
+      "timestamp": 1758361934.1475444,
+      "x_position": 92.25403225806453,
+      "y_position": 36.08467741935484,
+      "duration_from_start": 9.16101861000061
+    },
+    {
+      "timestamp": 1758361934.2539792,
+      "x_position": 94.43145161290323,
+      "y_position": 35.62903225806451,
+      "duration_from_start": 9.26745343208313
+    },
+    {
+      "timestamp": 1758361934.3604014,
+      "x_position": 89.90725806451613,
+      "y_position": 35.06854838709677,
+      "duration_from_start": 9.373875617980957
+    },
+    {
+      "timestamp": 1758361934.4668338,
+      "x_position": 100.0,
+      "y_position": 34.79032258064516,
+      "duration_from_start": 9.480308055877686
+    },
+    {
+      "timestamp": 1758361934.5732644,
+      "x_position": 82.5524193548387,
+      "y_position": 34.27016129032258,
+      "duration_from_start": 9.586738586425781
+    },
+    {
+      "timestamp": 1758361934.6798842,
+      "x_position": 77.99596774193547,
+      "y_position": 33.95967741935483,
+      "duration_from_start": 9.693358421325684
+    },
+    {
+      "timestamp": 1758361934.7869077,
+      "x_position": 89.53225806451613,
+      "y_position": 33.78629032258064,
+      "duration_from_start": 9.800381898880005
+    },
+    {
+      "timestamp": 1758361934.8932738,
+      "x_position": 100.0,
+      "y_position": 33.641129032258064,
+      "duration_from_start": 9.906748056411743
+    },
+    {
+      "timestamp": 1758361934.9997122,
+      "x_position": 85.27016129032258,
+      "y_position": 32.95564516129032,
+      "duration_from_start": 10.01318645477295
+    },
+    {
+      "timestamp": 1758361935.1061122,
+      "x_position": 100.0,
+      "y_position": 32.774193548387096,
+      "duration_from_start": 10.11958646774292
+    },
+    {
+      "timestamp": 1758361935.5316896,
+      "x_position": 100.0,
+      "y_position": 31.479838709677416,
+      "duration_from_start": 10.545163869857788
+    },
+    {
+      "timestamp": 1758361935.744367,
+      "x_position": 98.54032258064515,
+      "y_position": 31.04435483870968,
+      "duration_from_start": 10.757841110229492
+    },
+    {
+      "timestamp": 1758361935.8507397,
+      "x_position": 100.0,
+      "y_position": 30.596774193548388,
+      "duration_from_start": 10.864213943481445
+    },
+    {
+      "timestamp": 1758361936.1709027,
+      "x_position": 99.83064516129032,
+      "y_position": 29.51612903225807,
+      "duration_from_start": 11.184376955032349
+    },
+    {
+      "timestamp": 1758361936.4902577,
+      "x_position": 98.02419354838709,
+      "y_position": 29.028225806451612,
+      "duration_from_start": 11.503731966018677
+    },
+    {
+      "timestamp": 1758361936.5966046,
+      "x_position": 100.0,
+      "y_position": 28.717741935483875,
+      "duration_from_start": 11.610078811645508
+    },
+    {
+      "timestamp": 1758361936.9158475,
+      "x_position": 100.0,
+      "y_position": 27.637096774193548,
+      "duration_from_start": 11.929321765899658
+    },
+    {
+      "timestamp": 1758361937.6614838,
+      "x_position": 100.0,
+      "y_position": 26.612903225806456,
+      "duration_from_start": 12.674957990646362
+    },
+    {
+      "timestamp": 1758361939.1593032,
+      "x_position": 100.0,
+      "y_position": 25.608870967741936,
+      "duration_from_start": 14.1727774143219
+    }
+  ]
+}
