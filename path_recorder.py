@@ -279,42 +279,59 @@ class PathRecorder:
         consecutive_good_readings = 0
         required_readings = 2
         
+        logging.info(f"{axis}: Starting movement to {target:.1f}%")
+        
         while time.time() - start_time < max_wait:
             if not self.is_playing:
                 return False
             
-            # Get current position
-            current_x, current_y = self.controller.get_current_position()
-            current = current_x if axis == 'X' else current_y
-            
-            error = abs(current - target)
-            logging.info(f"{axis}: Current={current:.1f}%, Target={target:.1f}%, Error={error:.1f}%")
-            
-            # Check if within tolerance
-            if error <= tolerance:
-                consecutive_good_readings += 1
-                logging.info(f"{axis}: ✅ Within tolerance ({consecutive_good_readings}/{required_readings} checks)")
+            try:
+                # Get current position with timeout protection
+                logging.info(f"{axis}: Reading current position...")
+                current_x, current_y = self.controller.get_current_position()
+                current = current_x if axis == 'X' else current_y
                 
-                if consecutive_good_readings >= required_readings:
-                    logging.info(f"{axis}: 🎯 Position confirmed!")
-                    return True
+                error = abs(current - target)
+                logging.info(f"{axis}: Current={current:.1f}%, Target={target:.1f}%, Error={error:.1f}%")
+                
+                # Check if within tolerance
+                if error <= tolerance:
+                    consecutive_good_readings += 1
+                    logging.info(f"{axis}: ✅ Within tolerance ({consecutive_good_readings}/{required_readings} checks)")
                     
-                time.sleep(0.2)  # Wait before next check
-            else:
-                consecutive_good_readings = 0
-                
-                # Send movement command
-                if axis == 'X':
-                    self.controller.set_x_position(target, use_closed_loop=False)  # Use open-loop to avoid nested loops
+                    if consecutive_good_readings >= required_readings:
+                        logging.info(f"{axis}: 🎯 Position confirmed!")
+                        # Stop the motor for this axis
+                        if axis == 'X':
+                            self.controller.x_motor.stop_motor()
+                        else:
+                            self.controller.y_motor.stop_motor()
+                        return True
+                        
+                    time.sleep(0.5)  # Wait before next check
                 else:
-                    self.controller.set_y_position(target, use_closed_loop=False)
-                
-                time.sleep(0.3)  # Wait for movement
+                    consecutive_good_readings = 0
+                    
+                    # Send movement command
+                    logging.info(f"{axis}: Sending move command to {target:.1f}%")
+                    if axis == 'X':
+                        self.controller.set_x_position(target, use_closed_loop=False)  # Use open-loop to avoid nested loops
+                    else:
+                        self.controller.set_y_position(target, use_closed_loop=False)
+                    
+                    time.sleep(1.0)  # Wait longer for movement
+                    
+            except Exception as e:
+                logging.error(f"{axis}: Error during position verification: {e}")
+                time.sleep(0.5)
         
         # Timeout
-        current_x, current_y = self.controller.get_current_position()
-        current = current_x if axis == 'X' else current_y
-        logging.warning(f"{axis}: ⏰ Timeout - Current={current:.1f}%, Target={target:.1f}%")
+        try:
+            current_x, current_y = self.controller.get_current_position()
+            current = current_x if axis == 'X' else current_y
+            logging.warning(f"{axis}: ⏰ Timeout - Current={current:.1f}%, Target={target:.1f}%")
+        except Exception as e:
+            logging.error(f"{axis}: Error reading final position: {e}")
         return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
