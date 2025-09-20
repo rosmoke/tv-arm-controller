@@ -378,7 +378,7 @@ class PathRecorder:
         self.y_last_position = None
         x_command_count = 0
         y_command_count = 0
-        max_commands_per_axis = 8  # Emergency stop after 8 commands per axis
+        max_commands_per_axis = 15  # Emergency stop after 15 commands per axis (more attempts)
         
         while time.time() - start_time < max_wait:
             if not self.is_playing:
@@ -443,13 +443,13 @@ class PathRecorder:
                             self.controller.x_motor.set_speed(0)
                             self.x_stopped = True
                         else:
-                            # Much slower speeds to prevent overshoot
+                            # Balanced speeds for X motor
                             if x_error > 15.0:
-                                speed = 25.0  # Very slow even for large movements
+                                speed = 50.0  # Moderate speed for large movements
                             elif x_error > 8.0:
-                                speed = 15.0  # Slow speed for medium movements
+                                speed = 35.0  # Medium speed for medium movements
                             else:
-                                speed = 10.0  # Very slow for fine adjustments
+                                speed = 20.0  # Careful speed for fine adjustments
                             
                             logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
                             self.controller.set_x_position(target_x, use_closed_loop=False)
