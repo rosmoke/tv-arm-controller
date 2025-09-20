@@ -349,11 +349,11 @@ class PositionSensor:
                     voltage = max(self.min_voltage, min(self.max_voltage, voltage))
             return voltage
         
-        # If filtering is disabled, just return raw reading with logging
+        # If filtering is disabled, just return raw reading with minimal logging
         if not self.enable_filtering:
             try:
                 voltage = self.analog_in.voltage
-                logging.info(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
+                logging.debug(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
                 return voltage
             except Exception as e:
                 logging.error(f"Error reading voltage from channel {self.channel}: {e}")
@@ -603,13 +603,13 @@ class TVArmController:
     def get_current_position(self) -> Tuple[float, float]:
         """Get current position from potentiometers"""
         try:
-            logging.info("Reading X sensor...")
+            logging.debug("Reading X sensor...")
             x_pos = self.x_sensor.read_position_percent()
-            logging.info(f"X sensor read: {x_pos:.1f}%")
+            logging.debug(f"X sensor read: {x_pos:.1f}%")
             
-            logging.info("Reading Y sensor...")
+            logging.debug("Reading Y sensor...")
             y_pos = self.y_sensor.read_position_percent()
-            logging.info(f"Y sensor read: {y_pos:.1f}%")
+            logging.debug(f"Y sensor read: {y_pos:.1f}%")
             
             return x_pos, y_pos
         except Exception as e:
