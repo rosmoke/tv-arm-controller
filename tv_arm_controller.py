@@ -155,7 +155,7 @@ class DCMotorController:
             actual_position = position_callback()
             position_error = abs(actual_position - target_percent)
             
-            logging.info(f"Position check: target={target_percent:.1f}%, actual={actual_position:.1f}%, error={position_error:.1f}%")
+            logging.debug(f"Position check: target={target_percent:.1f}%, actual={actual_position:.1f}%, error={position_error:.1f}%")
             
             # Check if we're within tolerance
             if position_error <= tolerance:
@@ -182,18 +182,18 @@ class DCMotorController:
                     # Need to increase position
                     if self.invert_direction:
                         self.set_direction_reverse()
-                        logging.info(f"Moving reverse (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                        logging.debug(f"Moving reverse (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
                     else:
                         self.set_direction_forward()
-                        logging.info(f"Moving forward - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                        logging.debug(f"Moving forward - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
                 else:
                     # Need to decrease position
                     if self.invert_direction:
                         self.set_direction_forward()
-                        logging.info(f"Moving forward (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                        logging.debug(f"Moving forward (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
                     else:
                         self.set_direction_reverse()
-                        logging.info(f"Moving reverse - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                        logging.debug(f"Moving reverse - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
                 
                 self.set_speed(speed)
                 self.moving = True
