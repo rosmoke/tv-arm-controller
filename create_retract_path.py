@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import List, Dict
 
 
-def reverse_path(extend_path: str = "recorded_paths/extend.json", 
-                retract_path: str = "recorded_paths/retract.json"):
+def reverse_path(extend_path: str = "recorded_paths/extending.json", 
+                retract_path: str = "recorded_paths/retracting.json"):
     """
     Create retract path by reversing the extend path
     """
@@ -76,12 +76,12 @@ def reverse_path(extend_path: str = "recorded_paths/extend.json",
     
     # Create retract path data
     retract_data = {
-        'name': 'retract',
+        'name': 'retracting',
         'recorded_at': current_time,
         'duration': total_duration,
         'point_count': len(retract_points),
         'points': retract_points,
-        'generated_from': 'extend.json',
+        'generated_from': 'extending.json',
         'generated_at': time.strftime('%Y-%m-%d %H:%M:%S'),
         'reversed': True
     }
@@ -107,16 +107,16 @@ def reverse_path(extend_path: str = "recorded_paths/extend.json",
 def main():
     print("🔄 TV Arm Path Reverser")
     print("=" * 40)
-    print("Creates retract.json by reversing extend.json")
+    print("Creates retracting.json by reversing extending.json")
     print()
     
     if reverse_path():
         print("\n🎉 Success!")
         print("You now have:")
-        print("  - extend.json: Wall → Extended position")
-        print("  - retract.json: Extended → Wall position")
+        print("  - extending.json: Start → End position")
+        print("  - retracting.json: End → Start position")
         print()
-        print("Test with: python main.py --play-path retract")
+        print("Test with: python main.py --play-path retracting")
     else:
         print("\n❌ Failed to create retract path")
 

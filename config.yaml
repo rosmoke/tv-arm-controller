@@ -35,7 +35,7 @@ hardware:
     default_speed: 80 # Default motor speed (%) - increased for better movement
     movement_timeout: 10  # Maximum time for movement (seconds)
     invert_x_direction: true   # X motor direction inverted - FORWARD extends, REVERSE retracts
-    invert_y_direction: false  # Invert Y motor direction if wired backwards
+    invert_y_direction: true   # Y motor direction inverted - FORWARD decreases, REVERSE increases
     use_closed_loop: true     # Use closed-loop control with position feedback
     position_tolerance: 2.0   # Position tolerance for closed-loop control (%)
     max_move_time: 10.0       # Maximum time to reach target position (seconds)
