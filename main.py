@@ -321,9 +321,18 @@ class TVArmApplication:
     
     def run_teaching_mode(self):
         """Run interactive teaching mode"""
+        print("Initializing hardware controller for teaching mode...")
+        
+        # Initialize controller if not already done
         if not self.controller:
-            logging.error("Hardware controller not initialized")
-            return
+            try:
+                self.controller = TVArmController(self.config)
+                logging.info("Hardware controller initialized for teaching mode")
+            except Exception as e:
+                logging.error(f"Failed to initialize hardware controller: {e}")
+                print(f"Error initializing hardware controller: {e}")
+                print("Make sure all dependencies are installed and hardware is connected.")
+                return
         
         # Initialize components
         was_running = self.running
