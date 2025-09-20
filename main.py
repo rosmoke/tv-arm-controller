@@ -337,7 +337,7 @@ class TVArmApplication:
         # Initialize components
         was_running = self.running
         if not was_running:
-            self.controller.start()
+            self.controller.start(teaching_mode=True)  # Don't auto-move in teaching mode
             self.path_recorder = PathRecorder(self.controller, self.config)
         
         try:

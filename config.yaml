@@ -54,7 +54,7 @@ hardware:
       max_voltage: 3.2
       min_position: 0
       max_position: 100
-      max_drift_percent: 15.0  # Maximum allowed position drift (%)
+      max_drift_percent: 50.0  # Increased to accommodate voltage range changes
       enable_filtering: true   # Re-enable filtering to catch erratic readings
   
   # Actual TV mount positions (calibrated)

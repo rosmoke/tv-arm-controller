@@ -676,7 +676,7 @@ class TVArmController:
                 logging.error(f"Error in position update loop: {e}")
                 time.sleep(1)
     
-    def start(self):
+    def start(self, teaching_mode: bool = False):
         """Start the controller"""
         if self.running:
             return
@@ -688,11 +688,15 @@ class TVArmController:
         self.position_thread = threading.Thread(target=self._position_update_loop, daemon=True)
         self.position_thread.start()
         
-        # Move to default position if configured
-        if self.config['system']['restore_position_on_startup']:
+        # Move to default position if configured (skip in teaching mode)
+        if self.config['system']['restore_position_on_startup'] and not teaching_mode:
             default_x = self.config['system']['default_x_position']
             default_y = self.config['system']['default_y_position']
             self.set_position(default_x, default_y)
+        elif teaching_mode:
+            logging.info("Teaching mode: skipping default position move")
+            # Just read current position without moving
+            self.current_x_position, self.current_y_position = self.get_current_position()
         
         logging.info("TV Arm Controller started")
     
