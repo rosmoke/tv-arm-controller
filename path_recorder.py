@@ -215,32 +215,54 @@ class PathRecorder:
         return True
     
     def _playback_loop(self):
-        """Background thread that plays back recorded path"""
+        """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            start_time = time.time()
+            tolerance = 3.0  # 3% tolerance as requested
+            max_wait_per_point = 15.0  # Maximum time to wait for each point
             
             for i, point in enumerate(self.current_playback_path):
                 if not self.is_playing:
                     break
                 
-                # Calculate when this point should be reached
-                target_time = start_time + (point.duration_from_start / self.playback_speed)
-                current_time = time.time()
+                target_x = point.x_position
+                target_y = point.y_position
                 
-                # Wait if we're ahead of schedule
-                if current_time < target_time:
-                    time.sleep(target_time - current_time)
+                logging.info(f"=== DATAPOINT {i+1}/{len(self.current_playback_path)} ===")
+                logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
                 
-                # Move to the recorded position
-                self.controller.set_position(point.x_position, point.y_position)
+                # Move to X position first
+                logging.info(f"Moving X to {target_x:.1f}%...")
+                x_success = self._move_to_position_with_verification(
+                    'X', target_x, tolerance, max_wait_per_point
+                )
                 
-                logging.debug(f"Playback point {i+1}/{len(self.current_playback_path)}: X={point.x_position:.1f}%, Y={point.y_position:.1f}%")
+                if not x_success:
+                    logging.warning(f"Failed to reach X position {target_x:.1f}%")
+                    break
+                
+                # Move to Y position
+                logging.info(f"Moving Y to {target_y:.1f}%...")
+                y_success = self._move_to_position_with_verification(
+                    'Y', target_y, tolerance, max_wait_per_point
+                )
+                
+                if not y_success:
+                    logging.warning(f"Failed to reach Y position {target_y:.1f}%")
+                    break
+                
+                # Both axes reached target
+                current_x, current_y = self.controller.get_current_position()
+                logging.info(f"✅ REACHED DATAPOINT {i+1}: X={current_x:.1f}%, Y={current_y:.1f}%")
+                logging.info(f"Proceeding to next datapoint...")
                 
                 if self.playback_callback:
                     self.playback_callback("playing", "", i + 1)
+                
+                # Small pause between datapoints
+                time.sleep(0.5)
             
             self.is_playing = False
-            logging.info("Path playback completed")
+            logging.info("🎉 Path playback completed successfully")
             
             if self.playback_callback:
                 self.playback_callback("completed", "", len(self.current_playback_path))
@@ -250,6 +272,50 @@ class PathRecorder:
             self.is_playing = False
             if self.playback_callback:
                 self.playback_callback("error", "", 0)
+    
+    def _move_to_position_with_verification(self, axis: str, target: float, tolerance: float, max_wait: float) -> bool:
+        """Move a single axis to target position with verification"""
+        start_time = time.time()
+        consecutive_good_readings = 0
+        required_readings = 2
+        
+        while time.time() - start_time < max_wait:
+            if not self.is_playing:
+                return False
+            
+            # Get current position
+            current_x, current_y = self.controller.get_current_position()
+            current = current_x if axis == 'X' else current_y
+            
+            error = abs(current - target)
+            logging.info(f"{axis}: Current={current:.1f}%, Target={target:.1f}%, Error={error:.1f}%")
+            
+            # Check if within tolerance
+            if error <= tolerance:
+                consecutive_good_readings += 1
+                logging.info(f"{axis}: ✅ Within tolerance ({consecutive_good_readings}/{required_readings} checks)")
+                
+                if consecutive_good_readings >= required_readings:
+                    logging.info(f"{axis}: 🎯 Position confirmed!")
+                    return True
+                    
+                time.sleep(0.2)  # Wait before next check
+            else:
+                consecutive_good_readings = 0
+                
+                # Send movement command
+                if axis == 'X':
+                    self.controller.set_x_position(target, use_closed_loop=False)  # Use open-loop to avoid nested loops
+                else:
+                    self.controller.set_y_position(target, use_closed_loop=False)
+                
+                time.sleep(0.3)  # Wait for movement
+        
+        # Timeout
+        current_x, current_y = self.controller.get_current_position()
+        current = current_x if axis == 'X' else current_y
+        logging.warning(f"{axis}: ⏰ Timeout - Current={current:.1f}%, Target={target:.1f}%")
+        return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
         """Save a recorded path to disk"""
