@@ -209,14 +209,22 @@ class ServoController:
 
 
 class PositionSensor:
-    """Reads position from potentiometer via ADS1115"""
+    """Reads position from potentiometer via ADS1115 with filtering for erratic readings"""
     
     def __init__(self, ads: Any, channel: int, min_voltage: float = 0.1, 
-                 max_voltage: float = 3.2):
+                 max_voltage: float = 3.2, max_drift_percent: float = 10.0):
         self.ads = ads
         self.channel = channel
         self.min_voltage = min_voltage
         self.max_voltage = max_voltage
+        self.max_drift_percent = max_drift_percent
+        
+        # Filtering variables
+        self.last_valid_position = None
+        self.last_valid_voltage = None
+        self.consecutive_errors = 0
+        self.max_consecutive_errors = 3
+        self.max_retries = 5
         
         if ADS and AnalogIn and ads is not None:
             self.analog_in = AnalogIn(ads, getattr(ADS, f'P{channel}'))
@@ -224,20 +232,71 @@ class PositionSensor:
             self.analog_in = None
     
     def read_voltage(self) -> float:
-        """Read raw voltage from potentiometer"""
+        """Read raw voltage from potentiometer with retry logic"""
         if not self.analog_in:
-            # Simulation mode - return random value
+            # Simulation mode - return random value with occasional drift simulation
             import random
-            return random.uniform(self.min_voltage, self.max_voltage)
+            if self.last_valid_voltage is None:
+                voltage = random.uniform(self.min_voltage, self.max_voltage)
+            else:
+                # Simulate occasional drift for testing
+                if random.random() < 0.05:  # 5% chance of drift
+                    voltage = random.uniform(self.min_voltage, self.max_voltage)
+                else:
+                    # Normal small variation
+                    voltage = self.last_valid_voltage + random.uniform(-0.1, 0.1)
+                    voltage = max(self.min_voltage, min(self.max_voltage, voltage))
+            return voltage
         
-        try:
-            return self.analog_in.voltage
-        except Exception as e:
-            logging.error(f"Error reading voltage from channel {self.channel}: {e}")
-            return 0.0
+        # Try reading voltage with retries
+        for attempt in range(self.max_retries):
+            try:
+                voltage = self.analog_in.voltage
+                
+                # Validate the reading
+                if self._is_voltage_valid(voltage):
+                    self.last_valid_voltage = voltage
+                    self.consecutive_errors = 0
+                    return voltage
+                else:
+                    logging.warning(f"Invalid voltage reading on channel {self.channel}: {voltage:.3f}V (attempt {attempt + 1})")
+                    if attempt < self.max_retries - 1:
+                        time.sleep(0.01)  # Small delay before retry
+                    
+            except Exception as e:
+                logging.error(f"Error reading voltage from channel {self.channel} (attempt {attempt + 1}): {e}")
+                if attempt < self.max_retries - 1:
+                    time.sleep(0.01)  # Small delay before retry
+        
+        # All retries failed - use last valid voltage if available
+        self.consecutive_errors += 1
+        if self.last_valid_voltage is not None and self.consecutive_errors <= self.max_consecutive_errors:
+            logging.warning(f"Using last valid voltage for channel {self.channel}: {self.last_valid_voltage:.3f}V")
+            return self.last_valid_voltage
+        
+        # Return a safe default value
+        logging.error(f"All voltage readings failed for channel {self.channel}, using safe default")
+        return (self.min_voltage + self.max_voltage) / 2
+    
+    def _is_voltage_valid(self, voltage: float) -> bool:
+        """Check if voltage reading is valid (not a drift/error)"""
+        # Check if voltage is within expected range
+        if voltage < self.min_voltage * 0.9 or voltage > self.max_voltage * 1.1:
+            return False
+        
+        # If we have a previous reading, check for sudden drift
+        if self.last_valid_voltage is not None:
+            voltage_diff = abs(voltage - self.last_valid_voltage)
+            voltage_range = self.max_voltage - self.min_voltage
+            drift_percent = (voltage_diff / voltage_range) * 100
+            
+            if drift_percent > self.max_drift_percent:
+                return False
+        
+        return True
     
     def read_position_percent(self) -> float:
-        """Read position as percentage (0-100%)"""
+        """Read position as percentage (0-100%) with filtering"""
         voltage = self.read_voltage()
         
         # Clamp voltage to valid range
@@ -246,8 +305,28 @@ class PositionSensor:
         # Convert to percentage
         voltage_range = self.max_voltage - self.min_voltage
         percent = ((voltage - self.min_voltage) / voltage_range) * 100.0
+        position = max(0.0, min(100.0, percent))
         
-        return max(0.0, min(100.0, percent))
+        # Additional position-level filtering
+        if self.last_valid_position is not None:
+            position_diff = abs(position - self.last_valid_position)
+            if position_diff > self.max_drift_percent:
+                logging.warning(f"Large position change detected on channel {self.channel}: {position_diff:.1f}% (using last valid)")
+                # Use last valid position if drift is too large
+                return self.last_valid_position
+        
+        self.last_valid_position = position
+        return position
+    
+    def get_sensor_stats(self) -> dict:
+        """Get sensor statistics for debugging"""
+        return {
+            'channel': self.channel,
+            'last_valid_voltage': self.last_valid_voltage,
+            'last_valid_position': self.last_valid_position,
+            'consecutive_errors': self.consecutive_errors,
+            'max_drift_percent': self.max_drift_percent
+        }
 
 
 class TVArmController:
@@ -308,14 +387,16 @@ class TVArmController:
             self.ads, 
             config['hardware']['potentiometer']['x_axis_channel'],
             x_cal['min_voltage'], 
-            x_cal['max_voltage']
+            x_cal['max_voltage'],
+            x_cal.get('max_drift_percent', 10.0)
         )
         
         self.y_sensor = PositionSensor(
             self.ads,
             config['hardware']['potentiometer']['y_axis_channel'], 
             y_cal['min_voltage'],
-            y_cal['max_voltage']
+            y_cal['max_voltage'],
+            y_cal.get('max_drift_percent', 10.0)
         )
         
         # Current positions
@@ -477,6 +558,13 @@ class TVArmController:
         """Emergency stop - immediately stop all movement"""
         logging.warning("EMERGENCY STOP activated!")
         self.stop()
+    
+    def get_sensor_diagnostics(self) -> dict:
+        """Get sensor diagnostic information for troubleshooting"""
+        return {
+            'x_sensor': self.x_sensor.get_sensor_stats(),
+            'y_sensor': self.y_sensor.get_sensor_stats()
+        }
 
 
 def signal_handler(signum, frame):

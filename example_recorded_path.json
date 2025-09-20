@@ -1,0 +1,62 @@
+{
+  "name": "tv_extension_example",
+  "recorded_at": 1695196800.123456,
+  "duration": 12.5,
+  "point_count": 125,
+  "points": [
+    {
+      "timestamp": 1695196800.123456,
+      "x_position": 100.0,
+      "y_position": 25.0,
+      "duration_from_start": 0.0
+    },
+    {
+      "timestamp": 1695196800.223456,
+      "x_position": 98.5,
+      "y_position": 27.2,
+      "duration_from_start": 0.1
+    },
+    {
+      "timestamp": 1695196800.323456,
+      "x_position": 95.8,
+      "y_position": 31.5,
+      "duration_from_start": 0.2
+    },
+    {
+      "timestamp": 1695196800.423456,
+      "x_position": 91.2,
+      "y_position": 38.9,
+      "duration_from_start": 0.3
+    },
+    {
+      "timestamp": 1695196800.523456,
+      "x_position": 85.4,
+      "y_position": 48.2,
+      "duration_from_start": 0.4
+    },
+    {
+      "timestamp": 1695196800.623456,
+      "x_position": 78.1,
+      "y_position": 59.7,
+      "duration_from_start": 0.5
+    },
+    {
+      "timestamp": 1695196800.723456,
+      "x_position": 69.8,
+      "y_position": 72.4,
+      "duration_from_start": 0.6
+    },
+    {
+      "timestamp": 1695196800.823456,
+      "x_position": 60.2,
+      "y_position": 85.1,
+      "duration_from_start": 0.7
+    },
+    {
+      "timestamp": 1695196800.923456,
+      "x_position": 57.4,
+      "y_position": 80.6,
+      "duration_from_start": 0.8
+    }
+  ]
+}

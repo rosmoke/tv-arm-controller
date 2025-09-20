@@ -351,10 +351,11 @@ class TVArmApplication:
                 print("4. Play a recorded path")
                 print("5. Delete a recorded path")
                 print("6. Show current position")
-                print("7. Exit teaching mode")
+                print("7. Show sensor diagnostics")
+                print("8. Exit teaching mode")
                 print()
                 
-                choice = input("Enter your choice (1-7): ").strip()
+                choice = input("Enter your choice (1-8): ").strip()
                 
                 if choice == '1':
                     path_name = input("Enter path name (or press Enter for auto-generated): ").strip()
@@ -395,11 +396,25 @@ class TVArmApplication:
                     print(f"Current position: X={x:.1f}%, Y={y:.1f}%")
                 
                 elif choice == '7':
+                    # Show sensor diagnostics
+                    diagnostics = self.controller.get_sensor_diagnostics()
+                    print("\nSensor Diagnostics:")
+                    print("-" * 40)
+                    for sensor_name, stats in diagnostics.items():
+                        print(f"{sensor_name.upper()}:")
+                        print(f"  Channel: {stats['channel']}")
+                        print(f"  Last valid voltage: {stats['last_valid_voltage']:.3f}V" if stats['last_valid_voltage'] else "  Last valid voltage: None")
+                        print(f"  Last valid position: {stats['last_valid_position']:.1f}%" if stats['last_valid_position'] else "  Last valid position: None")
+                        print(f"  Consecutive errors: {stats['consecutive_errors']}")
+                        print(f"  Max drift threshold: {stats['max_drift_percent']:.1f}%")
+                        print()
+                
+                elif choice == '8':
                     print("Exiting teaching mode...")
                     break
                 
                 else:
-                    print("Invalid choice. Please enter 1-7.")
+                    print("Invalid choice. Please enter 1-8.")
                     
         except KeyboardInterrupt:
             print("\nTeaching mode interrupted.")

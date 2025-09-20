@@ -42,11 +42,13 @@ hardware:
       max_voltage: 3.2    # Maximum potentiometer voltage
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
+      max_drift_percent: 10.0  # Maximum allowed position drift (%)
     y_axis:
       min_voltage: 0.1
       max_voltage: 3.2
       min_position: 0
       max_position: 100
+      max_drift_percent: 10.0  # Maximum allowed position drift (%)
   
   # Actual TV mount positions (calibrated)
   positions:
