@@ -47,7 +47,7 @@ hardware:
       max_voltage: 3.15   # Maximum potentiometer voltage (based on your 3.10V readings)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 15.0  # Maximum allowed position drift (%) - reduced for better filtering
+      max_drift_percent: 50.0  # Increased to accommodate voltage range changes
       enable_filtering: true   # Re-enable filtering to catch erratic readings
     y_axis:
       min_voltage: 0.1

@@ -352,10 +352,12 @@ class TVArmApplication:
                 print("5. Delete a recorded path")
                 print("6. Show current position")
                 print("7. Show sensor diagnostics")
-                print("8. Exit teaching mode")
+                print("8. Move to WALL position")
+                print("9. Move to EXTENDED position")
+                print("10. Exit teaching mode")
                 print()
                 
-                choice = input("Enter your choice (1-8): ").strip()
+                choice = input("Enter your choice (1-10): ").strip()
                 
                 if choice == '1':
                     path_name = input("Enter path name (or press Enter for auto-generated): ").strip()
@@ -410,11 +412,43 @@ class TVArmApplication:
                         print()
                 
                 elif choice == '8':
+                    # Move to WALL position
+                    wall_x = 96.9  # Your measured wall position
+                    wall_y = 23.1
+                    print(f"Moving to WALL position: X={wall_x:.1f}%, Y={wall_y:.1f}%")
+                    print("Using closed-loop control - will wait for actual position...")
+                    try:
+                        x_success = self.controller.set_x_position(wall_x)
+                        y_success = self.controller.set_y_position(wall_y)
+                        if x_success and y_success:
+                            print("✅ Reached WALL position!")
+                        else:
+                            print("❌ Failed to reach WALL position")
+                    except Exception as e:
+                        print(f"❌ Error moving to wall: {e}")
+                
+                elif choice == '9':
+                    # Move to EXTENDED position
+                    ext_x = 62.3  # Your measured extended position
+                    ext_y = 88.7
+                    print(f"Moving to EXTENDED position: X={ext_x:.1f}%, Y={ext_y:.1f}%")
+                    print("Using closed-loop control - will wait for actual position...")
+                    try:
+                        x_success = self.controller.set_x_position(ext_x)
+                        y_success = self.controller.set_y_position(ext_y)
+                        if x_success and y_success:
+                            print("✅ Reached EXTENDED position!")
+                        else:
+                            print("❌ Failed to reach EXTENDED position")
+                    except Exception as e:
+                        print(f"❌ Error moving to extended: {e}")
+                
+                elif choice == '10':
                     print("Exiting teaching mode...")
                     break
                 
                 else:
-                    print("Invalid choice. Please enter 1-8.")
+                    print("Invalid choice. Please enter 1-10.")
                     
         except KeyboardInterrupt:
             print("\nTeaching mode interrupted.")
