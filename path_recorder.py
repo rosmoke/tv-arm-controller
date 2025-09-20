@@ -434,7 +434,7 @@ class PathRecorder:
                         corrections_sent = True
                     
                     if corrections_sent:
-                        time.sleep(wait_time)  # Variable wait time based on movement size
+                        time.sleep(2.0)  # Fixed wait time
                     else:
                         time.sleep(0.5)  # Short wait if no corrections needed
                     
