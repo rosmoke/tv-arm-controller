@@ -232,24 +232,13 @@ class PathRecorder:
                 logging.info(f"=== DATAPOINT {i+1}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
                 
-                # Move to X position first
-                logging.info(f"Moving X to {target_x:.1f}%...")
-                x_success = self._move_to_position_with_verification(
-                    'X', target_x, tolerance, max_wait_per_point
+                # Move both axes simultaneously
+                success = self._move_to_position_simultaneous(
+                    target_x, target_y, tolerance, max_wait_per_point
                 )
                 
-                if not x_success:
-                    logging.warning(f"Failed to reach X position {target_x:.1f}%")
-                    break
-                
-                # Move to Y position
-                logging.info(f"Moving Y to {target_y:.1f}%...")
-                y_success = self._move_to_position_with_verification(
-                    'Y', target_y, tolerance, max_wait_per_point
-                )
-                
-                if not y_success:
-                    logging.warning(f"Failed to reach Y position {target_y:.1f}%")
+                if not success:
+                    logging.warning(f"Failed to reach datapoint X={target_x:.1f}%, Y={target_y:.1f}%")
                     break
                 
                 # Both axes reached target
@@ -357,6 +346,80 @@ class PathRecorder:
             logging.warning(f"{axis}: ⏰ Timeout - Current={current:.1f}%, Target={target:.1f}%")
         except Exception as e:
             logging.error(f"{axis}: Error reading final position: {e}")
+        return False
+    
+    def _move_to_position_simultaneous(self, target_x: float, target_y: float, tolerance: float, max_wait: float) -> bool:
+        """Move both X and Y axes simultaneously to target position"""
+        start_time = time.time()
+        consecutive_good_readings = 0
+        required_readings = 2
+        
+        logging.info(f"Moving both axes simultaneously: X→{target_x:.1f}%, Y→{target_y:.1f}%")
+        
+        # Send initial movement commands to both motors
+        logging.info("Sending initial movement commands to both motors...")
+        self.controller.set_x_position(target_x, use_closed_loop=False)
+        self.controller.set_y_position(target_y, use_closed_loop=False)
+        
+        while time.time() - start_time < max_wait:
+            if not self.is_playing:
+                return False
+            
+            try:
+                # Get current position for both axes
+                current_x, current_y = self.controller.get_current_position()
+                
+                x_error = abs(current_x - target_x)
+                y_error = abs(current_y - target_y)
+                
+                logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%)")
+                
+                # Check if both axes are within tolerance
+                if x_error <= tolerance and y_error <= tolerance:
+                    consecutive_good_readings += 1
+                    logging.info(f"✅ Both axes within tolerance ({consecutive_good_readings}/{required_readings} checks)")
+                    
+                    if consecutive_good_readings >= required_readings:
+                        # Stop both motors
+                        self.controller.x_motor.stop_motor()
+                        self.controller.y_motor.stop_motor()
+                        logging.info(f"🎯 Both axes confirmed at target!")
+                        return True
+                        
+                    time.sleep(1.0)  # Wait before next check
+                else:
+                    consecutive_good_readings = 0
+                    
+                    # Send correction commands for axes that need adjustment
+                    corrections_sent = False
+                    if x_error > tolerance:
+                        logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}%")
+                        self.controller.set_x_position(target_x, use_closed_loop=False)
+                        corrections_sent = True
+                    
+                    if y_error > tolerance:
+                        logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}%")
+                        self.controller.set_y_position(target_y, use_closed_loop=False)
+                        corrections_sent = True
+                    
+                    if corrections_sent:
+                        time.sleep(3.0)  # Wait for movement
+                    else:
+                        time.sleep(0.5)  # Short wait if no corrections needed
+                    
+            except Exception as e:
+                logging.error(f"Error during simultaneous movement: {e}")
+                time.sleep(0.5)
+        
+        # Timeout - stop both motors
+        self.controller.x_motor.stop_motor()
+        self.controller.y_motor.stop_motor()
+        
+        try:
+            current_x, current_y = self.controller.get_current_position()
+            logging.warning(f"⏰ Timeout - Current: X={current_x:.1f}%, Y={current_y:.1f}%, Target: X={target_x:.1f}%, Y={target_y:.1f}%")
+        except Exception as e:
+            logging.error(f"Error reading final position: {e}")
         return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
