@@ -165,7 +165,7 @@ class PathRecorder:
                 logging.error(f"Error in recording loop: {e}")
                 time.sleep(0.5)
     
-    def play_path(self, path_name: str, speed_multiplier: float = 1.0) -> bool:
+    def play_path(self, path_name: str, speed_multiplier: float = 1.0, manual_step: bool = False) -> bool:
         """Play back a recorded path"""
         if self.is_playing:
             logging.warning("Already playing back a path")
@@ -181,11 +181,13 @@ class PathRecorder:
             logging.error(f"Failed to load path: {path_name}")
             return False
         
-        logging.info(f"Starting path playback: {path_name} ({len(path_data)} points, speed: {speed_multiplier}x)")
+        mode_desc = "manual step-through" if manual_step else "automatic"
+        logging.info(f"Starting path playback: {path_name} ({len(path_data)} points, speed: {speed_multiplier}x, mode: {mode_desc})")
         
         self.is_playing = True
         self.current_playback_path = path_data
         self.playback_speed = speed_multiplier
+        self.manual_step_mode = manual_step
         
         # Start playback thread
         self.playback_thread = threading.Thread(target=self._playback_loop, daemon=True)
@@ -253,13 +255,36 @@ class PathRecorder:
                 # Both axes reached target
                 current_x, current_y = self.controller.get_current_position()
                 logging.info(f"✅ REACHED DATAPOINT {i+1}: X={current_x:.1f}%, Y={current_y:.1f}%")
-                logging.info(f"Proceeding to next datapoint...")
                 
                 if self.playback_callback:
                     self.playback_callback("playing", "", i + 1)
                 
-                # Small pause between datapoints
-                time.sleep(0.5)
+                # Manual step mode - wait for user input
+                if hasattr(self, 'manual_step_mode') and self.manual_step_mode:
+                    if i + 1 < len(self.current_playback_path):  # Not the last point
+                        next_point = self.current_playback_path[i + 1]
+                        print(f"\n🎯 REACHED DATAPOINT {i+1}/{len(self.current_playback_path)}")
+                        print(f"Current: X={current_x:.1f}%, Y={current_y:.1f}%")
+                        print(f"Next target: X={next_point.x_position:.1f}%, Y={next_point.y_position:.1f}%")
+                        print("Press Enter to continue to next datapoint, or 'q' to quit...")
+                        
+                        try:
+                            user_input = input().strip().lower()
+                            if user_input == 'q':
+                                logging.info("Manual step playback stopped by user")
+                                self.is_playing = False
+                                break
+                        except EOFError:
+                            # Handle case where input is not available
+                            logging.info("No input available, continuing automatically")
+                            time.sleep(1.0)
+                    else:
+                        print(f"\n🎉 COMPLETED! Reached final datapoint {i+1}/{len(self.current_playback_path)}")
+                        print(f"Final position: X={current_x:.1f}%, Y={current_y:.1f}%")
+                else:
+                    logging.info(f"Proceeding to next datapoint...")
+                    # Small pause between datapoints in automatic mode
+                    time.sleep(0.5)
             
             self.is_playing = False
             logging.info("🎉 Path playback completed successfully")

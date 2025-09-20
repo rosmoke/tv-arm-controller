@@ -354,10 +354,11 @@ class TVArmApplication:
                 print("7. Show sensor diagnostics")
                 print("8. Move to WALL position")
                 print("9. Move to EXTENDED position")
-                print("10. Exit teaching mode")
+                print("10. Manual step-through path playback")
+                print("11. Exit teaching mode")
                 print()
                 
-                choice = input("Enter your choice (1-10): ").strip()
+                choice = input("Enter your choice (1-11): ").strip()
                 
                 if choice == '1':
                     path_name = input("Enter path name (or press Enter for auto-generated): ").strip()
@@ -450,11 +451,15 @@ class TVArmApplication:
                         print(f"❌ Error moving to extended: {e}")
                 
                 elif choice == '10':
+                    # Manual step-through path playback
+                    self._manual_step_playback()
+                
+                elif choice == '11':
                     print("Exiting teaching mode...")
                     break
                 
                 else:
-                    print("Invalid choice. Please enter 1-10.")
+                    print("Invalid choice. Please enter 1-11.")
                     
         except KeyboardInterrupt:
             print("\nTeaching mode interrupted.")
@@ -540,6 +545,47 @@ class TVArmApplication:
                 print("Invalid path number.")
         except ValueError:
             print("Invalid input.")
+    
+    def _manual_step_playback(self):
+        """Manual step-through path playback"""
+        paths = self.path_recorder.list_paths()
+        if not paths:
+            print("No recorded paths found.")
+            return
+        
+        self._list_paths_interactive()
+        
+        try:
+            choice = int(input("\nEnter path number for manual step-through: ")) - 1
+            if 0 <= choice < len(paths):
+                path_name = paths[choice]['name']
+                print(f"\n🎯 Manual Step-Through: {path_name}")
+                print("=" * 50)
+                print("The system will move to each datapoint and wait for your input.")
+                print("You can:")
+                print("- Press Enter to continue to next datapoint")
+                print("- Type 'q' and Enter to quit")
+                print("- Use Ctrl+C to emergency stop")
+                print()
+                
+                confirm = input("Start manual step-through? (y/N): ").strip().lower()
+                if confirm == 'y':
+                    if self.path_recorder.play_path(path_name, 1.0, manual_step=True):
+                        print("Manual step-through started...")
+                        # Wait for playback to complete
+                        while self.path_recorder.is_playing:
+                            time.sleep(0.5)
+                        print("Manual step-through completed.")
+                    else:
+                        print("Failed to start manual step-through.")
+                else:
+                    print("Manual step-through cancelled.")
+            else:
+                print("Invalid path number.")
+        except (ValueError, KeyboardInterrupt):
+            print("Manual step-through cancelled.")
+            if self.path_recorder.is_playing:
+                self.path_recorder.stop_playback()
     
     def list_recorded_paths(self):
         """List all recorded paths (command line mode)"""
