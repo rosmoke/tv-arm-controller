@@ -48,14 +48,14 @@ hardware:
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
-      enable_filtering: true   # Re-enable filtering to catch glitches during movement
+      enable_filtering: false  # Disable filtering during movement testing
     y_axis:
       min_voltage: 0.1
       max_voltage: 3.2
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
-      enable_filtering: true   # Re-enable filtering to catch glitches during movement
+      enable_filtering: false  # Disable filtering during movement testing
   
   # Actual TV mount positions (calibrated)
   positions:
