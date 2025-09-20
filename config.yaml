@@ -36,6 +36,9 @@ hardware:
     movement_timeout: 10  # Maximum time for movement (seconds)
     invert_x_direction: true   # Invert X motor direction if wired backwards
     invert_y_direction: false  # Invert Y motor direction if wired backwards
+    use_closed_loop: true     # Use closed-loop control with position feedback
+    position_tolerance: 2.0   # Position tolerance for closed-loop control (%)
+    max_move_time: 10.0       # Maximum time to reach target position (seconds)
     
   # Position limits and calibration
   calibration:

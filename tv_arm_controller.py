@@ -97,13 +97,22 @@ class DCMotorController:
         if self.pwm:
             self.pwm.ChangeDutyCycle(speed)
     
-    def move_to_position(self, target_percent: float, speed: float = 50.0):
-        """Move motor towards target position"""
+    def move_to_position(self, target_percent: float, speed: float = 50.0, 
+                         position_callback=None, tolerance: float = 2.0, 
+                         max_wait_time: float = 10.0):
+        """Move motor towards target position with closed-loop control"""
         target_percent = max(self.min_position, min(self.max_position, target_percent))
         self.target_position = target_percent
         
-        # For now, just set direction based on target vs current
-        # In a real system, you'd use position feedback to control movement
+        # If no position callback provided, use open-loop control (legacy behavior)
+        if position_callback is None:
+            return self._move_open_loop(target_percent, speed)
+        
+        # Closed-loop control with position verification
+        return self._move_closed_loop(target_percent, speed, position_callback, tolerance, max_wait_time)
+    
+    def _move_open_loop(self, target_percent: float, speed: float):
+        """Legacy open-loop movement (no position feedback)"""
         if target_percent > self.current_position:
             if self.invert_direction:
                 self.set_direction_reverse()
@@ -126,9 +135,79 @@ class DCMotorController:
             self.stop_motor()
             logging.debug(f"DC Motor already at target position {target_percent:.1f}%")
         
-        # Update current position (in real system, this would come from position feedback)
+        # Update current position (assumption - no feedback)
         self.current_position = target_percent
         return True
+    
+    def _move_closed_loop(self, target_percent: float, speed: float, 
+                         position_callback, tolerance: float, max_wait_time: float):
+        """Closed-loop movement with position verification"""
+        import time
+        
+        start_time = time.time()
+        consecutive_checks = 0
+        required_checks = 2
+        
+        logging.info(f"DC Motor closed-loop move to {target_percent:.1f}% (tolerance: {tolerance:.1f}%)")
+        
+        while time.time() - start_time < max_wait_time:
+            # Get current actual position from potentiometer
+            actual_position = position_callback()
+            position_error = abs(actual_position - target_percent)
+            
+            logging.debug(f"Position check: target={target_percent:.1f}%, actual={actual_position:.1f}%, error={position_error:.1f}%")
+            
+            # Check if we're within tolerance
+            if position_error <= tolerance:
+                consecutive_checks += 1
+                logging.debug(f"Position OK ({consecutive_checks}/{required_checks} checks)")
+                
+                if consecutive_checks >= required_checks:
+                    # Success! We've reached the target position
+                    self.stop_motor()
+                    self.current_position = actual_position
+                    self.moving = False
+                    logging.info(f"DC Motor reached target {target_percent:.1f}% (actual: {actual_position:.1f}%)")
+                    return True
+                
+                # Wait a bit before next check
+                time.sleep(0.1)
+                continue
+            else:
+                # Reset consecutive checks if we're not in tolerance
+                consecutive_checks = 0
+                
+                # Determine which direction to move
+                if actual_position < target_percent:
+                    # Need to increase position
+                    if self.invert_direction:
+                        self.set_direction_reverse()
+                        logging.debug(f"Moving reverse (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                    else:
+                        self.set_direction_forward()
+                        logging.debug(f"Moving forward - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                else:
+                    # Need to decrease position
+                    if self.invert_direction:
+                        self.set_direction_forward()
+                        logging.debug(f"Moving forward (inverted) - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                    else:
+                        self.set_direction_reverse()
+                        logging.debug(f"Moving reverse - current: {actual_position:.1f}%, target: {target_percent:.1f}%")
+                
+                self.set_speed(speed)
+                self.moving = True
+                
+                # Wait before next position check
+                time.sleep(0.2)
+        
+        # Timeout reached
+        actual_position = position_callback()
+        self.stop_motor()
+        self.current_position = actual_position
+        self.moving = False
+        logging.warning(f"DC Motor timeout moving to {target_percent:.1f}% (reached: {actual_position:.1f}%)")
+        return False
     
     def set_position_percent(self, percent: float) -> bool:
         """Set motor position as percentage (0-100%)"""
@@ -461,20 +540,58 @@ class TVArmController:
         """Set callback function for position updates"""
         self.position_callback = callback
     
-    def set_x_position(self, percent: float) -> bool:
+    def set_x_position(self, percent: float, use_closed_loop: bool = None) -> bool:
         """Set X-axis position (0-100%)"""
         percent = max(0.0, min(100.0, percent))
         self.target_x_position = percent
-        success = self.x_motor.set_position_percent(percent)
-        logging.info(f"Set X position to {percent:.1f}%")
+        
+        # Use config setting if not specified
+        if use_closed_loop is None:
+            use_closed_loop = self.config['hardware']['dc_motor'].get('use_closed_loop', False)
+        
+        if use_closed_loop:
+            # Use closed-loop control with position feedback
+            tolerance = self.config['hardware']['dc_motor'].get('position_tolerance', 2.0)
+            max_time = self.config['hardware']['dc_motor'].get('max_move_time', 10.0)
+            
+            success = self.x_motor.move_to_position(
+                percent, 
+                position_callback=lambda: self.x_sensor.read_position_percent(),
+                tolerance=tolerance,
+                max_wait_time=max_time
+            )
+        else:
+            # Use legacy open-loop control
+            success = self.x_motor.set_position_percent(percent)
+        
+        logging.info(f"Set X position to {percent:.1f}% ({'closed-loop' if use_closed_loop else 'open-loop'})")
         return success
     
-    def set_y_position(self, percent: float) -> bool:
+    def set_y_position(self, percent: float, use_closed_loop: bool = None) -> bool:
         """Set Y-axis position (0-100%)"""
         percent = max(0.0, min(100.0, percent))
         self.target_y_position = percent
-        success = self.y_motor.set_position_percent(percent)
-        logging.info(f"Set Y position to {percent:.1f}%")
+        
+        # Use config setting if not specified
+        if use_closed_loop is None:
+            use_closed_loop = self.config['hardware']['dc_motor'].get('use_closed_loop', False)
+        
+        if use_closed_loop:
+            # Use closed-loop control with position feedback
+            tolerance = self.config['hardware']['dc_motor'].get('position_tolerance', 2.0)
+            max_time = self.config['hardware']['dc_motor'].get('max_move_time', 10.0)
+            
+            success = self.y_motor.move_to_position(
+                percent,
+                position_callback=lambda: self.y_sensor.read_position_percent(), 
+                tolerance=tolerance,
+                max_wait_time=max_time
+            )
+        else:
+            # Use legacy open-loop control
+            success = self.y_motor.set_position_percent(percent)
+        
+        logging.info(f"Set Y position to {percent:.1f}% ({'closed-loop' if use_closed_loop else 'open-loop'})")
         return success
     
     def set_position(self, x_percent: float, y_percent: float) -> bool:
