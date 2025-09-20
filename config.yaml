@@ -32,7 +32,7 @@ hardware:
     frequency: 1000   # PWM frequency for speed control (Hz)
     min_position: 0   # Minimum position (%)
     max_position: 100 # Maximum position (%)
-    default_speed: 50 # Default motor speed (%)
+    default_speed: 80 # Default motor speed (%) - increased for better movement
     movement_timeout: 10  # Maximum time for movement (seconds)
     invert_x_direction: true   # X motor direction needs to be inverted
     invert_y_direction: false  # Invert Y motor direction if wired backwards

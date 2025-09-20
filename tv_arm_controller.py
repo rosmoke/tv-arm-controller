@@ -67,12 +67,14 @@ class DCMotorController:
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.HIGH)
             GPIO.output(self.ain2_pin, GPIO.LOW)
+        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set FORWARD (AIN1=HIGH, AIN2=LOW)")
     
     def set_direction_reverse(self):
         """Set motor direction to reverse"""
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.LOW)
             GPIO.output(self.ain2_pin, GPIO.HIGH)
+        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set REVERSE (AIN1=LOW, AIN2=HIGH)")
     
     def stop_motor(self):
         """Stop motor (coast)"""
@@ -96,6 +98,7 @@ class DCMotorController:
         speed = max(0.0, min(100.0, abs(speed)))
         if self.pwm:
             self.pwm.ChangeDutyCycle(speed)
+        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set speed {speed:.1f}%")
     
     def move_to_position(self, target_percent: float, speed: float = 50.0, 
                          position_callback=None, tolerance: float = 2.0, 
