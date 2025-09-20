@@ -232,6 +232,10 @@ class PositionSensor:
             self.analog_in = AnalogIn(ads, getattr(ADS, f'P{channel}'))
         else:
             self.analog_in = None
+        
+        # Log filtering status
+        filter_status = "enabled" if self.enable_filtering else "disabled"
+        logging.info(f"Position sensor channel {self.channel}: filtering {filter_status}")
     
     def read_voltage(self) -> float:
         """Read raw voltage from potentiometer with retry logic"""
@@ -328,8 +332,8 @@ class PositionSensor:
         percent = ((voltage - self.min_voltage) / voltage_range) * 100.0
         position = max(0.0, min(100.0, percent))
         
-        # Additional position-level filtering
-        if self.last_valid_position is not None:
+        # Additional position-level filtering (only if filtering is enabled)
+        if self.enable_filtering and self.last_valid_position is not None:
             position_diff = abs(position - self.last_valid_position)
             if position_diff > self.max_drift_percent:
                 logging.warning(f"Large position change detected on channel {self.channel}: {position_diff:.1f}% (using last valid)")
