@@ -114,29 +114,33 @@ class DCMotorController:
         # Closed-loop control with position verification
         return self._move_closed_loop(target_percent, speed, position_callback, tolerance, max_wait_time)
     
-    def _move_open_loop(self, target_percent: float, speed: float):
+    def _move_open_loop(self, target_percent: float, speed: float = None):
         """Legacy open-loop movement (no position feedback)"""
+        # Use default speed from config if not specified
+        if speed is None:
+            speed = 80.0  # Higher default speed for better movement
+        
         if target_percent > self.current_position:
             if self.invert_direction:
                 self.set_direction_reverse()
-                logging.debug(f"DC Motor moving reverse (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
+                logging.info(f"DC Motor moving reverse (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
             else:
                 self.set_direction_forward()
-                logging.debug(f"DC Motor moving forward to {target_percent:.1f}% at {speed:.1f}% speed")
+                logging.info(f"DC Motor moving forward to {target_percent:.1f}% at {speed:.1f}% speed")
             self.set_speed(speed)
             self.moving = True
         elif target_percent < self.current_position:
             if self.invert_direction:
                 self.set_direction_forward()
-                logging.debug(f"DC Motor moving forward (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
+                logging.info(f"DC Motor moving forward (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
             else:
                 self.set_direction_reverse()
-                logging.debug(f"DC Motor moving reverse to {target_percent:.1f}% at {speed:.1f}% speed")
+                logging.info(f"DC Motor moving reverse to {target_percent:.1f}% at {speed:.1f}% speed")
             self.set_speed(speed)
             self.moving = True
         else:
             self.stop_motor()
-            logging.debug(f"DC Motor already at target position {target_percent:.1f}%")
+            logging.info(f"DC Motor already at target position {target_percent:.1f}%")
         
         # Update current position (assumption - no feedback)
         self.current_position = target_percent
