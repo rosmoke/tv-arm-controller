@@ -602,9 +602,19 @@ class TVArmController:
     
     def get_current_position(self) -> Tuple[float, float]:
         """Get current position from potentiometers"""
-        x_pos = self.x_sensor.read_position_percent()
-        y_pos = self.y_sensor.read_position_percent()
-        return x_pos, y_pos
+        try:
+            logging.info("Reading X sensor...")
+            x_pos = self.x_sensor.read_position_percent()
+            logging.info(f"X sensor read: {x_pos:.1f}%")
+            
+            logging.info("Reading Y sensor...")
+            y_pos = self.y_sensor.read_position_percent()
+            logging.info(f"Y sensor read: {y_pos:.1f}%")
+            
+            return x_pos, y_pos
+        except Exception as e:
+            logging.error(f"Error reading current position: {e}")
+            return 50.0, 50.0  # Safe default
     
     def get_target_position(self) -> Tuple[float, float]:
         """Get target position"""
