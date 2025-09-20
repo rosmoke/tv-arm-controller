@@ -60,13 +60,12 @@ class PathCleaner:
     
     def make_unidirectional(self, points: List[Dict]) -> List[Dict]:
         """
-        Remove outlier datapoints that have large jumps from the previous point
-        Simple point-to-point comparison to remove sensor glitches
+        Make path truly unidirectional - both X and Y axes must progress monotonically
         """
         if len(points) < 2:
             return points
         
-        # Analyze overall movement for info
+        # Analyze overall movement direction
         start_point = points[0]
         end_point = points[-1]
         
@@ -75,27 +74,72 @@ class PathCleaner:
         
         print(f"   Movement analysis: X={x_movement:.1f}%, Y={y_movement:.1f}%")
         
+        # Determine required direction for each axis
+        x_should_increase = x_movement > 0
+        y_should_increase = y_movement > 0
+        
+        x_dir_name = "increasing" if x_should_increase else "decreasing"
+        y_dir_name = "increasing" if y_should_increase else "decreasing"
+        print(f"   Required directions: X {x_dir_name}, Y {y_dir_name}")
+        
         # Start with first point
         cleaned_points = [points[0]]
         
-        # Threshold for detecting large jumps between consecutive points
-        jump_threshold = 20.0  # If position changes by more than 20% from previous point, it's likely a glitch
-        
         for i in range(1, len(points)):
             current_point = points[i]
-            previous_point = cleaned_points[-1]  # Last valid point we kept
+            last_point = cleaned_points[-1]
             
-            # Calculate change from previous point
-            x_change = abs(current_point['x_position'] - previous_point['x_position'])
-            y_change = abs(current_point['y_position'] - previous_point['y_position'])
+            current_x = current_point['x_position']
+            current_y = current_point['y_position']
+            last_x = last_point['x_position']
+            last_y = last_point['y_position']
             
-            # If either axis has too large a jump, it's likely a sensor glitch
-            if x_change > jump_threshold or y_change > jump_threshold:
-                print(f"   Outlier detected at point {i}: X change {x_change:.1f}%, Y change {y_change:.1f}%")
-                continue  # Skip this outlier point
+            # Check if this point moves in the correct direction for BOTH axes
+            x_valid = True
+            y_valid = True
             
-            # Point passed validation, add it
-            cleaned_points.append(current_point)
+            if x_should_increase:
+                x_valid = current_x >= last_x  # X must increase or stay same
+            else:
+                x_valid = current_x <= last_x  # X must decrease or stay same
+                
+            if y_should_increase:
+                y_valid = current_y >= last_y  # Y must increase or stay same
+            else:
+                y_valid = current_y <= last_y  # Y must decrease or stay same
+            
+            # Debug output for first few points
+            if i <= 20:
+                x_change = current_x - last_x
+                y_change = current_y - last_y
+                direction_x = "→" if x_change > 0 else "←" if x_change < 0 else "="
+                direction_y = "↑" if y_change > 0 else "↓" if y_change < 0 else "="
+                status = "KEEP" if (x_valid and y_valid) else "SKIP"
+                print(f"   Point {i}: X={current_x:.1f}% ({direction_x}{abs(x_change):.1f}%), Y={current_y:.1f}% ({direction_y}{abs(y_change):.1f}%) - {status}")
+            
+            # Correct invalid movements instead of deleting points
+            corrected_point = current_point.copy()
+            corrected = False
+            
+            if not x_valid:
+                # Use last valid X value
+                corrected_point['x_position'] = last_x
+                corrected = True
+                if i <= 20:
+                    print(f"   >>> CORRECTED X: {current_x:.1f}% → {last_x:.1f}%")
+            
+            if not y_valid:
+                # Use last valid Y value  
+                corrected_point['y_position'] = last_y
+                corrected = True
+                if i <= 20:
+                    print(f"   >>> CORRECTED Y: {current_y:.1f}% → {last_y:.1f}%")
+            
+            # Always add the point (either original or corrected)
+            cleaned_points.append(corrected_point)
+            
+            if corrected and i <= 20:
+                print(f"   >>> Point {i} corrected and kept")
         
         # Recalculate duration_from_start for cleaned points
         if cleaned_points:
@@ -103,8 +147,8 @@ class PathCleaner:
             for point in cleaned_points:
                 point['duration_from_start'] = point['timestamp'] - start_time
         
-        reduction = len(points) - len(cleaned_points)
-        print(f"   Outlier removal: {len(points)} → {len(cleaned_points)} points (removed {reduction} outliers)")
+        corrections = len(points) - len([p for p in cleaned_points if p in points])
+        print(f"   Unidirectional filtering: {len(points)} → {len(cleaned_points)} points (corrected {corrections} direction violations)")
         
         return cleaned_points
     

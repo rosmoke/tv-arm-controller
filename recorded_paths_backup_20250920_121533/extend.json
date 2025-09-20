@@ -11,8 +11,38 @@
       "duration_from_start": 0.0096893310546875
     },
     {
+      "timestamp": 1758361839.5449405,
+      "x_position": 98.59274193548387,
+      "y_position": 23.080645161290324,
+      "duration_from_start": 0.5500710010528564
+    },
+    {
+      "timestamp": 1758361841.59502,
+      "x_position": 99.6532258064516,
+      "y_position": 23.08467741935484,
+      "duration_from_start": 2.6001505851745605
+    },
+    {
+      "timestamp": 1758361841.7014592,
+      "x_position": 98.38306451612904,
+      "y_position": 23.024193548387096,
+      "duration_from_start": 2.706589698791504
+    },
+    {
+      "timestamp": 1758361843.722129,
+      "x_position": 99.93548387096773,
+      "y_position": 23.06451612903226,
+      "duration_from_start": 4.727259635925293
+    },
+    {
+      "timestamp": 1758361844.0411959,
+      "x_position": 98.71370967741935,
+      "y_position": 23.028225806451612,
+      "duration_from_start": 5.046326398849487
+    },
+    {
       "timestamp": 1758361844.2536826,
-      "x_position": 99.7,
+      "x_position": 100.0,
       "y_position": 23.108870967741936,
       "duration_from_start": 5.258813142776489
     },
