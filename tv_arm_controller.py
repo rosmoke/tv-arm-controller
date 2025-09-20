@@ -9,7 +9,7 @@ import threading
 import logging
 import signal
 import sys
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any
 
 try:
     import RPi.GPIO as GPIO
@@ -211,14 +211,14 @@ class ServoController:
 class PositionSensor:
     """Reads position from potentiometer via ADS1115"""
     
-    def __init__(self, ads: ADS.ADS1115, channel: int, min_voltage: float = 0.1, 
+    def __init__(self, ads: Any, channel: int, min_voltage: float = 0.1, 
                  max_voltage: float = 3.2):
         self.ads = ads
         self.channel = channel
         self.min_voltage = min_voltage
         self.max_voltage = max_voltage
         
-        if ADS and AnalogIn:
+        if ADS and AnalogIn and ads is not None:
             self.analog_in = AnalogIn(ads, getattr(ADS, f'P{channel}'))
         else:
             self.analog_in = None
