@@ -465,13 +465,13 @@ class PathRecorder:
                             self.controller.y_motor.set_speed(0)
                             self.y_stopped = True
                         else:
-                            # Moderate speeds for Y motor to prevent overshoot
+                            # Balanced speeds for Y motor - fast enough to reach target, slow enough to control
                             if y_error > 12.0:
-                                speed = 30.0  # Slow speed even for large Y movements
+                                speed = 45.0  # Moderate speed for large Y movements
                             elif y_error > 6.0:
-                                speed = 20.0  # Slower speed for medium Y movements
+                                speed = 35.0  # Medium speed for medium Y movements
                             else:
-                                speed = 15.0  # Very slow for fine Y adjustments
+                                speed = 25.0  # Careful speed for fine Y adjustments
                             
                             logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
                             self.controller.set_y_position(target_y, use_closed_loop=False)
