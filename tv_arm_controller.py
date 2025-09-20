@@ -309,8 +309,6 @@ class PositionSensor:
         min_allowed = self.min_voltage * 0.5
         max_allowed = self.max_voltage * 1.5
         
-        logging.info(f"Channel {self.channel}: Checking voltage {voltage:.3f}V against range [{min_allowed:.3f}V - {max_allowed:.3f}V]")
-        
         if voltage < min_allowed or voltage > max_allowed:
             logging.warning(f"Channel {self.channel}: Voltage {voltage:.3f}V outside range [{min_allowed:.3f}V - {max_allowed:.3f}V]")
             return False
@@ -321,13 +319,9 @@ class PositionSensor:
             voltage_range = self.max_voltage - self.min_voltage
             drift_percent = (voltage_diff / voltage_range) * 100
             
-            logging.info(f"Channel {self.channel}: Voltage drift check: {drift_percent:.1f}% (threshold: {self.max_drift_percent:.1f}%)")
-            
             if drift_percent > self.max_drift_percent:
                 logging.warning(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
                 return False
-        
-        logging.info(f"Channel {self.channel}: Voltage {voltage:.3f}V is VALID")
         return True
     
     def read_position_percent(self) -> float:
