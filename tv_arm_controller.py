@@ -254,11 +254,11 @@ class PositionSensor:
                     voltage = max(self.min_voltage, min(self.max_voltage, voltage))
             return voltage
         
-        # If filtering is disabled, just return raw reading
+        # If filtering is disabled, just return raw reading with logging
         if not self.enable_filtering:
             try:
                 voltage = self.analog_in.voltage
-                logging.debug(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
+                logging.info(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
                 return voltage
             except Exception as e:
                 logging.error(f"Error reading voltage from channel {self.channel}: {e}")

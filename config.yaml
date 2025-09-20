@@ -42,15 +42,15 @@ hardware:
       max_voltage: 3.3    # Maximum potentiometer voltage (increased to accommodate readings)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 25.0  # Maximum allowed position drift (%)
-      enable_filtering: false  # Temporarily disable filtering for debugging
+      max_drift_percent: 15.0  # Maximum allowed position drift (%) - reduced for better filtering
+      enable_filtering: true   # Re-enable filtering to catch erratic readings
     y_axis:
       min_voltage: 0.1
       max_voltage: 3.2
       min_position: 0
       max_position: 100
-      max_drift_percent: 25.0  # Maximum allowed position drift (%)
-      enable_filtering: false  # Temporarily disable filtering for debugging
+      max_drift_percent: 15.0  # Maximum allowed position drift (%)
+      enable_filtering: true   # Re-enable filtering to catch erratic readings
   
   # Actual TV mount positions (calibrated)
   positions:
