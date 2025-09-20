@@ -308,7 +308,7 @@ class PathRecorder:
                             self.controller.y_motor.stop_motor()
                         return True
                         
-                    time.sleep(0.5)  # Wait before next check
+                    time.sleep(1.0)  # Wait longer before next check
                 else:
                     consecutive_good_readings = 0
                     
@@ -319,7 +319,7 @@ class PathRecorder:
                     else:
                         self.controller.set_y_position(target, use_closed_loop=False)
                     
-                    time.sleep(1.0)  # Wait longer for movement
+                    time.sleep(3.0)  # Wait much longer for motor movement
                     
             except Exception as e:
                 logging.error(f"{axis}: Error during position verification: {e}")
