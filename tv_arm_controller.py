@@ -142,8 +142,9 @@ class DCMotorController:
             self.stop_motor()
             logging.info(f"DC Motor already at target position {target_percent:.1f}%")
         
-        # Update current position (assumption - no feedback)
-        self.current_position = target_percent
+        # Don't update current position in open-loop mode during closed-loop control
+        # This prevents the "already at target" false positive
+        logging.debug(f"Open-loop command sent, not updating internal position tracking")
         return True
     
     def _move_closed_loop(self, target_percent: float, speed: float, 
