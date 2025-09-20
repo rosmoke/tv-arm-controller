@@ -37,7 +37,7 @@ hardware:
     invert_x_direction: true   # X motor direction inverted - FORWARD extends, REVERSE retracts
     invert_y_direction: true   # Y motor direction inverted - FORWARD decreases, REVERSE increases
     use_closed_loop: true     # Use closed-loop control with position feedback
-    position_tolerance: 2.0   # Position tolerance for closed-loop control (%)
+    position_tolerance: 1.0   # Position tolerance for closed-loop control (%) - reduced for precision
     max_move_time: 10.0       # Maximum time to reach target position (seconds)
     
   # Position limits and calibration

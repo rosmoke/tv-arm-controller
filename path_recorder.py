@@ -219,7 +219,7 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            tolerance = 3.0  # 3% tolerance as requested
+            tolerance = 1.0  # 1% tolerance for more precise positioning
             max_wait_per_point = 15.0  # Maximum time to wait for each point
             
             for i, point in enumerate(self.current_playback_path):
