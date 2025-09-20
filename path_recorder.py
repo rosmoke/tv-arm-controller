@@ -220,7 +220,7 @@ class PathRecorder:
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
             tolerance = 2.0  # 2% tolerance - motors need more realistic tolerance to confirm arrival
-            max_wait_per_point = 15.0  # Maximum time to wait for each point
+            max_wait_per_point = 25.0  # Increased timeout for Y motor to reach targets
             
             for i, point in enumerate(self.current_playback_path):
                 if not self.is_playing:
@@ -444,13 +444,13 @@ class PathRecorder:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
                     
                     if y_error > tolerance and not y_at_target:
-                        # Higher speeds for Y motor (seems to need more power)
-                        if y_error > 10.0:
-                            speed = 90.0  # Very high speed for large movements
-                        elif y_error > 5.0:
-                            speed = 70.0  # High speed for medium movements
+                        # Much higher speeds for Y motor (needs more power than X)
+                        if y_error > 8.0:
+                            speed = 95.0  # Maximum speed for large Y movements
+                        elif y_error > 4.0:
+                            speed = 80.0  # High speed for medium Y movements
                         else:
-                            speed = 50.0  # Medium speed for fine adjustments (was 30%)
+                            speed = 60.0  # Higher speed even for fine Y adjustments
                         
                         logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
                         self.controller.set_y_position(target_y, use_closed_loop=False)
