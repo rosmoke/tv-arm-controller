@@ -373,6 +373,13 @@ class PathRecorder:
         self.controller.set_x_position(target_x, use_closed_loop=False)
         self.controller.set_y_position(target_y, use_closed_loop=False)
         
+        # Initialize position tracking for overshoot detection
+        self.x_last_position = None
+        self.y_last_position = None
+        x_command_count = 0
+        y_command_count = 0
+        max_commands_per_axis = 8  # Emergency stop after 8 commands per axis
+        
         while time.time() - start_time < max_wait:
             if not self.is_playing:
                 return False
@@ -429,32 +436,46 @@ class PathRecorder:
                     corrections_sent = False
                     
                     if x_error > tolerance and not x_at_target:
-                        # Simple speed control based on error size
-                        if x_error > 10.0:
-                            speed = 70.0  # High speed for large movements
-                        elif x_error > 5.0:
-                            speed = 50.0  # Medium speed for medium movements
+                        x_command_count += 1
+                        if x_command_count > max_commands_per_axis:
+                            logging.warning(f"🚨 X EMERGENCY STOP - too many commands ({x_command_count})")
+                            self.controller.x_motor.stop_motor()
+                            self.controller.x_motor.set_speed(0)
+                            self.x_stopped = True
                         else:
-                            speed = 30.0  # Slow speed for fine adjustments
-                        
-                        logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%)")
-                        self.controller.set_x_position(target_x, use_closed_loop=False)
-                        corrections_sent = True
+                            # Much slower speeds to prevent overshoot
+                            if x_error > 15.0:
+                                speed = 25.0  # Very slow even for large movements
+                            elif x_error > 8.0:
+                                speed = 15.0  # Slow speed for medium movements
+                            else:
+                                speed = 10.0  # Very slow for fine adjustments
+                            
+                            logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
+                            self.controller.set_x_position(target_x, use_closed_loop=False)
+                            corrections_sent = True
                     elif x_at_target:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
                     
                     if y_error > tolerance and not y_at_target:
-                        # Much higher speeds for Y motor (needs more power than X)
-                        if y_error > 8.0:
-                            speed = 95.0  # Maximum speed for large Y movements
-                        elif y_error > 4.0:
-                            speed = 80.0  # High speed for medium Y movements
+                        y_command_count += 1
+                        if y_command_count > max_commands_per_axis:
+                            logging.warning(f"🚨 Y EMERGENCY STOP - too many commands ({y_command_count})")
+                            self.controller.y_motor.stop_motor()
+                            self.controller.y_motor.set_speed(0)
+                            self.y_stopped = True
                         else:
-                            speed = 60.0  # Higher speed even for fine Y adjustments
-                        
-                        logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
-                        self.controller.set_y_position(target_y, use_closed_loop=False)
-                        corrections_sent = True
+                            # Moderate speeds for Y motor to prevent overshoot
+                            if y_error > 12.0:
+                                speed = 30.0  # Slow speed even for large Y movements
+                            elif y_error > 6.0:
+                                speed = 20.0  # Slower speed for medium Y movements
+                            else:
+                                speed = 15.0  # Very slow for fine Y adjustments
+                            
+                            logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
+                            self.controller.set_y_position(target_y, use_closed_loop=False)
+                            corrections_sent = True
                     elif y_at_target:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {tolerance}% of {target_y:.1f}%)")
                     
