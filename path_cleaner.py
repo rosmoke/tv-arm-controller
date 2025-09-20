@@ -60,13 +60,13 @@ class PathCleaner:
     
     def make_unidirectional(self, points: List[Dict]) -> List[Dict]:
         """
-        Remove outlier datapoints that don't follow linear progression
-        Keeps only points that maintain smooth movement from previous point
+        Remove outlier datapoints that have large jumps from the previous point
+        Simple point-to-point comparison to remove sensor glitches
         """
-        if len(points) < 3:
+        if len(points) < 2:
             return points
         
-        # Analyze overall movement
+        # Analyze overall movement for info
         start_point = points[0]
         end_point = points[-1]
         
@@ -78,62 +78,24 @@ class PathCleaner:
         # Start with first point
         cleaned_points = [points[0]]
         
-        # Threshold for detecting outliers (percentage change that's too large)
-        outlier_threshold = 15.0  # If movement changes by more than 15% from expected, it's likely an outlier
+        # Threshold for detecting large jumps between consecutive points
+        jump_threshold = 20.0  # If position changes by more than 20% from previous point, it's likely a glitch
         
         for i in range(1, len(points)):
             current_point = points[i]
-            last_valid_point = cleaned_points[-1]
+            previous_point = cleaned_points[-1]  # Last valid point we kept
             
-            # Calculate expected linear progression
-            if len(cleaned_points) >= 2:
-                # Use trend from last two valid points to predict expected values
-                prev_point = cleaned_points[-2]
-                
-                # Calculate velocity (change per unit time)
-                time_diff = last_valid_point['timestamp'] - prev_point['timestamp']
-                if time_diff > 0:
-                    x_velocity = (last_valid_point['x_position'] - prev_point['x_position']) / time_diff
-                    y_velocity = (last_valid_point['y_position'] - prev_point['y_position']) / time_diff
-                    
-                    # Predict where we should be at current timestamp
-                    current_time_diff = current_point['timestamp'] - last_valid_point['timestamp']
-                    expected_x = last_valid_point['x_position'] + (x_velocity * current_time_diff)
-                    expected_y = last_valid_point['y_position'] + (y_velocity * current_time_diff)
-                    
-                    # Check if current point is close to expected position
-                    x_deviation = abs(current_point['x_position'] - expected_x)
-                    y_deviation = abs(current_point['y_position'] - expected_y)
-                    
-                    # If deviation is too large, it's likely an outlier
-                    if x_deviation > outlier_threshold or y_deviation > outlier_threshold:
-                        print(f"   Outlier detected at point {i}: X deviation {x_deviation:.1f}%, Y deviation {y_deviation:.1f}%")
-                        continue  # Skip this outlier point
+            # Calculate change from previous point
+            x_change = abs(current_point['x_position'] - previous_point['x_position'])
+            y_change = abs(current_point['y_position'] - previous_point['y_position'])
             
-            else:
-                # For the second point, just check if movement is reasonable
-                x_change = abs(current_point['x_position'] - last_valid_point['x_position'])
-                y_change = abs(current_point['y_position'] - last_valid_point['y_position'])
-                
-                # If change is extremely large, it's likely an outlier
-                if x_change > 30.0 or y_change > 30.0:
-                    print(f"   Large jump detected at point {i}: X change {x_change:.1f}%, Y change {y_change:.1f}%")
-                    continue  # Skip this outlier point
+            # If either axis has too large a jump, it's likely a sensor glitch
+            if x_change > jump_threshold or y_change > jump_threshold:
+                print(f"   Outlier detected at point {i}: X change {x_change:.1f}%, Y change {y_change:.1f}%")
+                continue  # Skip this outlier point
             
             # Point passed validation, add it
             cleaned_points.append(current_point)
-        
-        # Ensure we have the final destination if it's reasonable
-        if len(points) > 1 and points[-1] not in cleaned_points:
-            final_point = points[-1]
-            last_valid = cleaned_points[-1]
-            
-            # Check if final point is a reasonable end position
-            x_change = abs(final_point['x_position'] - last_valid['x_position'])
-            y_change = abs(final_point['y_position'] - last_valid['y_position'])
-            
-            if x_change <= 30.0 and y_change <= 30.0:  # Reasonable final movement
-                cleaned_points.append(final_point)
         
         # Recalculate duration_from_start for cleaned points
         if cleaned_points:
