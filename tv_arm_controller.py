@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 TV Arm Controller - Main hardware control module
-Handles servo motors and potentiometer position feedback
+Handles DC motors with TB6612FNG driver and potentiometer position feedback
 """
 
 import time
@@ -135,9 +135,13 @@ class DCMotorController:
             self.pwm.stop()
 
 
-# Keep ServoController for backward compatibility
+# ServoController kept for backward compatibility (deprecated)
 class ServoController:
-    """Controls servo motor using PWM (deprecated - use DCMotorController for DC motors)"""
+    """Controls servo motor using PWM (DEPRECATED - use DCMotorController for DC motors)
+    
+    This class is kept for backward compatibility only. New implementations
+    should use DCMotorController for DC motor control with TB6612FNG driver.
+    """
     
     def __init__(self, pin: int, frequency: int = 50, min_pulse: float = 1.0, 
                  max_pulse: float = 2.0, min_angle: int = 0, max_angle: int = 180):
@@ -362,7 +366,7 @@ class TVArmController:
         return self.target_x_position, self.target_y_position
     
     def calibrate_position_sensors(self) -> dict:
-        """Calibrate position sensors - move servos and read voltages"""
+        """Calibrate position sensors - move DC motors and read voltages"""
         logging.info("Starting position sensor calibration...")
         calibration_data = {
             'x_axis': {'min_voltage': None, 'max_voltage': None},
