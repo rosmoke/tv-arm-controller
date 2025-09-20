@@ -390,20 +390,55 @@ class PathRecorder:
                 else:
                     consecutive_good_readings = 0
                     
-                    # Send correction commands for axes that need adjustment
+                    # Send correction commands with progressive speed control
                     corrections_sent = False
+                    
                     if x_error > tolerance:
-                        logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}%")
-                        self.controller.set_x_position(target_x, use_closed_loop=False)
+                        # Use slower speed when close to target
+                        if x_error > 10.0:
+                            speed = 80.0  # Full speed for large movements
+                            wait_time = 2.0
+                        elif x_error > 5.0:
+                            speed = 50.0  # Medium speed for medium movements
+                            wait_time = 1.5
+                        else:
+                            speed = 30.0  # Slow speed for fine adjustments
+                            wait_time = 1.0
+                        
+                        logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%)")
+                        
+                        # Send movement command with appropriate speed
+                        if current_x < target_x:
+                            self.controller.x_motor.set_direction_forward()
+                        else:
+                            self.controller.x_motor.set_direction_reverse()
+                        self.controller.x_motor.set_speed(speed)
                         corrections_sent = True
                     
                     if y_error > tolerance:
-                        logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}%")
-                        self.controller.set_y_position(target_y, use_closed_loop=False)
+                        # Use slower speed when close to target
+                        if y_error > 10.0:
+                            speed = 80.0  # Full speed for large movements
+                            wait_time = 2.0
+                        elif y_error > 5.0:
+                            speed = 50.0  # Medium speed for medium movements
+                            wait_time = 1.5
+                        else:
+                            speed = 30.0  # Slow speed for fine adjustments
+                            wait_time = 1.0
+                        
+                        logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
+                        
+                        # Send movement command with appropriate speed
+                        if current_y < target_y:
+                            self.controller.y_motor.set_direction_forward()
+                        else:
+                            self.controller.y_motor.set_direction_reverse()
+                        self.controller.y_motor.set_speed(speed)
                         corrections_sent = True
                     
                     if corrections_sent:
-                        time.sleep(3.0)  # Wait for movement
+                        time.sleep(wait_time)  # Variable wait time based on movement size
                     else:
                         time.sleep(0.5)  # Short wait if no corrections needed
                     
