@@ -512,20 +512,23 @@ class PathRecorder:
         
         # Check if we've overshot the target (passed it)
         # This requires knowing the previous position to detect direction
-        if not hasattr(self, f'{axis.lower()}_last_position'):
+        last_position_attr = f'{axis.lower()}_last_position'
+        
+        if not hasattr(self, last_position_attr) or getattr(self, last_position_attr) is None:
             # First reading - store current position
-            setattr(self, f'{axis.lower()}_last_position', current)
+            setattr(self, last_position_attr, current)
             return False
         
-        last_position = getattr(self, f'{axis.lower()}_last_position')
+        last_position = getattr(self, last_position_attr)
         
-        # Determine if we've crossed the target
-        if last_position < target <= current or current <= target < last_position:
-            logging.info(f"{axis} CROSSED target: {last_position:.1f}% → {current:.1f}% (target: {target:.1f}%)")
-            return True
+        # Determine if we've crossed the target (only if we have valid last position)
+        if last_position is not None:
+            if (last_position < target <= current) or (current <= target < last_position):
+                logging.info(f"{axis} CROSSED target: {last_position:.1f}% → {current:.1f}% (target: {target:.1f}%)")
+                return True
         
         # Update last position
-        setattr(self, f'{axis.lower()}_last_position', current)
+        setattr(self, last_position_attr, current)
         return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
