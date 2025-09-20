@@ -386,9 +386,9 @@ class PathRecorder:
                 
                 logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%)")
                 
-                # Check each axis independently
-                x_at_target = x_error <= tolerance
-                y_at_target = y_error <= tolerance
+                # Check each axis independently - stop when reached or overshot target
+                x_at_target = self._is_axis_at_target(current_x, target_x, tolerance, 'X')
+                y_at_target = self._is_axis_at_target(current_y, target_y, tolerance, 'Y')
                 
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
@@ -476,6 +476,35 @@ class PathRecorder:
             logging.warning(f"⏰ Timeout - Current: X={current_x:.1f}%, Y={current_y:.1f}%, Target: X={target_x:.1f}%, Y={target_y:.1f}%")
         except Exception as e:
             logging.error(f"Error reading final position: {e}")
+        return False
+    
+    def _is_axis_at_target(self, current: float, target: float, tolerance: float, axis: str) -> bool:
+        """
+        Check if axis has reached or overshot target
+        Returns True if within tolerance OR if we've passed the target
+        """
+        error = abs(current - target)
+        
+        # If within tolerance, we're at target
+        if error <= tolerance:
+            return True
+        
+        # Check if we've overshot the target (passed it)
+        # This requires knowing the previous position to detect direction
+        if not hasattr(self, f'{axis.lower()}_last_position'):
+            # First reading - store current position
+            setattr(self, f'{axis.lower()}_last_position', current)
+            return False
+        
+        last_position = getattr(self, f'{axis.lower()}_last_position')
+        
+        # Determine if we've crossed the target
+        if last_position < target <= current or current <= target < last_position:
+            logging.info(f"{axis} CROSSED target: {last_position:.1f}% → {current:.1f}% (target: {target:.1f}%)")
+            return True
+        
+        # Update last position
+        setattr(self, f'{axis.lower()}_last_position', current)
         return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
