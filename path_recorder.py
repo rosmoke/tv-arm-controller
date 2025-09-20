@@ -444,13 +444,13 @@ class PathRecorder:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
                     
                     if y_error > tolerance and not y_at_target:
-                        # Simple speed control based on error size
+                        # Higher speeds for Y motor (seems to need more power)
                         if y_error > 10.0:
-                            speed = 70.0  # High speed for large movements
+                            speed = 90.0  # Very high speed for large movements
                         elif y_error > 5.0:
-                            speed = 50.0  # Medium speed for medium movements
+                            speed = 70.0  # High speed for medium movements
                         else:
-                            speed = 30.0  # Slow speed for fine adjustments
+                            speed = 50.0  # Medium speed for fine adjustments (was 30%)
                         
                         logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
                         self.controller.set_y_position(target_y, use_closed_loop=False)
