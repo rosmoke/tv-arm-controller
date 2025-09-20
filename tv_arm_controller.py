@@ -31,7 +31,8 @@ class DCMotorController:
     """Controls DC motor using TB6612FNG motor driver"""
     
     def __init__(self, ain1_pin: int, ain2_pin: int, pwm_pin: int, stby_pin: int = None, 
-                 frequency: int = 1000, min_position: float = 0.0, max_position: float = 100.0):
+                 frequency: int = 1000, min_position: float = 0.0, max_position: float = 100.0,
+                 invert_direction: bool = False):
         self.ain1_pin = ain1_pin
         self.ain2_pin = ain2_pin  
         self.pwm_pin = pwm_pin
@@ -39,6 +40,7 @@ class DCMotorController:
         self.frequency = frequency
         self.min_position = min_position
         self.max_position = max_position
+        self.invert_direction = invert_direction
         self.current_position = 50.0  # Start at center
         self.target_position = 50.0
         self.pwm = None
@@ -99,15 +101,23 @@ class DCMotorController:
         # For now, just set direction based on target vs current
         # In a real system, you'd use position feedback to control movement
         if target_percent > self.current_position:
-            self.set_direction_forward()
+            if self.invert_direction:
+                self.set_direction_reverse()
+                logging.debug(f"DC Motor moving reverse (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
+            else:
+                self.set_direction_forward()
+                logging.debug(f"DC Motor moving forward to {target_percent:.1f}% at {speed:.1f}% speed")
             self.set_speed(speed)
             self.moving = True
-            logging.debug(f"DC Motor moving forward to {target_percent:.1f}% at {speed:.1f}% speed")
         elif target_percent < self.current_position:
-            self.set_direction_reverse()
+            if self.invert_direction:
+                self.set_direction_forward()
+                logging.debug(f"DC Motor moving forward (inverted) to {target_percent:.1f}% at {speed:.1f}% speed")
+            else:
+                self.set_direction_reverse()
+                logging.debug(f"DC Motor moving reverse to {target_percent:.1f}% at {speed:.1f}% speed")
             self.set_speed(speed)
             self.moving = True
-            logging.debug(f"DC Motor moving reverse to {target_percent:.1f}% at {speed:.1f}% speed")
         else:
             self.stop_motor()
             logging.debug(f"DC Motor already at target position {target_percent:.1f}%")
@@ -394,7 +404,8 @@ class TVArmController:
             stby_pin=config['hardware'].get('motor_stby_pin'),
             frequency=motor_config['frequency'],
             min_position=motor_config['min_position'],
-            max_position=motor_config['max_position']
+            max_position=motor_config['max_position'],
+            invert_direction=motor_config.get('invert_x_direction', False)
         )
         
         # Y-axis motor (Motor B)
@@ -405,7 +416,8 @@ class TVArmController:
             stby_pin=config['hardware'].get('motor_stby_pin'),  # Shared standby pin
             frequency=motor_config['frequency'],
             min_position=motor_config['min_position'],
-            max_position=motor_config['max_position']
+            max_position=motor_config['max_position'],
+            invert_direction=motor_config.get('invert_y_direction', False)
         )
         
         # Initialize position sensors

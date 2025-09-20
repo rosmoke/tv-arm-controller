@@ -34,6 +34,8 @@ hardware:
     max_position: 100 # Maximum position (%)
     default_speed: 50 # Default motor speed (%)
     movement_timeout: 10  # Maximum time for movement (seconds)
+    invert_x_direction: true   # Invert X motor direction if wired backwards
+    invert_y_direction: false  # Invert Y motor direction if wired backwards
     
   # Position limits and calibration
   calibration:
