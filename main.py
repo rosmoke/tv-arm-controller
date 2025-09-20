@@ -14,6 +14,7 @@ from pathlib import Path
 
 from tv_arm_controller import TVArmController
 from home_assistant_integration import HomeAssistantMQTT
+from path_recorder import PathRecorder
 
 
 class TVArmApplication:
@@ -23,6 +24,7 @@ class TVArmApplication:
         self.config = self._load_config(config_path)
         self.controller = None
         self.ha_integration = None
+        self.path_recorder = None
         self.running = False
         
         # Set up logging
@@ -104,6 +106,46 @@ class TVArmApplication:
             logging.info(f"Setting Y position to {y_position}%")
             self.controller.set_y_position(y_position)
         
+        def handle_start_recording(path_name: str = None):
+            """Handle start recording command"""
+            logging.info(f"Starting path recording: {path_name or 'auto-generated name'}")
+            if self.path_recorder:
+                success = self.path_recorder.start_recording(path_name)
+                if success:
+                    self.ha_integration.publish_message("homeassistant/sensor/tv_arm_recording/state", "recording")
+                return success
+            return False
+        
+        def handle_stop_recording():
+            """Handle stop recording command"""
+            logging.info("Stopping path recording")
+            if self.path_recorder:
+                success = self.path_recorder.stop_recording()
+                if success:
+                    self.ha_integration.publish_message("homeassistant/sensor/tv_arm_recording/state", "stopped")
+                return success
+            return False
+        
+        def handle_play_path(path_name: str, speed: float = 1.0):
+            """Handle play path command"""
+            logging.info(f"Playing path: {path_name} at {speed}x speed")
+            if self.path_recorder:
+                success = self.path_recorder.play_path(path_name, speed)
+                if success:
+                    self.ha_integration.publish_message("homeassistant/sensor/tv_arm_playback/state", "playing")
+                return success
+            return False
+        
+        def handle_stop_playback():
+            """Handle stop playback command"""
+            logging.info("Stopping path playback")
+            if self.path_recorder:
+                success = self.path_recorder.stop_playback()
+                if success:
+                    self.ha_integration.publish_message("homeassistant/sensor/tv_arm_playback/state", "stopped")
+                return success
+            return False
+        
         # Register command handlers
         self.ha_integration.set_command_handler('open', handle_open)
         self.ha_integration.set_command_handler('close', handle_close)
@@ -111,6 +153,12 @@ class TVArmApplication:
         self.ha_integration.set_command_handler('set_position', handle_set_position)
         self.ha_integration.set_command_handler('set_x_position', handle_set_x_position)
         self.ha_integration.set_command_handler('set_y_position', handle_set_y_position)
+        
+        # Path recording command handlers
+        self.ha_integration.set_command_handler('start_recording', handle_start_recording)
+        self.ha_integration.set_command_handler('stop_recording', handle_stop_recording)
+        self.ha_integration.set_command_handler('play_path', handle_play_path)
+        self.ha_integration.set_command_handler('stop_playback', handle_stop_playback)
         
         logging.info("Command handlers configured")
     
@@ -136,6 +184,10 @@ class TVArmApplication:
             # Initialize Home Assistant integration
             logging.info("Initializing Home Assistant integration...")
             self.ha_integration = HomeAssistantMQTT(self.config)
+            
+            # Initialize Path Recorder
+            logging.info("Initializing Path Recorder...")
+            self.path_recorder = PathRecorder(self.controller, self.config)
             
             # Set up command handlers
             self._setup_command_handlers()
@@ -166,6 +218,11 @@ class TVArmApplication:
         
         logging.info("Stopping TV Arm Application...")
         self.running = False
+        
+        # Stop Path Recorder
+        if self.path_recorder:
+            self.path_recorder.cleanup()
+            self.path_recorder = None
         
         # Stop Home Assistant integration
         if self.ha_integration:
@@ -261,6 +318,213 @@ class TVArmApplication:
     def is_running(self) -> bool:
         """Check if application is running"""
         return self.running
+    
+    def run_teaching_mode(self):
+        """Run interactive teaching mode"""
+        if not self.controller:
+            logging.error("Hardware controller not initialized")
+            return
+        
+        # Initialize components
+        was_running = self.running
+        if not was_running:
+            self.controller.start()
+            self.path_recorder = PathRecorder(self.controller, self.config)
+        
+        try:
+            while True:
+                print("\n" + "=" * 40)
+                print("TEACHING MODE MENU")
+                print("=" * 40)
+                print("1. Start recording a new path")
+                print("2. Stop current recording")
+                print("3. List recorded paths")
+                print("4. Play a recorded path")
+                print("5. Delete a recorded path")
+                print("6. Show current position")
+                print("7. Exit teaching mode")
+                print()
+                
+                choice = input("Enter your choice (1-7): ").strip()
+                
+                if choice == '1':
+                    path_name = input("Enter path name (or press Enter for auto-generated): ").strip()
+                    if not path_name:
+                        path_name = None
+                    
+                    print("\nStarting recording...")
+                    print("Manually move the TV arm to create your path.")
+                    print("The system will record the position every 0.1 seconds.")
+                    print("Press Enter when done recording.")
+                    
+                    if self.path_recorder.start_recording(path_name):
+                        input("Recording... Press Enter to stop.")
+                        if self.path_recorder.stop_recording():
+                            print("Path recorded successfully!")
+                        else:
+                            print("Failed to save path.")
+                    else:
+                        print("Failed to start recording.")
+                
+                elif choice == '2':
+                    if self.path_recorder.stop_recording():
+                        print("Recording stopped and saved.")
+                    else:
+                        print("No active recording to stop.")
+                
+                elif choice == '3':
+                    self._list_paths_interactive()
+                
+                elif choice == '4':
+                    self._play_path_interactive()
+                
+                elif choice == '5':
+                    self._delete_path_interactive()
+                
+                elif choice == '6':
+                    x, y = self.controller.get_current_position()
+                    print(f"Current position: X={x:.1f}%, Y={y:.1f}%")
+                
+                elif choice == '7':
+                    print("Exiting teaching mode...")
+                    break
+                
+                else:
+                    print("Invalid choice. Please enter 1-7.")
+                    
+        except KeyboardInterrupt:
+            print("\nTeaching mode interrupted.")
+        except Exception as e:
+            logging.error(f"Error in teaching mode: {e}")
+            print(f"Error in teaching mode: {e}")
+        finally:
+            if self.path_recorder:
+                self.path_recorder.cleanup()
+            if not was_running:
+                self.controller.stop()
+    
+    def _list_paths_interactive(self):
+        """List paths in interactive mode"""
+        paths = self.path_recorder.list_paths()
+        if not paths:
+            print("No recorded paths found.")
+            return
+        
+        print(f"\nFound {len(paths)} recorded paths:")
+        print("-" * 60)
+        for i, path in enumerate(paths, 1):
+            duration = path['duration']
+            points = path['point_count']
+            recorded_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(path['recorded_at']))
+            print(f"{i}. {path['name']} - {duration:.1f}s, {points} points, recorded: {recorded_time}")
+    
+    def _play_path_interactive(self):
+        """Play path in interactive mode"""
+        paths = self.path_recorder.list_paths()
+        if not paths:
+            print("No recorded paths found.")
+            return
+        
+        self._list_paths_interactive()
+        
+        try:
+            choice = int(input("\nEnter path number to play: ")) - 1
+            if 0 <= choice < len(paths):
+                path_name = paths[choice]['name']
+                speed = input("Enter playback speed (default 1.0): ").strip()
+                speed = float(speed) if speed else 1.0
+                
+                print(f"Playing path '{path_name}' at {speed}x speed...")
+                print("Press Ctrl+C to stop playback.")
+                
+                if self.path_recorder.play_path(path_name, speed):
+                    # Wait for playback to complete
+                    while self.path_recorder.is_playing:
+                        time.sleep(0.5)
+                    print("Playback completed.")
+                else:
+                    print("Failed to start playback.")
+            else:
+                print("Invalid path number.")
+        except (ValueError, KeyboardInterrupt):
+            print("Playback cancelled.")
+            if self.path_recorder.is_playing:
+                self.path_recorder.stop_playback()
+    
+    def _delete_path_interactive(self):
+        """Delete path in interactive mode"""
+        paths = self.path_recorder.list_paths()
+        if not paths:
+            print("No recorded paths found.")
+            return
+        
+        self._list_paths_interactive()
+        
+        try:
+            choice = int(input("\nEnter path number to delete: ")) - 1
+            if 0 <= choice < len(paths):
+                path_name = paths[choice]['name']
+                confirm = input(f"Are you sure you want to delete '{path_name}'? (y/N): ").strip().lower()
+                if confirm == 'y':
+                    if self.path_recorder.delete_path(path_name):
+                        print(f"Path '{path_name}' deleted successfully.")
+                    else:
+                        print(f"Failed to delete path '{path_name}'.")
+                else:
+                    print("Deletion cancelled.")
+            else:
+                print("Invalid path number.")
+        except ValueError:
+            print("Invalid input.")
+    
+    def list_recorded_paths(self):
+        """List all recorded paths (command line mode)"""
+        if not self.controller:
+            self.controller = TVArmController(self.config)
+        
+        self.path_recorder = PathRecorder(self.controller, self.config)
+        paths = self.path_recorder.list_paths()
+        
+        if not paths:
+            print("No recorded paths found.")
+            return
+        
+        print(f"Found {len(paths)} recorded paths:")
+        print("-" * 80)
+        print("Name".ljust(20) + "Duration".ljust(12) + "Points".ljust(8) + "Recorded At")
+        print("-" * 80)
+        
+        for path in paths:
+            name = path['name'][:19]
+            duration = f"{path['duration']:.1f}s"
+            points = str(path['point_count'])
+            recorded_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(path['recorded_at']))
+            print(name.ljust(20) + duration.ljust(12) + points.ljust(8) + recorded_time)
+    
+    def play_recorded_path(self, path_name: str):
+        """Play a specific recorded path (command line mode)"""
+        if not self.controller:
+            self.controller = TVArmController(self.config)
+            self.controller.start()
+        
+        self.path_recorder = PathRecorder(self.controller, self.config)
+        
+        print(f"Playing recorded path: {path_name}")
+        print("Press Ctrl+C to stop playback.")
+        
+        try:
+            if self.path_recorder.play_path(path_name):
+                # Wait for playback to complete
+                while self.path_recorder.is_playing:
+                    time.sleep(0.5)
+                print("Playback completed.")
+            else:
+                print(f"Failed to play path '{path_name}'. Check if the path exists.")
+        except KeyboardInterrupt:
+            print("\nPlayback stopped by user.")
+            self.path_recorder.stop_playback()
+        finally:
+            self.controller.stop()
 
 
 def signal_handler(signum, frame):
@@ -280,6 +544,12 @@ def main():
                        help='Run calibration mode and exit')
     parser.add_argument('--test', action='store_true', 
                        help='Run test sequence and exit')
+    parser.add_argument('--teach', action='store_true',
+                       help='Run interactive teaching mode')
+    parser.add_argument('--list-paths', action='store_true',
+                       help='List all recorded paths and exit')
+    parser.add_argument('--play-path', type=str,
+                       help='Play a specific recorded path and exit')
     parser.add_argument('--daemon', action='store_true',
                        help='Run as daemon (no interactive output)')
     
@@ -345,6 +615,28 @@ def main():
             input("Make sure the TV arm can move freely, then press Enter to continue...")
             
             app.run_test_sequence()
+        
+        elif args.teach:
+            # Teaching mode
+            print("=" * 50)
+            print("TV ARM CONTROLLER - TEACHING MODE")
+            print("=" * 50)
+            print()
+            print("In teaching mode, you can:")
+            print("1. Manually move the TV arm to record a path")
+            print("2. Play back recorded paths")
+            print("3. List and manage recorded paths")
+            print()
+            
+            app.run_teaching_mode()
+        
+        elif args.list_paths:
+            # List paths mode
+            app.list_recorded_paths()
+        
+        elif args.play_path:
+            # Play specific path mode
+            app.play_recorded_path(args.play_path)
             
         else:
             # Normal operation mode

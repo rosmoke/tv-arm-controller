@@ -104,3 +104,18 @@ system:
   restore_position_on_startup: true
   default_x_position: 50        # Default X position (%)
   default_y_position: 50        # Default Y position (%)
+
+# Path Recording and Playback Configuration
+path_recording:
+  # Recording settings
+  recording_interval: 0.1       # How often to record position (seconds)
+  position_tolerance: 1.0       # Minimum position change to record (%)
+  paths_directory: "recorded_paths"  # Directory to store recorded paths
+  
+  # Playback settings
+  default_playback_speed: 1.0   # Default playback speed multiplier
+  smooth_playback: true         # Enable smooth interpolation between points
+  
+  # Safety settings
+  max_recording_duration: 300   # Maximum recording time (seconds)
+  max_path_points: 10000        # Maximum points per recorded path
