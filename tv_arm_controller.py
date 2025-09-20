@@ -57,6 +57,10 @@ class DCMotorController:
             self.pwm = GPIO.PWM(self.pwm_pin, self.frequency)
             self.pwm.start(0)
             self.stop_motor()
+        
+        # Log direction inversion status
+        inversion_status = "enabled" if self.invert_direction else "disabled"
+        logging.info(f"DC Motor pins {self.ain1_pin}/{self.ain2_pin}: direction inversion {inversion_status}")
     
     def set_direction_forward(self):
         """Set motor direction to forward"""
