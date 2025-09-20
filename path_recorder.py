@@ -407,12 +407,9 @@ class PathRecorder:
                         
                         logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%)")
                         
-                        # Send movement command with appropriate speed
-                        if current_x < target_x:
-                            self.controller.x_motor.set_direction_forward()
-                        else:
-                            self.controller.x_motor.set_direction_reverse()
-                        self.controller.x_motor.set_speed(speed)
+                        # Use the controller's movement logic that handles inversion
+                        logging.info(f"Sending X movement command...")
+                        self.controller.x_motor.move_to_position(target_x, speed, position_callback=None)
                         corrections_sent = True
                     
                     if y_error > tolerance:
@@ -429,12 +426,9 @@ class PathRecorder:
                         
                         logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%)")
                         
-                        # Send movement command with appropriate speed
-                        if current_y < target_y:
-                            self.controller.y_motor.set_direction_forward()
-                        else:
-                            self.controller.y_motor.set_direction_reverse()
-                        self.controller.y_motor.set_speed(speed)
+                        # Use the controller's movement logic that handles inversion
+                        logging.info(f"Sending Y movement command...")
+                        self.controller.y_motor.move_to_position(target_y, speed, position_callback=None)
                         corrections_sent = True
                     
                     if corrections_sent:
