@@ -392,13 +392,19 @@ class PathRecorder:
                 
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
+                    logging.info(f"🛑 STOPPING X motor - reached target {target_x:.1f}% (current: {current_x:.1f}%)")
                     self.controller.x_motor.stop_motor()
-                    logging.info(f"🎯 X axis reached target {target_x:.1f}% - STOPPED")
+                    # Double-check stop command
+                    self.controller.x_motor.set_speed(0)
+                    logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
+                    logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
                     self.controller.y_motor.stop_motor()
-                    logging.info(f"🎯 Y axis reached target {target_y:.1f}% - STOPPED")
+                    # Double-check stop command
+                    self.controller.y_motor.set_speed(0)
+                    logging.info(f"🎯 Y axis STOPPED at {current_y:.1f}%")
                     self.y_stopped = True
                 
                 # Check if both axes are at target
