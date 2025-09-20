@@ -219,7 +219,7 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            tolerance = 1.0  # 1% tolerance for more precise positioning
+            tolerance = 2.0  # 2% tolerance - motors need more realistic tolerance to confirm arrival
             max_wait_per_point = 15.0  # Maximum time to wait for each point
             
             for i, point in enumerate(self.current_playback_path):
@@ -275,8 +275,13 @@ class PathRecorder:
                     # Small pause between datapoints in automatic mode
                     time.sleep(0.5)
             
+            # Stop both motors at end of path
+            logging.info("Stopping both motors at end of path...")
+            self.controller.x_motor.stop_motor()
+            self.controller.y_motor.stop_motor()
+            
             self.is_playing = False
-            logging.info("🎉 Path playback completed successfully")
+            logging.info("🎉 Path playback completed successfully - motors stopped")
             
             if self.playback_callback:
                 self.playback_callback("completed", "", len(self.current_playback_path))
