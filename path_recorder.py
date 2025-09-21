@@ -505,6 +505,19 @@ class PathRecorder:
                     # Send correction commands only for axes that need adjustment
                     corrections_sent = False
                     
+                    # Dynamic speed calculation based on distance to target
+                    def calculate_approach_speed(error, base_speed, axis_name):
+                        """Calculate speed based on distance to target - slow down when close"""
+                        if error <= 1.0:  # Very close to target
+                            approach_speed = base_speed * 0.3  # 30% speed for final approach
+                            logging.info(f"{axis_name} FINAL APPROACH: {error:.1f}% error → {approach_speed:.0f}% speed (30% of {base_speed}%)")
+                        elif error <= 3.0:  # Getting close to target
+                            approach_speed = base_speed * 0.7  # 70% speed for approach
+                            logging.info(f"{axis_name} APPROACH: {error:.1f}% error → {approach_speed:.0f}% speed (70% of {base_speed}%)")
+                        else:  # Far from target
+                            approach_speed = base_speed  # Full speed
+                        return approach_speed
+                    
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         if iteration_count % 50 == 0:  # Only log every 50 iterations to reduce spam
@@ -543,6 +556,19 @@ class PathRecorder:
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
+                        # Send speed adjustment commands based on distance to target
+                        base_x_speed = 50.0  # Default speed for X motor
+                        new_x_speed = calculate_approach_speed(x_error, base_x_speed, "X")
+                        
+                        # Determine direction for X motor
+                        if target_x > current_x:
+                            self.controller.x_motor.set_direction_forward()
+                        else:
+                            self.controller.x_motor.set_direction_reverse()
+                        
+                        self.controller.x_motor.set_speed(new_x_speed)
+                        corrections_sent = True
+                        
                         # Update last position for next check
                         self.x_last_position = current_x
                     elif x_at_target:
@@ -583,6 +609,19 @@ class PathRecorder:
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
+                        # Send speed adjustment commands based on distance to target
+                        base_y_speed = 50.0  # Default speed for Y motor (will be multiplied by 1.5x in motor controller)
+                        new_y_speed = calculate_approach_speed(y_error, base_y_speed, "Y")
+                        
+                        # Determine direction for Y motor
+                        if target_y > current_y:
+                            self.controller.y_motor.set_direction_forward()
+                        else:
+                            self.controller.y_motor.set_direction_reverse()
+                        
+                        self.controller.y_motor.set_speed(new_y_speed)
+                        corrections_sent = True
+                        
                         # Update last position for next check
                         self.y_last_position = current_y
                     elif y_at_target:
