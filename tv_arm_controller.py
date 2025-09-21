@@ -32,7 +32,7 @@ class DCMotorController:
     
     def __init__(self, ain1_pin: int, ain2_pin: int, pwm_pin: int, stby_pin: int = None, 
                  frequency: int = 1000, min_position: float = 0.0, max_position: float = 100.0,
-                 invert_direction: bool = False):
+                 invert_direction: bool = False, speed_multiplier: float = 1.0):
         self.ain1_pin = ain1_pin
         self.ain2_pin = ain2_pin  
         self.pwm_pin = pwm_pin
@@ -41,6 +41,7 @@ class DCMotorController:
         self.min_position = min_position
         self.max_position = max_position
         self.invert_direction = invert_direction
+        self.speed_multiplier = speed_multiplier
         self.current_position = 50.0  # Start at center
         self.target_position = 50.0
         self.pwm = None
@@ -58,9 +59,10 @@ class DCMotorController:
             self.pwm.start(0)
             self.stop_motor()
         
-        # Log direction inversion status
+        # Log direction inversion and speed multiplier status
         inversion_status = "enabled" if self.invert_direction else "disabled"
-        logging.info(f"DC Motor pins {self.ain1_pin}/{self.ain2_pin}: direction inversion {inversion_status}")
+        multiplier_info = f", speed multiplier {self.speed_multiplier:.1f}x" if self.speed_multiplier != 1.0 else ""
+        logging.info(f"DC Motor pins {self.ain1_pin}/{self.ain2_pin}: direction inversion {inversion_status}{multiplier_info}")
     
     def set_direction_forward(self):
         """Set motor direction to forward"""
@@ -94,7 +96,9 @@ class DCMotorController:
             self.pwm.ChangeDutyCycle(100)
     
     def set_speed(self, speed: float):
-        """Set motor speed (0-100%)"""
+        """Set motor speed (0-100%) with speed multiplier applied"""
+        # Apply speed multiplier (for Y motor acceleration)
+        speed = speed * self.speed_multiplier
         speed = max(0.0, min(100.0, abs(speed)))
         if self.pwm:
             self.pwm.ChangeDutyCycle(speed)
@@ -541,7 +545,8 @@ class TVArmController:
             invert_direction=motor_config.get('invert_x_direction', False)
         )
         
-        # Y-axis motor (Motor B)
+        # Y-axis motor (Motor B) with speed multiplier for faster movement
+        y_speed_multiplier = motor_config.get('y_speed_multiplier', 1.0)
         self.y_motor = DCMotorController(
             ain1_pin=config['hardware']['motor_y_ain1_pin'],
             ain2_pin=config['hardware']['motor_y_ain2_pin'],
@@ -550,7 +555,8 @@ class TVArmController:
             frequency=motor_config['frequency'],
             min_position=motor_config['min_position'],
             max_position=motor_config['max_position'],
-            invert_direction=motor_config.get('invert_y_direction', False)
+            invert_direction=motor_config.get('invert_y_direction', False),
+            speed_multiplier=y_speed_multiplier
         )
         
         # Initialize position sensors
