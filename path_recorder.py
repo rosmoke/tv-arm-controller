@@ -442,6 +442,8 @@ class PathRecorder:
         start_time = time.time()
         consecutive_good_readings = 0
         required_readings = 1  # Only need 1 good reading with tight tolerances and glitch filtering
+        consecutive_sensor_failures = 0  # Track consecutive sensor failures
+        max_consecutive_failures = 5  # Allow up to 5 consecutive failures before emergency stop
         
         logging.info(f"Moving both axes simultaneously: X→{target_x:.1f}%, Y→{target_y:.1f}%")
         
@@ -519,6 +521,32 @@ class PathRecorder:
                     except Exception as e:
                         logging.warning(f"Sensor reading {i+1} failed: {e}")
                         continue
+                
+                # Check if we have enough readings to continue safely
+                if len(readings_x) == 0 or len(readings_y) == 0:
+                    consecutive_sensor_failures += 1
+                    logging.warning(f"⚠️ SENSOR GLITCH {consecutive_sensor_failures}/{max_consecutive_failures} - NO VALID READINGS!")
+                    
+                    if consecutive_sensor_failures >= max_consecutive_failures:
+                        logging.error("🚨 CRITICAL SENSOR FAILURE - TOO MANY CONSECUTIVE FAILURES!")
+                        logging.error("⚠️ EMERGENCY STOP: Cannot continue without sensor feedback")
+                        # Emergency stop both motors immediately
+                        self.controller.x_motor.stop_motor()
+                        self.controller.x_motor.set_speed(0)
+                        self.controller.y_motor.stop_motor()
+                        self.controller.y_motor.set_speed(0)
+                        logging.error("🛑 Both motors emergency stopped due to persistent sensor failures")
+                        return False
+                    else:
+                        logging.info(f"🔄 CONTINUING WITH CAUTION - Will retry sensor reading")
+                        # Use last known position if available, otherwise skip this iteration
+                        time.sleep(0.1)  # Brief pause to let sensors recover
+                        continue
+                else:
+                    # Reset failure counter on successful reading
+                    if consecutive_sensor_failures > 0:
+                        logging.info(f"✅ SENSOR RECOVERY - Reset failure counter from {consecutive_sensor_failures}")
+                        consecutive_sensor_failures = 0
                 
                 # Use consensus of 3 readings - pick the two closest values and average them
                 current_x = self._get_consensus_reading(readings_x, 'X')
@@ -776,12 +804,17 @@ class PathRecorder:
         Get consensus from 3 sensor readings by finding the two closest values and averaging them
         This eliminates sensor glitches that cause single bad readings
         """
-        if len(readings) < 2:
-            if len(readings) == 1:
-                return readings[0]
-            else:
-                logging.error(f"No valid {axis} sensor readings available")
-                return 0.0
+        if len(readings) < 1:
+            logging.error(f"🚨 NO {axis} SENSOR READINGS - EMERGENCY STOP REQUIRED")
+            # This should have been caught earlier, but safety check
+            self.controller.x_motor.stop_motor()
+            self.controller.x_motor.set_speed(0)
+            self.controller.y_motor.stop_motor()
+            self.controller.y_motor.set_speed(0)
+            return 0.0
+        elif len(readings) == 1:
+            logging.warning(f"⚠️ {axis} DEGRADED SENSOR: Only 1 reading available - using it but risky")
+            return readings[0]
         
         if len(readings) == 2:
             avg = (readings[0] + readings[1]) / 2
