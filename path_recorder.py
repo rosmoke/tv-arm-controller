@@ -594,17 +594,17 @@ class PathRecorder:
                                 else:
                                     if iteration_count % 100 == 0:  # Reduce X continuing spam
                                         logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (large movement, allowing sensor variations)")
-                            else:  # Small movement targets - original sensitivity
-                                if movement > 2.0 and x_error > last_error + 1.0:
-                                    logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                            else:  # Small movement targets - be extremely lenient 
+                                if movement > 10.0 and x_error > last_error + 5.0:  # VERY lenient - only catastrophic reversals
+                                    logging.warning(f"🚫 X CATASTROPHIC REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
                                     logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
                                     self.controller.x_motor.stop_motor()
                                     self.controller.x_motor.set_speed(0)
                                     self.x_stopped = True
-                                    logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
+                                    logging.warning(f"🔒 X MOTOR LOCKED due to catastrophic reversal [iteration {iteration_count}]")
                                 else:
                                     if iteration_count % 100 == 0:  # Reduce X continuing spam
-                                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%)")
+                                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, allowing all variations)")
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
@@ -648,16 +648,16 @@ class PathRecorder:
                                 else:
                                     if iteration_count % 100 == 0:  # Reduce Y continuing spam  
                                         logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (large movement, allowing sensor variations)")
-                            else:  # Small movement targets - original sensitivity
-                                if movement > 1.5 and y_error > last_error + 0.8:  # Very lenient - Y is slow and has voltage variations
-                                    logging.warning(f"🚫 Y MAJOR DIRECTION REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                            else:  # Small movement targets - be extremely lenient for Y motor
+                                if movement > 15.0 and y_error > last_error + 8.0:  # EXTREMELY lenient - Y motor has sensor delay issues
+                                    logging.warning(f"🚫 Y CATASTROPHIC REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
                                     logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
                                     self.controller.y_motor.stop_motor()
                                     self.controller.y_motor.set_speed(0)
                                     self.y_stopped = True
                                 else:
-                                    if iteration_count % 100 == 0:  # Reduce Y continuing spam  
-                                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%)")
+                                    if iteration_count % 100 == 0:  # Reduce Y continuing spam
+                                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, allowing sensor delays)")
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
@@ -744,8 +744,8 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Only accept if within tolerance - simple and accurate
-        if error <= tolerance:
+        # Only accept if strictly within tolerance - prevent boundary edge cases
+        if error < tolerance:
             logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
             return True
         else:
