@@ -67,26 +67,46 @@ class ManualController:
         return None
     
     def process_key(self, key: str):
-        """Process key press and control motors directly"""
+        """Process key press and control motors directly with safety limits"""
         # Calculate actual motor speed (UI speed * multiplier)
         actual_speed = min(100.0, self.continuous_speed * self.speed_multiplier)
         
         if key == '\x1b[A':  # Up arrow - Y motor forward
             print("↑ Y UP")
-            self.tv_controller.y_motor.set_direction_forward()
-            self.tv_controller.y_motor.set_speed(actual_speed)
+            safe_speed = self._check_motor_safety('y', 'forward', actual_speed)
+            if safe_speed > 0:
+                self.tv_controller.y_motor.set_direction_forward()
+                self.tv_controller.y_motor.set_speed(safe_speed)
+            else:
+                print("🛑 Y SAFETY STOP")
+                self.tv_controller.y_motor.stop_motor()
         elif key == '\x1b[B':  # Down arrow - Y motor reverse
             print("↓ Y DOWN")
-            self.tv_controller.y_motor.set_direction_reverse()
-            self.tv_controller.y_motor.set_speed(actual_speed)
+            safe_speed = self._check_motor_safety('y', 'reverse', actual_speed)
+            if safe_speed > 0:
+                self.tv_controller.y_motor.set_direction_reverse()
+                self.tv_controller.y_motor.set_speed(safe_speed)
+            else:
+                print("🛑 Y SAFETY STOP")
+                self.tv_controller.y_motor.stop_motor()
         elif key == '\x1b[C':  # Right arrow - X motor forward
             print("→ X RIGHT")
-            self.tv_controller.x_motor.set_direction_forward()
-            self.tv_controller.x_motor.set_speed(actual_speed)
+            safe_speed = self._check_motor_safety('x', 'forward', actual_speed)
+            if safe_speed > 0:
+                self.tv_controller.x_motor.set_direction_forward()
+                self.tv_controller.x_motor.set_speed(safe_speed)
+            else:
+                print("🛑 X SAFETY STOP")
+                self.tv_controller.x_motor.stop_motor()
         elif key == '\x1b[D':  # Left arrow - X motor reverse
             print("← X LEFT")
-            self.tv_controller.x_motor.set_direction_reverse()
-            self.tv_controller.x_motor.set_speed(actual_speed)
+            safe_speed = self._check_motor_safety('x', 'reverse', actual_speed)
+            if safe_speed > 0:
+                self.tv_controller.x_motor.set_direction_reverse()
+                self.tv_controller.x_motor.set_speed(safe_speed)
+            else:
+                print("🛑 X SAFETY STOP")
+                self.tv_controller.x_motor.stop_motor()
         elif key == ' ':  # Spacebar - stop all
             print("⏹️  STOP ALL")
             self.tv_controller.x_motor.stop_motor()
@@ -109,6 +129,47 @@ class ManualController:
                 print("❌ Error reading position")
         
         return True
+    
+    def _check_motor_safety(self, axis: str, direction: str, requested_speed: float) -> float:
+        """Check safety limits and return safe speed (0 = stop)"""
+        try:
+            # Get current position
+            x_pos, y_pos = self.tv_controller.get_current_position()
+            
+            if axis == 'x':
+                # Get X sensor voltage
+                current_voltage = self.tv_controller.x_sensor.read_voltage()
+                config = self.tv_controller.config['hardware']['calibration']['x_axis']
+            else:
+                # Get Y sensor voltage  
+                current_voltage = self.tv_controller.y_sensor.read_voltage()
+                config = self.tv_controller.config['hardware']['calibration']['y_axis']
+            
+            # Get safety settings
+            min_voltage = config['min_voltage']
+            max_voltage = config['max_voltage']
+            safety_margin = config.get('safety_margin', 0.05)
+            slow_zone_margin = config.get('slow_zone_margin', 0.1)
+            safety_slow_speed = config.get('safety_slow_speed', 30)
+            
+            # Check safety using motor's safety method
+            if axis == 'x':
+                should_stop, max_speed = self.tv_controller.x_motor.check_safety_limits(
+                    current_voltage, min_voltage, max_voltage, 
+                    safety_margin, slow_zone_margin, safety_slow_speed, direction)
+            else:
+                should_stop, max_speed = self.tv_controller.y_motor.check_safety_limits(
+                    current_voltage, min_voltage, max_voltage,
+                    safety_margin, slow_zone_margin, safety_slow_speed, direction)
+            
+            if should_stop:
+                return 0
+            else:
+                return min(requested_speed, max_speed)
+                
+        except Exception as e:
+            print(f"❌ Safety check error for {axis}: {e}")
+            return 0  # Stop on error for safety
     
     def control_loop(self):
         """Main control loop for position display"""

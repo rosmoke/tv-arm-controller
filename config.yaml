@@ -44,19 +44,27 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 0.8    # Minimum potentiometer voltage (based on your actual readings)
-      max_voltage: 3.15   # Maximum potentiometer voltage (based on your 3.10V readings)
+      min_voltage: 1.653  # Absolute minimum X-axis voltage
+      max_voltage: 2.92   # Absolute maximum X-axis voltage
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
+      # Safety limits
+      safety_margin: 0.05   # Voltage margin from absolute limits (50mV)
+      slow_zone_margin: 0.1 # Start slowing down within this margin (100mV)
+      safety_slow_speed: 30 # Reduced speed when in slow zone (%)
     y_axis:
-      min_voltage: 0.8
-      max_voltage: 3.06
+      min_voltage: 0.821
+      max_voltage: 3.017
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
+      # Safety limits
+      safety_margin: 0.05   # Voltage margin from absolute limits (50mV)
+      slow_zone_margin: 0.1 # Start slowing down within this margin (100mV)
+      safety_slow_speed: 30 # Reduced speed when in slow zone (%)
   
   # Actual TV mount positions (calibrated)
   positions:
