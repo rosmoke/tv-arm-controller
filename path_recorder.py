@@ -219,10 +219,10 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            # Calculated tolerances based on observed error (0.6% X, 0.3% Y)
-            # Target accuracy: within 0.2% of datapoint, set slightly below for safety
-            x_tolerance = 0.15  # 0.15% tolerance for X axis (calculated from 0.6% error)
-            y_tolerance = 0.15  # 0.15% tolerance for Y axis (calculated from 0.3% error)
+            # Balanced tolerances with dynamic speed control for precision
+            # Tight enough for accuracy, loose enough to handle small sensor variations
+            x_tolerance = 0.4   # 0.4% tolerance for X axis (precise but achievable)
+            y_tolerance = 0.3   # 0.3% tolerance for Y axis (tighter control for Y)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
@@ -467,13 +467,17 @@ class PathRecorder:
                                 self.controller.x_motor.set_speed(0)
                                 self.x_stopped = True
                             else:
-                                # X motor speeds (base speeds, Y will be 2x these)
+                                # Dynamic X motor speeds based on distance to target
                                 if x_error > 15.0:
-                                    x_speed = 25.0  # Moderate speed for large movements
-                                elif x_error > 8.0:
-                                    x_speed = 17.5  # Medium speed for medium movements
+                                    x_speed = 25.0  # Normal speed for large movements
+                                elif x_error > 5.0:
+                                    x_speed = 15.0  # Medium speed for medium movements
+                                elif x_error > 2.0:
+                                    x_speed = 8.0   # Slow speed for small movements
+                                elif x_error > 0.5:
+                                    x_speed = 4.0   # Very slow for tiny movements (like 0%→1%)
                                 else:
-                                    x_speed = 10.0  # Careful speed for fine adjustments
+                                    x_speed = 2.0   # Ultra slow for final positioning
                                 speed = x_speed
                                 
                                 logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
@@ -503,13 +507,17 @@ class PathRecorder:
                                 self.controller.y_motor.set_speed(0)
                                 self.y_stopped = True
                             else:
-                                # Y motor speeds (2x X motor speeds for faster movement)
+                                # Dynamic Y motor speeds (2x X motor speeds for faster movement)
                                 if y_error > 12.0:
-                                    y_speed = 50.0  # 2x X moderate speed (25.0 * 2)
-                                elif y_error > 6.0:
-                                    y_speed = 35.0  # 2x X medium speed (17.5 * 2)
+                                    y_speed = 50.0  # 2x X normal speed (25.0 * 2)
+                                elif y_error > 4.0:
+                                    y_speed = 30.0  # 2x X medium speed (15.0 * 2)
+                                elif y_error > 1.5:
+                                    y_speed = 16.0  # 2x X slow speed (8.0 * 2)
+                                elif y_error > 0.3:
+                                    y_speed = 8.0   # 2x X very slow (4.0 * 2) for tiny movements
                                 else:
-                                    y_speed = 20.0  # 2x X careful speed (10.0 * 2)
+                                    y_speed = 4.0   # 2x X ultra slow (2.0 * 2) for final positioning
                                 speed = y_speed
                                 
                                 logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
