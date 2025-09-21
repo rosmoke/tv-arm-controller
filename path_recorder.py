@@ -236,6 +236,9 @@ class PathRecorder:
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
                 
                 # Reset motor lock flags for new datapoint
+                x_was_stopped = hasattr(self, 'x_stopped') and self.x_stopped
+                y_was_stopped = hasattr(self, 'y_stopped') and self.y_stopped
+                
                 if hasattr(self, 'x_stopped'):
                     delattr(self, 'x_stopped')
                 if hasattr(self, 'y_stopped'):
@@ -248,7 +251,8 @@ class PathRecorder:
                     delattr(self, 'x_last_valid_position')
                 if hasattr(self, 'y_last_valid_position'):
                     delattr(self, 'y_last_valid_position')
-                logging.info(f"🔄 Reset motor flags and sensor filters for fresh start")
+                
+                logging.info(f"🔄 Reset motor flags: X was {'LOCKED' if x_was_stopped else 'FREE'}, Y was {'LOCKED' if y_was_stopped else 'FREE'} -> both now FREE")
                 
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
@@ -410,11 +414,12 @@ class PathRecorder:
         x_command_count = 0
         y_command_count = 0
         max_commands_per_axis = 15  # Emergency stop after 15 commands per axis (more attempts)
-        
+
         while time.time() - start_time < max_wait:
             if not self.is_playing:
                 return False
             
+            iteration_count += 1
             try:
                 # Get current position for both axes
                 raw_x, raw_y = self.controller.get_current_position()
@@ -503,6 +508,8 @@ class PathRecorder:
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes) [iteration {iteration_count}]")
+                        if iteration_count <= 3:  # Only for first few iterations to avoid spam
+                            logging.warning(f"🔍 DEBUG: X motor locked from start - hasattr(x_stopped)={hasattr(self, 'x_stopped')}, x_stopped={getattr(self, 'x_stopped', 'MISSING')}")
                     elif x_error > x_tolerance and not x_at_target:
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'x_last_position') and self.x_last_position is not None:
