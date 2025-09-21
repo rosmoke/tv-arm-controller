@@ -126,24 +126,28 @@ class ManualController:
                         x, y = self.tv_controller.get_current_position()
                         if self.moving_x > 0:  # Move right (increase X)
                             new_x = min(100.0, x + self.step_size)
+                            print(f"\n🔧 X: {x:.1f}% → {new_x:.1f}%")
                             self.tv_controller.set_x_position(new_x, use_closed_loop=False)
                         else:  # Move left (decrease X)
                             new_x = max(0.0, x - self.step_size)
+                            print(f"\n🔧 X: {x:.1f}% → {new_x:.1f}%")
                             self.tv_controller.set_x_position(new_x, use_closed_loop=False)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"\n❌ X motor error: {e}")
                 
                 if self.moving_y != 0:
                     try:
                         x, y = self.tv_controller.get_current_position()
                         if self.moving_y > 0:  # Move up (increase Y)
                             new_y = min(100.0, y + self.step_size)
+                            print(f"\n🔧 Y: {y:.1f}% → {new_y:.1f}%")
                             self.tv_controller.set_y_position(new_y, use_closed_loop=False)
                         else:  # Move down (decrease Y)
                             new_y = max(0.0, y - self.step_size)
+                            print(f"\n🔧 Y: {y:.1f}% → {new_y:.1f}%")
                             self.tv_controller.set_y_position(new_y, use_closed_loop=False)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f"\n❌ Y motor error: {e}")
                 
                 time.sleep(0.1)  # Control loop frequency
                 
