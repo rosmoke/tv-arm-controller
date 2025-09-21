@@ -609,13 +609,23 @@ class PathRecorder:
     def _is_axis_at_target(self, current: float, target: float, tolerance: float, axis: str) -> bool:
         """
         Check if axis has reached target within tolerance
-        Only accepts positions within the specified tolerance range
+        Accounts for motor momentum by stopping earlier to prevent overshoot
         """
         error = abs(current - target)
         
-        # Only accept if within tolerance - no crossing logic
-        if error <= tolerance:
-            logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
+        # Account for motor momentum - stop earlier to prevent overshoot
+        # Use different stopping distances based on motor characteristics
+        if axis == 'X':
+            momentum_buffer = 0.4  # X motor has more momentum, stop 0.4% before target
+        else:  # Y motor
+            momentum_buffer = 0.1  # Y motor has less momentum, stop 0.1% before target
+        
+        # Stop when we're close enough, accounting for momentum
+        effective_tolerance = tolerance + momentum_buffer
+        
+        # Only accept if within effective tolerance
+        if error <= effective_tolerance:
+            logging.info(f"{axis} AT TARGET: {current:.1f}% within {effective_tolerance:.1f}% of {target:.1f}% (tolerance: {tolerance}% + momentum: {momentum_buffer}%)")
             return True
         else:
             logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
