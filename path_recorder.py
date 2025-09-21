@@ -523,8 +523,18 @@ class PathRecorder:
                 y_error = abs(current_y - target_y)
                 
                 # Check each axis independently - stop when reached OR OVERSHOT target
-                x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
-                y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
+                # Handle sensor reading errors gracefully
+                try:
+                    x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
+                except Exception as e:
+                    logging.warning(f"X sensor error in target check: {e}")
+                    x_at_target = False  # Assume not at target if sensor fails
+                
+                try:
+                    y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
+                except Exception as e:
+                    logging.warning(f"Y sensor error in target check: {e}")
+                    y_at_target = False  # Assume not at target if sensor fails
                 
                 # Overshoot detection - emergency stop if motor goes too far
                 if self._check_overshoot(current_x, target_x, 'X', expected_x_direction):
@@ -545,7 +555,7 @@ class PathRecorder:
                 
                 # Stop motors that have reached their targets (but don't reset counter)  
                 if x_at_target and not hasattr(self, 'x_stopped'):
-                    logging.info(f"🎯 X motor reached target {target_x:.1f}% (current: {current_x:.1f}%)")
+                    logging.info(f"🎯 X motor reached target {target_x:.1f}% (current: {current_x:.1f}%, error: {x_error:.1f}%, tolerance: {x_tolerance}%)")
                     # FORCE STOP - multiple commands to ensure motor actually stops
                     self.controller.x_motor.stop_motor()
                     self.controller.x_motor.set_speed(0)
@@ -622,7 +632,7 @@ class PathRecorder:
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         if iteration_count % 50 == 0:  # Only log every 50 iterations to reduce spam
-                            logging.info(f"X axis LOCKED: {current_x:.1f}% [iter {iteration_count}]")
+                            logging.info(f"X axis LOCKED: {current_x:.1f}% [iter {iteration_count}] - check X sensor connection!")
                     elif x_error > x_tolerance and not x_at_target and not (hasattr(self, 'x_stopped') and self.x_stopped):
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'x_last_position') and self.x_last_position is not None:
