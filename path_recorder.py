@@ -233,26 +233,11 @@ class PathRecorder:
                 target_x = point.x_position
                 target_y = point.y_position
                 
-                # Check if we should skip this datapoint (for extend/retract paths)
-                current_x, current_y = self.controller.get_current_position()
-                
-                # For extend path: skip if already past (extended beyond) the target
-                # For retract path: skip if already past (retracted beyond) the target
-                path_name = getattr(self, 'current_path_name', '').lower()
-                
                 # Track the actual datapoint number we're working on (1-based)
                 actual_datapoint_number = point.point_number if hasattr(point, 'point_number') else i + 1
                 
-                if 'extend' in path_name:
-                    # EXTEND: Skip if current position is already higher than target (already extended past)
-                    if current_x >= target_x and current_y >= target_y:
-                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already extended past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
-                        continue
-                elif 'retract' in path_name:
-                    # RETRACT: Skip if current position is already lower than target (already retracted past)
-                    if current_x <= target_x and current_y <= target_y:
-                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already retracted past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
-                        continue
+                # TODO: Smart skip logic disabled temporarily - was causing incorrect skipping
+                # Will re-implement after fixing the core movement logic
                 
                 logging.info(f"=== DATAPOINT {actual_datapoint_number}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
@@ -532,8 +517,8 @@ class PathRecorder:
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
                     logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
-                # Stop motors that have reached their targets - but not in first few iterations (prevent false positives)
-                if x_at_target and not hasattr(self, 'x_stopped') and iteration_count > 3:
+                # Stop motors that have reached their targets
+                if x_at_target and not hasattr(self, 'x_stopped'):
                     logging.info(f"🛑 STOPPING X motor - reached target {target_x:.1f}% (current: {current_x:.1f}%)")
                     # Triple-check stop commands to prevent overshoot
                     self.controller.x_motor.stop_motor()
@@ -542,20 +527,16 @@ class PathRecorder:
                     logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
                     logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
-                elif x_at_target and iteration_count <= 3:
-                    logging.warning(f"⚠️ X claims to be at target in early iteration {iteration_count} - ignoring (current: {current_x:.1f}%, target: {target_x:.1f}%)")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     logging.debug(f"X already stopped at {current_x:.1f}% (target: {target_x:.1f}%)")
                 
-                if y_at_target and not hasattr(self, 'y_stopped') and iteration_count > 3:
+                if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
                     self.controller.y_motor.stop_motor()
                     # Double-check stop command
                     self.controller.y_motor.set_speed(0)
                     logging.info(f"🎯 Y axis STOPPED at {current_y:.1f}%")
                     self.y_stopped = True
-                elif y_at_target and iteration_count <= 3:
-                    logging.warning(f"⚠️ Y claims to be at target in early iteration {iteration_count} - ignoring (current: {current_y:.1f}%, target: {target_y:.1f}%)")
                 
                 # Check if both axes are at target
                 if x_at_target and y_at_target:
