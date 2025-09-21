@@ -528,25 +528,19 @@ class PathRecorder:
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
                     logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
-                # Stop motors that have reached their targets
+                # Stop motors that have reached their targets (but don't reset counter)
                 if x_at_target and not hasattr(self, 'x_stopped'):
-                    logging.info(f"🛑 STOPPING X motor - reached target {target_x:.1f}% (current: {current_x:.1f}%)")
-                    # Triple-check stop commands to prevent overshoot
+                    logging.info(f"🎯 X motor reached target {target_x:.1f}% (current: {current_x:.1f}%)")
                     self.controller.x_motor.stop_motor()
                     self.controller.x_motor.set_speed(0)
-                    self.controller.x_motor.stop_motor()  # Extra stop command
-                    logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
-                    logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     pass  # X already stopped - no need to log every iteration
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
-                    logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
+                    logging.info(f"🎯 Y motor reached target {target_y:.1f}% (current: {current_y:.1f}%)")
                     self.controller.y_motor.stop_motor()
-                    # Double-check stop command
                     self.controller.y_motor.set_speed(0)
-                    logging.info(f"🎯 Y axis STOPPED at {current_y:.1f}%")
                     self.y_stopped = True
                 
                 # Check if both axes are at target
@@ -555,7 +549,14 @@ class PathRecorder:
                     logging.info(f"✅ Both axes at target ({consecutive_good_readings}/{required_readings} checks)")
                     
                     if consecutive_good_readings >= required_readings:
-                        logging.info(f"🎯 Both axes confirmed at target!")
+                        logging.info(f"🎯 DATAPOINT SUCCESS! Both axes reached target: X={current_x:.1f}%→{target_x:.1f}%, Y={current_y:.1f}%→{target_y:.1f}%")
+                        # Stop both motors to ensure they don't drift
+                        self.controller.x_motor.stop_motor()
+                        self.controller.x_motor.set_speed(0)
+                        self.controller.y_motor.stop_motor()
+                        self.controller.y_motor.set_speed(0)
+                        logging.info("🛑 Both motors stopped - datapoint complete")
+                        
                         # Reset flags for next datapoint
                         if hasattr(self, 'x_stopped'):
                             delattr(self, 'x_stopped')
@@ -563,7 +564,7 @@ class PathRecorder:
                             delattr(self, 'y_stopped')
                         return True
                         
-                    time.sleep(1.0)  # Wait before next check
+                    time.sleep(0.5)  # Shorter wait - we're very close to success
                 else:
                     consecutive_good_readings = 0
                     
