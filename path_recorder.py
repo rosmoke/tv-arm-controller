@@ -382,7 +382,7 @@ class PathRecorder:
         """Move both X and Y axes simultaneously to target position"""
         start_time = time.time()
         consecutive_good_readings = 0
-        required_readings = 2
+        required_readings = 1  # Only need 1 good reading with tight tolerances and glitch filtering
         
         logging.info(f"Moving both axes simultaneously: X→{target_x:.1f}%, Y→{target_y:.1f}%")
         
