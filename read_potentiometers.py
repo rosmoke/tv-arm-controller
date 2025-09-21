@@ -7,6 +7,7 @@ Shows real-time voltage and position readings from both X and Y axes
 import time
 import sys
 import signal
+import yaml
 from typing import Optional
 
 try:
@@ -32,22 +33,52 @@ class LivePotentiometerReader:
         self.x_channel = None
         self.y_channel = None
         
-        # Configuration (from your config.yaml)
-        self.x_config = {
-            'channel': 0,
-            'min_voltage': 0.8,
-            'max_voltage': 3.15,
-            'label': 'X-AXIS'
-        }
-        
-        self.y_config = {
-            'channel': 2, 
-            'min_voltage': 0.1,
-            'max_voltage': 3.2,
-            'label': 'Y-AXIS'
-        }
-        
+        # Load configuration from config.yaml
+        self.load_config()
         self.init_hardware()
+    
+    def load_config(self):
+        """Load voltage ranges from config.yaml"""
+        try:
+            with open('config.yaml', 'r') as f:
+                config = yaml.safe_load(f)
+            
+            x_cal = config['hardware']['calibration']['x_axis']
+            y_cal = config['hardware']['calibration']['y_axis']
+            
+            self.x_config = {
+                'channel': config['hardware']['potentiometer']['x_axis_channel'],
+                'min_voltage': x_cal['min_voltage'],
+                'max_voltage': x_cal['max_voltage'],
+                'label': 'X-AXIS'
+            }
+            
+            self.y_config = {
+                'channel': config['hardware']['potentiometer']['y_axis_channel'],
+                'min_voltage': y_cal['min_voltage'],
+                'max_voltage': y_cal['max_voltage'],
+                'label': 'Y-AXIS'
+            }
+            
+            print(f"✅ Config loaded - X: {self.x_config['min_voltage']:.3f}V-{self.x_config['max_voltage']:.3f}V, Y: {self.y_config['min_voltage']:.3f}V-{self.y_config['max_voltage']:.3f}V")
+            
+        except Exception as e:
+            print(f"❌ Error loading config.yaml: {e}")
+            print("Using fallback values...")
+            # Fallback to current values if config loading fails
+            self.x_config = {
+                'channel': 0,
+                'min_voltage': 1.670,
+                'max_voltage': 2.884,
+                'label': 'X-AXIS'
+            }
+            
+            self.y_config = {
+                'channel': 2, 
+                'min_voltage': 0.821,
+                'max_voltage': 3.017,
+                'label': 'Y-AXIS'
+            }
     
     def init_hardware(self):
         """Initialize ADS1115 and analog channels"""
