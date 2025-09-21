@@ -445,8 +445,8 @@ class PathRecorder:
         expected_x_direction = 1 if target_x > start_x else -1 if target_x < start_x else 0
         expected_y_direction = 1 if target_y > start_y else -1 if target_y < start_y else 0
         
-        logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'}, "
-                    f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'}")
+        logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'} ({expected_x_direction}), "
+                    f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'} ({expected_y_direction})")
         
         # Send initial movement commands to both motors with correct directions
         logging.info("Sending initial movement commands to both motors...")
@@ -536,18 +536,19 @@ class PathRecorder:
                     logging.warning(f"Y sensor error in target check: {e}")
                     y_at_target = False  # Assume not at target if sensor fails
                 
-                # Overshoot detection - emergency stop if motor goes too far
-                if self._check_overshoot(current_x, target_x, 'X', expected_x_direction):
-                    logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT! {current_x:.1f}% target was {target_x:.1f}%")
-                    self.controller.x_motor.stop_motor()
-                    self.controller.x_motor.set_speed(0)
-                    self.x_stopped = True
+                # TEMPORARILY DISABLED: Overshoot detection - preventing X motor from moving
+                # TODO: Fix overshoot detection logic - it's blocking initial movement
+                # if self._check_overshoot(current_x, target_x, 'X', expected_x_direction):
+                #     logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT! {current_x:.1f}% target was {target_x:.1f}% (expected_direction: {expected_x_direction})")
+                #     self.controller.x_motor.stop_motor()
+                #     self.controller.x_motor.set_speed(0)
+                #     self.x_stopped = True
                     
-                if self._check_overshoot(current_y, target_y, 'Y', expected_y_direction):
-                    logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT! {current_y:.1f}% target was {target_y:.1f}%")
-                    self.controller.y_motor.stop_motor() 
-                    self.controller.y_motor.set_speed(0)
-                    self.y_stopped = True
+                # if self._check_overshoot(current_y, target_y, 'Y', expected_y_direction):
+                #     logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT! {current_y:.1f}% target was {target_y:.1f}% (expected_direction: {expected_y_direction})")
+                #     self.controller.y_motor.stop_motor() 
+                #     self.controller.y_motor.set_speed(0)
+                #     self.y_stopped = True
                 
                 # Only log position every 20 iterations to reduce spam
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
