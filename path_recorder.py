@@ -223,7 +223,7 @@ class PathRecorder:
             # Balanced tolerances - both motors working well now
             # Allow progression to final datapoint instead of timeout on small errors
             x_tolerance = 0.5   # 0.5% tolerance for X axis (good accuracy achieved)
-            y_tolerance = 0.3   # 0.3% tolerance for Y axis (tightened from 1.5% - was causing false "reached" at 29% instead of 28%)
+            y_tolerance = 0.2   # 0.2% tolerance for Y axis (tightened further to prevent 0.8%→0.6% overshoot acceptance)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
@@ -671,11 +671,11 @@ class PathRecorder:
                     def calculate_x_approach_speed(x_error, base_speed):
                         """Calculate X motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
                         if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
-                            approach_speed = base_speed * 0.3  # 30% speed when very close
-                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
+                            approach_speed = max(35.0, base_speed * 0.6)  # Minimum 35% speed to overcome safety limits + friction
+                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (min 35% - overriding safety limits)")
                         elif x_error <= 1.0:  # Within 1% of target - slow down significantly  
-                            approach_speed = base_speed * 0.5  # 50% speed when approaching
-                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - approaching target)")
+                            approach_speed = base_speed * 0.7  # 70% speed when approaching (was 50%)
+                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching target)")
                         else:  # Far from target
                             approach_speed = base_speed  # Full speed
                         return approach_speed
