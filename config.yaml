@@ -33,7 +33,7 @@ hardware:
     min_position: 0   # Minimum position (%)
     max_position: 100 # Maximum position (%)
     default_speed: 80 # Default motor speed (%) - increased for better movement
-    y_speed_multiplier: 2.5  # Y motor speed multiplier - Y runs 2.5x faster than X for quicker movement
+    y_speed_multiplier: 1.5  # Y motor speed multiplier - Y runs 1.5x faster than X for balanced movement
     movement_timeout: 10  # Maximum time for movement (seconds)
     invert_x_direction: true   # X motor direction inverted - FORWARD decreases, REVERSE increases
     invert_y_direction: true   # Y motor direction inverted - FORWARD decreases, REVERSE increases
