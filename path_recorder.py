@@ -435,7 +435,10 @@ class PathRecorder:
                     # Send correction commands only for axes that need adjustment
                     corrections_sent = False
                     
-                    if x_error > tolerance and not x_at_target:
+                    # Only send commands to X motor if it hasn't been stopped yet
+                    if hasattr(self, 'x_stopped') and self.x_stopped:
+                        logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
+                    elif x_error > tolerance and not x_at_target:
                         x_command_count += 1
                         if x_command_count > max_commands_per_axis:
                             logging.warning(f"🚨 X EMERGENCY STOP - too many commands ({x_command_count})")
@@ -457,7 +460,10 @@ class PathRecorder:
                     elif x_at_target:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
                     
-                    if y_error > tolerance and not y_at_target:
+                    # Only send commands to Y motor if it hasn't been stopped yet
+                    if hasattr(self, 'y_stopped') and self.y_stopped:
+                        logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
+                    elif y_error > tolerance and not y_at_target:
                         y_command_count += 1
                         if y_command_count > max_commands_per_axis:
                             logging.warning(f"🚨 Y EMERGENCY STOP - too many commands ({y_command_count})")
