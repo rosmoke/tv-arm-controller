@@ -236,7 +236,7 @@ class PathRecorder:
                 
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
-                    target_x, target_y, tolerance, max_wait_per_point
+                    target_x, target_y, x_tolerance, max_wait_per_point
                 )
                 
                 if not success:
@@ -370,6 +370,14 @@ class PathRecorder:
         
         logging.info(f"Moving both axes simultaneously: X→{target_x:.1f}%, Y→{target_y:.1f}%")
         
+        # Get starting position to determine expected direction
+        start_x, start_y = self.controller.get_current_position()
+        expected_x_direction = 1 if target_x > start_x else -1 if target_x < start_x else 0
+        expected_y_direction = 1 if target_y > start_y else -1 if target_y < start_y else 0
+        
+        logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'}, "
+                    f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'}")
+        
         # Send initial movement commands to both motors
         logging.info("Sending initial movement commands to both motors...")
         self.controller.set_x_position(target_x, use_closed_loop=False)
@@ -441,24 +449,34 @@ class PathRecorder:
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
                     elif x_error > x_tolerance and not x_at_target:
-                        x_command_count += 1
-                        if x_command_count > max_commands_per_axis:
-                            logging.warning(f"🚨 X EMERGENCY STOP - too many commands ({x_command_count})")
+                        # Check if correction would move in wrong direction
+                        correction_direction = 1 if target_x > current_x else -1
+                        if expected_x_direction != 0 and correction_direction != expected_x_direction:
+                            logging.warning(f"🚫 X DIRECTION BLOCK: Would move {'backward' if correction_direction < 0 else 'forward'} but path expects {'forward' if expected_x_direction > 0 else 'backward'}")
+                            logging.warning(f"   Current: {current_x:.1f}%, Target: {target_x:.1f}%, Expected direction: {expected_x_direction}")
+                            # Stop motor to prevent wrong direction movement
                             self.controller.x_motor.stop_motor()
                             self.controller.x_motor.set_speed(0)
                             self.x_stopped = True
                         else:
-                            # Balanced speeds for X motor
-                            if x_error > 15.0:
-                                speed = 50.0  # Moderate speed for large movements
-                            elif x_error > 8.0:
-                                speed = 35.0  # Medium speed for medium movements
+                            x_command_count += 1
+                            if x_command_count > max_commands_per_axis:
+                                logging.warning(f"🚨 X EMERGENCY STOP - too many commands ({x_command_count})")
+                                self.controller.x_motor.stop_motor()
+                                self.controller.x_motor.set_speed(0)
+                                self.x_stopped = True
                             else:
-                                speed = 20.0  # Careful speed for fine adjustments
-                            
-                            logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
-                            self.controller.set_x_position(target_x, use_closed_loop=False)
-                            corrections_sent = True
+                                # Balanced speeds for X motor
+                                if x_error > 15.0:
+                                    speed = 50.0  # Moderate speed for large movements
+                                elif x_error > 8.0:
+                                    speed = 35.0  # Medium speed for medium movements
+                                else:
+                                    speed = 20.0  # Careful speed for fine adjustments
+                                
+                                logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
+                                self.controller.set_x_position(target_x, use_closed_loop=False)
+                                corrections_sent = True
                     elif x_at_target:
                             logging.info(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
                     
@@ -466,24 +484,34 @@ class PathRecorder:
                     if hasattr(self, 'y_stopped') and self.y_stopped:
                         logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
                     elif y_error > y_tolerance and not y_at_target:
-                        y_command_count += 1
-                        if y_command_count > max_commands_per_axis:
-                            logging.warning(f"🚨 Y EMERGENCY STOP - too many commands ({y_command_count})")
+                        # Check if correction would move in wrong direction
+                        correction_direction = 1 if target_y > current_y else -1
+                        if expected_y_direction != 0 and correction_direction != expected_y_direction:
+                            logging.warning(f"🚫 Y DIRECTION BLOCK: Would move {'backward' if correction_direction < 0 else 'forward'} but path expects {'forward' if expected_y_direction > 0 else 'backward'}")
+                            logging.warning(f"   Current: {current_y:.1f}%, Target: {target_y:.1f}%, Expected direction: {expected_y_direction}")
+                            # Stop motor to prevent wrong direction movement
                             self.controller.y_motor.stop_motor()
                             self.controller.y_motor.set_speed(0)
                             self.y_stopped = True
                         else:
-                            # Balanced speeds for Y motor - fast enough to reach target, slow enough to control
-                            if y_error > 12.0:
-                                speed = 45.0  # Moderate speed for large Y movements
-                            elif y_error > 6.0:
-                                speed = 35.0  # Medium speed for medium Y movements
+                            y_command_count += 1
+                            if y_command_count > max_commands_per_axis:
+                                logging.warning(f"🚨 Y EMERGENCY STOP - too many commands ({y_command_count})")
+                                self.controller.y_motor.stop_motor()
+                                self.controller.y_motor.set_speed(0)
+                                self.y_stopped = True
                             else:
-                                speed = 25.0  # Careful speed for fine Y adjustments
-                            
-                            logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
-                            self.controller.set_y_position(target_y, use_closed_loop=False)
-                            corrections_sent = True
+                                # Balanced speeds for Y motor - fast enough to reach target, slow enough to control
+                                if y_error > 12.0:
+                                    speed = 45.0  # Moderate speed for large Y movements
+                                elif y_error > 6.0:
+                                    speed = 35.0  # Medium speed for medium Y movements
+                                else:
+                                    speed = 25.0  # Careful speed for fine Y adjustments
+                                
+                                logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
+                                self.controller.set_y_position(target_y, use_closed_loop=False)
+                                corrections_sent = True
                     elif y_at_target:
                             logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
