@@ -50,8 +50,8 @@ hardware:
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
     y_axis:
-      min_voltage: 0.1
-      max_voltage: 3.2
+      min_voltage: 0.8
+      max_voltage: 3.06
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
