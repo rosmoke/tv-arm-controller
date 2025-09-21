@@ -251,10 +251,14 @@ class PathRecorder:
                         logging.info(f"🔄 EXTEND SKIP: Already above datapoint {actual_datapoint_number} - X={current_x:.1f}%>{target_x:.1f}%, Y={current_y:.1f}%>{target_y:.1f}%")
                 elif 'retract' in path_name:
                     # RETRACT: percentages should DECREASE (96% → 0%)
-                    # Skip if we're already BELOW this datapoint (both X AND Y lower than target)
-                    if current_x < target_x and current_y < target_y:
+                    # Skip if this datapoint is ABOVE our current position (we can't go UP during retract)
+                    # OR if we're already BELOW this datapoint (already passed it going down)
+                    if (target_x > current_x or target_y > current_y) or (current_x < target_x and current_y < target_y):
                         should_skip = True
-                        logging.info(f"🔄 RETRACT SKIP: Already below datapoint {actual_datapoint_number} - X={current_x:.1f}%<{target_x:.1f}%, Y={current_y:.1f}%<{target_y:.1f}%")
+                        if target_x > current_x or target_y > current_y:
+                            logging.info(f"🔄 RETRACT SKIP: Datapoint {actual_datapoint_number} is ABOVE current position - X={current_x:.1f}%→{target_x:.1f}%, Y={current_y:.1f}%→{target_y:.1f}% (can't go UP while retracting)")
+                        else:
+                            logging.info(f"🔄 RETRACT SKIP: Already below datapoint {actual_datapoint_number} - X={current_x:.1f}%<{target_x:.1f}%, Y={current_y:.1f}%<{target_y:.1f}%")
                 
                 if should_skip:
                     continue
