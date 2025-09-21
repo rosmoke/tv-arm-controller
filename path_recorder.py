@@ -604,7 +604,24 @@ class PathRecorder:
                 path_dict = json.load(f)
             
             # Convert dictionary data back to PathPoint objects
-            points = [PathPoint.from_dict(point_data) for point_data in path_dict['points']]
+            # Handle both old format ('points') and new format ('datapoints')
+            point_data_list = path_dict.get('points', path_dict.get('datapoints', []))
+            points = []
+            
+            for point_data in point_data_list:
+                # Handle new format with different field names
+                if 'x_position' in point_data and 'y_position' in point_data:
+                    # New format - convert to PathPoint format
+                    converted_point = {
+                        'timestamp': point_data.get('timestamp', 0),
+                        'x_position': point_data['x_position'],
+                        'y_position': point_data['y_position'],
+                        'duration_from_start': 0  # Default for new format
+                    }
+                    points.append(PathPoint.from_dict(converted_point))
+                else:
+                    # Old format - use as is
+                    points.append(PathPoint.from_dict(point_data))
             
             logging.info(f"Path loaded: {path_name} ({len(points)} points)")
             return points
@@ -623,11 +640,25 @@ class PathRecorder:
                     with open(file_path, 'r') as f:
                         path_dict = json.load(f)
                     
+                    # Handle both old and new JSON formats
+                    recorded_at = path_dict.get('recorded_at', 0)
+                    if isinstance(recorded_at, str):
+                        # Convert ISO timestamp to Unix timestamp
+                        try:
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(recorded_at.replace('Z', '+00:00'))
+                            recorded_at = dt.timestamp()
+                        except:
+                            recorded_at = 0
+                    
+                    # Get point count from either field name
+                    point_count = path_dict.get('point_count', path_dict.get('total_points', 0))
+                    
                     paths.append({
                         'name': path_dict.get('name', file_path.stem),
-                        'recorded_at': path_dict.get('recorded_at', 0),
-                        'duration': path_dict.get('duration', 0),
-                        'point_count': path_dict.get('point_count', 0),
+                        'recorded_at': recorded_at,
+                        'duration': path_dict.get('duration', 0),  # Default to 0 for new format
+                        'point_count': point_count,
                         'file_path': str(file_path)
                     })
                 except Exception as e:
