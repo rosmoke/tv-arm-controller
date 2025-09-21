@@ -421,35 +421,24 @@ class PathRecorder:
             
             iteration_count += 1
             try:
-                # Get current position for both axes
-                raw_x, raw_y = self.controller.get_current_position()
+                # Get 3 sensor readings and use consensus to eliminate glitches
+                readings_x = []
+                readings_y = []
                 
-                # Filter out obvious sensor glitches for Y axis (you mentioned false readings)
-                # If Y reading changes by more than 20% in one cycle, it's likely a glitch
-                if hasattr(self, 'y_last_valid_position') and self.y_last_valid_position is not None:
-                    y_change = abs(raw_y - self.y_last_valid_position)
-                    if y_change > 20.0:  # More than 20% change in one reading cycle
-                        logging.warning(f"🔧 Y SENSOR GLITCH DETECTED: {self.y_last_valid_position:.1f}% → {raw_y:.1f}% (Δ{y_change:.1f}%) - using last valid reading")
-                        current_y = self.y_last_valid_position  # Use last valid reading
-                    else:
-                        current_y = raw_y
-                        self.y_last_valid_position = raw_y
-                else:
-                    current_y = raw_y
-                    self.y_last_valid_position = raw_y
+                for i in range(3):
+                    try:
+                        x_reading, y_reading = self.controller.get_current_position()
+                        readings_x.append(x_reading)
+                        readings_y.append(y_reading)
+                        if i < 2:  # Small delay between readings
+                            time.sleep(0.01)  # 10ms between readings
+                    except Exception as e:
+                        logging.warning(f"Sensor reading {i+1} failed: {e}")
+                        continue
                 
-                # X axis - more aggressive filtering due to I/O errors and sensor glitches
-                if hasattr(self, 'x_last_valid_position') and self.x_last_valid_position is not None:
-                    x_change = abs(raw_x - self.x_last_valid_position)
-                    if x_change > 3.0:  # More than 3% change in one reading cycle (much tighter filtering)
-                        logging.warning(f"🔧 X SENSOR GLITCH DETECTED: {self.x_last_valid_position:.1f}% → {raw_x:.1f}% (Δ{x_change:.1f}%) - using last valid reading")
-                        current_x = self.x_last_valid_position  # Use last valid reading
-                    else:
-                        current_x = raw_x
-                        self.x_last_valid_position = raw_x
-                else:
-                    current_x = raw_x
-                    self.x_last_valid_position = raw_x
+                # Use consensus of 3 readings - pick the two closest values and average them
+                current_x = self._get_consensus_reading(readings_x, 'X')
+                current_y = self._get_consensus_reading(readings_y, 'Y')
                 
                 x_error = abs(current_x - target_x)
                 y_error = abs(current_y - target_y)
@@ -606,6 +595,45 @@ class PathRecorder:
             logging.error(f"Error reading final position: {e}")
         return False
     
+    def _get_consensus_reading(self, readings: list, axis: str) -> float:
+        """
+        Get consensus from 3 sensor readings by finding the two closest values and averaging them
+        This eliminates sensor glitches that cause single bad readings
+        """
+        if len(readings) < 2:
+            if len(readings) == 1:
+                return readings[0]
+            else:
+                logging.error(f"No valid {axis} sensor readings available")
+                return 0.0
+        
+        if len(readings) == 2:
+            avg = (readings[0] + readings[1]) / 2
+            logging.debug(f"{axis} consensus (2 readings): {readings[0]:.1f}%, {readings[1]:.1f}% → {avg:.1f}%")
+            return avg
+        
+        # For 3 readings, find the two closest and average them
+        distances = [
+            (abs(readings[0] - readings[1]), 0, 1),  # distance between 0,1
+            (abs(readings[0] - readings[2]), 0, 2),  # distance between 0,2  
+            (abs(readings[1] - readings[2]), 1, 2),  # distance between 1,2
+        ]
+        
+        # Find the pair with minimum distance (most consistent)
+        min_distance, idx1, idx2 = min(distances)
+        consensus = (readings[idx1] + readings[idx2]) / 2
+        
+        logging.debug(f"{axis} consensus (3 readings): [{readings[0]:.1f}%, {readings[1]:.1f}%, {readings[2]:.1f}%] → closest pair: {readings[idx1]:.1f}%, {readings[idx2]:.1f}% → {consensus:.1f}%")
+        
+        # Log if we had to reject a glitchy reading
+        rejected_idx = [0, 1, 2]
+        rejected_idx.remove(idx1)
+        rejected_idx.remove(idx2)
+        if rejected_idx and min_distance > 2.0:  # If we rejected a reading that was >2% different
+            logging.warning(f"🔧 {axis} GLITCH REJECTED: {readings[rejected_idx[0]]:.1f}% (consensus: {consensus:.1f}%)")
+        
+        return consensus
+
     def _is_axis_at_target(self, current: float, target: float, tolerance: float, axis: str) -> bool:
         """
         Check if axis has reached target within tolerance
