@@ -152,6 +152,12 @@ class ManualController:
             slow_zone_margin = config.get('slow_zone_margin', 0.1)
             safety_slow_speed = config.get('safety_slow_speed', 30)
             
+            # Debug output
+            print(f"\n🔍 {axis.upper()} Safety Check:")
+            print(f"   Voltage: {current_voltage:.3f}V, Range: {min_voltage:.3f}V-{max_voltage:.3f}V")
+            print(f"   Margins: safety={safety_margin:.3f}V, slow={slow_zone_margin:.3f}V")
+            print(f"   Direction: {direction}, Requested: {requested_speed:.1f}%")
+            
             # Check safety using motor's safety method
             if axis == 'x':
                 should_stop, max_speed = self.tv_controller.x_motor.check_safety_limits(
@@ -162,10 +168,15 @@ class ManualController:
                     current_voltage, min_voltage, max_voltage,
                     safety_margin, slow_zone_margin, safety_slow_speed, direction)
             
+            print(f"   Result: stop={should_stop}, max_speed={max_speed:.1f}%")
+            
             if should_stop:
+                print(f"   🛑 STOPPING {axis.upper()} motor")
                 return 0
             else:
-                return min(requested_speed, max_speed)
+                final_speed = min(requested_speed, max_speed)
+                print(f"   ✅ {axis.upper()} speed: {requested_speed:.1f}% → {final_speed:.1f}%")
+                return final_speed
                 
         except Exception as e:
             print(f"❌ Safety check error for {axis}: {e}")
