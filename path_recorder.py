@@ -521,27 +521,45 @@ class PathRecorder:
                 x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
                 
-                # TODO: Overshoot detection was causing false positives - disabled temporarily
-                # The system was incorrectly detecting 1.8% as "overshot" from 51.0% target
+                # Overshoot detection - emergency stop if motor goes too far
+                if self._check_overshoot(current_x, target_x, 'X'):
+                    logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT! {current_x:.1f}% target was {target_x:.1f}%")
+                    self.controller.x_motor.stop_motor()
+                    self.controller.x_motor.set_speed(0)
+                    self.x_stopped = True
+                    
+                if self._check_overshoot(current_y, target_y, 'Y'):
+                    logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT! {current_y:.1f}% target was {target_y:.1f}%")
+                    self.controller.y_motor.stop_motor() 
+                    self.controller.y_motor.set_speed(0)
+                    self.y_stopped = True
                 
                 # Only log position every 20 iterations to reduce spam
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
                     logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
-                # Stop motors that have reached their targets (but don't reset counter)
+                # Stop motors that have reached their targets (but don't reset counter)  
                 if x_at_target and not hasattr(self, 'x_stopped'):
                     logging.info(f"🎯 X motor reached target {target_x:.1f}% (current: {current_x:.1f}%)")
+                    # FORCE STOP - multiple commands to ensure motor actually stops
                     self.controller.x_motor.stop_motor()
                     self.controller.x_motor.set_speed(0)
+                    self.controller.x_motor.stop_motor()  # Double stop for safety
                     self.x_stopped = True
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
-                    pass  # X already stopped - no need to log every iteration
+                    # ENFORCE STOP - motor should not be moving if marked as stopped
+                    self.controller.x_motor.set_speed(0)
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🎯 Y motor reached target {target_y:.1f}% (current: {current_y:.1f}%)")
+                    # FORCE STOP - multiple commands to ensure motor actually stops  
                     self.controller.y_motor.stop_motor()
                     self.controller.y_motor.set_speed(0)
+                    self.controller.y_motor.stop_motor()  # Double stop for safety
                     self.y_stopped = True
+                elif hasattr(self, 'y_stopped') and self.y_stopped:
+                    # ENFORCE STOP - motor should not be moving if marked as stopped
+                    self.controller.y_motor.set_speed(0)
                 
                 # Check if both axes are at target
                 if x_at_target and y_at_target:
@@ -784,10 +802,14 @@ class PathRecorder:
     
     def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
         """
-        Check if motor has overshot the target by more than 2% (clear overshoot)
-        This prevents motors from running away in the wrong direction
+        Check if motor has overshot the target - emergency stop for runaway motors
+        X motor went to 41.6% when target was 24.5% (17% overshoot!)
         """
-        overshoot_tolerance = 2.0  # 2% overshoot tolerance
+        # More aggressive overshoot detection for both axes
+        if axis == 'X':
+            overshoot_tolerance = 1.0  # 1.0% overshoot tolerance for X axis
+        else:  # Y axis  
+            overshoot_tolerance = 0.3  # 0.3% overshoot tolerance for Y axis (it's more precise)
         
         # Calculate if we've gone significantly past the target
         if current > target + overshoot_tolerance:
