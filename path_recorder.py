@@ -254,9 +254,22 @@ class PathRecorder:
                 
                 logging.info(f"🔄 Reset motor flags: X was {'LOCKED' if x_was_stopped else 'FREE'}, Y was {'LOCKED' if y_was_stopped else 'FREE'} -> both now FREE")
                 
+                # Adjust tolerances for very small targets to improve accuracy
+                adjusted_x_tolerance = x_tolerance
+                adjusted_y_tolerance = y_tolerance
+                
+                # For targets near 0%, use tighter tolerance for better accuracy
+                if target_x <= 1.0:
+                    adjusted_x_tolerance = 0.1  # Tighter tolerance for X near 0%
+                    logging.info(f"🎯 X NEAR ZERO: Using tight tolerance {adjusted_x_tolerance}% for target {target_x}% (normal: {x_tolerance}%)")
+                
+                if target_y <= 1.0:
+                    adjusted_y_tolerance = 0.1  # Tighter tolerance for Y near 0%  
+                    logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance}% for target {target_y}% (normal: {y_tolerance}%)")
+                
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
-                    target_x, target_y, x_tolerance, y_tolerance, max_wait_per_point
+                    target_x, target_y, adjusted_x_tolerance, adjusted_y_tolerance, max_wait_per_point
                 )
                 
                 if not success:
