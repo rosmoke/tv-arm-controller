@@ -527,13 +527,13 @@ class PathRecorder:
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
                 
                 # Overshoot detection - emergency stop if motor goes too far
-                if self._check_overshoot(current_x, target_x, 'X'):
+                if self._check_overshoot(current_x, target_x, 'X', expected_x_direction):
                     logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT! {current_x:.1f}% target was {target_x:.1f}%")
                     self.controller.x_motor.stop_motor()
                     self.controller.x_motor.set_speed(0)
                     self.x_stopped = True
                     
-                if self._check_overshoot(current_y, target_y, 'Y'):
+                if self._check_overshoot(current_y, target_y, 'Y', expected_y_direction):
                     logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT! {current_y:.1f}% target was {target_y:.1f}%")
                     self.controller.y_motor.stop_motor() 
                     self.controller.y_motor.set_speed(0)
@@ -805,27 +805,37 @@ class PathRecorder:
             logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
             return False
     
-    def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
-        """
-        Check if motor has overshot the target - emergency stop for runaway motors
-        ONLY checks for forward overshoot (going past target), not backward (starting position)
-        """
-        # Conservative overshoot detection - only for real runaway motors
-        if axis == 'X':
-            overshoot_tolerance = 3.0  # 3.0% overshoot tolerance for X axis 
-        else:  # Y axis  
-            overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for Y axis
-        
-        # ONLY check for forward overshoot - when motor goes significantly PAST the target
-        # This prevents the false positive "backward overshoot" at starting positions
-        if current > target + overshoot_tolerance:
-            logging.warning(f"{axis} FORWARD OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far past target)")
-            return True
-        
-        # NO backward overshoot detection - it causes false positives at starting positions
-        # Backward detection was causing: "1.8% < 24.5% - 2.0%" = "MAJOR OVERSHOOT" (WRONG!)
-        
-        return False
+        def _check_overshoot(self, current: float, target: float, axis: str, expected_direction: int) -> bool:
+            """
+            Check if motor has overshot the target - emergency stop for runaway motors
+            Only checks if motor went PAST the target in the movement direction
+            
+            Args:
+                current: Current position
+                target: Target position  
+                axis: 'X' or 'Y'
+                expected_direction: 1 for forward/increasing, -1 for reverse/decreasing, 0 for no movement
+            """
+            # Conservative overshoot tolerance - only for real runaway motors
+            if axis == 'X':
+                overshoot_tolerance = 3.0  # 3.0% overshoot tolerance for X axis 
+            else:  # Y axis  
+                overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for Y axis
+            
+            # Only check for overshoot in the direction of movement
+            if expected_direction > 0:  # Moving forward/increasing (extend)
+                # Overshoot = went too far past target (above target)
+                if current > target + overshoot_tolerance:
+                    logging.warning(f"{axis} OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far forward)")
+                    return True
+            elif expected_direction < 0:  # Moving reverse/decreasing (retract)
+                # Overshoot = went too far past target (below target) 
+                if current < target - overshoot_tolerance:
+                    logging.warning(f"{axis} OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
+                    return True
+            
+            # No overshoot detected
+            return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
         """Save a recorded path to disk"""
