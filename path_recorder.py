@@ -464,15 +464,16 @@ class PathRecorder:
                             last_error = abs(self.x_last_position - target_x)
                             movement = abs(current_x - self.x_last_position)
                             
-                            # Only check direction if significant movement (>0.5%) to avoid sensor noise
-                            if movement > 0.5 and x_error > last_error + 0.3:  # Error increased significantly
-                                logging.warning(f"🚫 X WRONG DIRECTION: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                            # Only check for major direction reversal (>2% movement in clearly wrong direction)
+                            # Allow voltage fluctuations and small movements - focus on preventing true direction reversals
+                            if movement > 2.0 and x_error > last_error + 1.0:  # Much more lenient - only major wrong direction
+                                logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
                                 logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
                                 self.controller.x_motor.stop_motor()
                                 self.controller.x_motor.set_speed(0)
                                 self.x_stopped = True
                             else:
-                                logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, movement: {movement:.1f}%)")
+                                logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, movement: {movement:.1f}%, allowing voltage variations)")
                         else:
                             logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Update last position for next check
@@ -489,16 +490,16 @@ class PathRecorder:
                             last_error = abs(self.y_last_position - target_y)
                             movement = abs(current_y - self.y_last_position)
                             
-                            # Y motor is slow to respond - be more lenient with direction checking
-                            # Only check direction if significant movement (>0.5%) and clear wrong direction
-                            if movement > 0.5 and y_error > last_error + 0.4:  # Much higher thresholds for Y
-                                logging.warning(f"🚫 Y WRONG DIRECTION: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                            # Y motor is very slow to respond - only stop for major direction reversals
+                            # Allow all voltage fluctuations - focus only on preventing true direction reversals
+                            if movement > 1.5 and y_error > last_error + 0.8:  # Very lenient - Y is slow and has voltage variations
+                                logging.warning(f"🚫 Y MAJOR DIRECTION REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
                                 logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
                                 self.controller.y_motor.stop_motor()
                                 self.controller.y_motor.set_speed(0)
                                 self.y_stopped = True
                             else:
-                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, movement: {movement:.1f}%, Y needs time)")
+                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, movement: {movement:.1f}%, allowing voltage variations)")
                         else:
                             logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check, Y slow to respond)")
                         # Update last position for next check
