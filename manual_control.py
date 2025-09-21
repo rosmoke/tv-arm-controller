@@ -23,7 +23,7 @@ class ManualController:
         
         # Control settings
         self.step_size = 2.0  # Percentage to move per key press
-        self.continuous_speed = 30.0  # Speed for continuous movement
+        self.continuous_speed = 60.0  # Speed for continuous movement
         self.position_update_interval = 0.2  # How often to show position
         
         # Current movement state
