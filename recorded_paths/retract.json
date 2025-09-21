@@ -7,8 +7,8 @@
     {
       "point_number": 1,
       "timestamp": "2025-09-21T10:00:06Z",
-      "x_position": 94.6,
-      "y_position": 89.2
+      "x_position": 96.0,
+      "y_position": 84.0
     },
     {
       "point_number": 2,
@@ -31,8 +31,8 @@
     {
       "point_number": 5,
       "timestamp": "2025-09-21T10:00:02Z",
-      "x_position": 1.0,
-      "y_position": 0.3
+      "x_position": 1.6,
+      "y_position": 0.6
     },
     {
       "point_number": 6,
