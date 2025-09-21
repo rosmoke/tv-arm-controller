@@ -454,15 +454,13 @@ class PathRecorder:
                 x_error = abs(current_x - target_x)
                 y_error = abs(current_y - target_y)
                 
-                logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%)")
-                
                 # Check each axis independently - stop when reached or overshot target
                 x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
                 
-                # Debug logging for target checking
-                logging.info(f"Target check: X={current_x:.1f}%→{target_x:.1f}% (tol:{x_tolerance}%) = {'✓' if x_at_target else '✗'}")
-                logging.info(f"Target check: Y={current_y:.1f}%→{target_y:.1f}% (tol:{y_tolerance}%) = {'✓' if y_at_target else '✗'}")
+                # Only log position every 20 iterations to reduce spam
+                if iteration_count % 20 == 0 or x_at_target or y_at_target:
+                    logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
@@ -507,9 +505,8 @@ class PathRecorder:
                     
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
-                        logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes) [iteration {iteration_count}]")
-                        if iteration_count <= 3:  # Only for first few iterations to avoid spam
-                            logging.warning(f"🔍 DEBUG: X motor locked from start - hasattr(x_stopped)={hasattr(self, 'x_stopped')}, x_stopped={getattr(self, 'x_stopped', 'MISSING')}")
+                        if iteration_count % 50 == 0:  # Only log every 50 iterations to reduce spam
+                            logging.info(f"X axis LOCKED: {current_x:.1f}% [iter {iteration_count}]")
                     elif x_error > x_tolerance and not x_at_target:
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'x_last_position') and self.x_last_position is not None:
@@ -526,9 +523,11 @@ class PathRecorder:
                                 self.x_stopped = True
                                 logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
                             else:
-                                logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, movement: {movement:.1f}%, allowing voltage variations)")
+                                if iteration_count % 100 == 0:  # Reduce X continuing spam
+                                    logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%)")
                         else:
-                            logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
+                            if iteration_count <= 5:  # Only log first few iterations
+                                logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Update last position for next check
                         self.x_last_position = current_x
                     elif x_at_target:
@@ -536,7 +535,8 @@ class PathRecorder:
                     
                     # Only send commands to Y motor if it hasn't been stopped yet
                     if hasattr(self, 'y_stopped') and self.y_stopped:
-                        logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes) [iteration {iteration_count}]")
+                        if iteration_count % 50 == 0:  # Only log every 50 iterations to reduce spam
+                            logging.info(f"Y axis LOCKED: {current_y:.1f}% [iter {iteration_count}]")
                     elif y_error > y_tolerance and not y_at_target:
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'y_last_position') and self.y_last_position is not None:
@@ -552,9 +552,11 @@ class PathRecorder:
                                 self.controller.y_motor.set_speed(0)
                                 self.y_stopped = True
                             else:
-                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, movement: {movement:.1f}%, allowing voltage variations)")
+                                if iteration_count % 100 == 0:  # Reduce Y continuing spam  
+                                    logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%)")
                         else:
-                            logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check, Y slow to respond)")
+                            if iteration_count <= 5:  # Only log first few iterations
+                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Update last position for next check
                         self.y_last_position = current_y
                     elif y_at_target:
