@@ -219,10 +219,10 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            # Balanced tolerances with dynamic speed control for precision
-            # Tight enough for accuracy, loose enough to handle small sensor variations
-            x_tolerance = 0.4   # 0.4% tolerance for X axis (precise but achievable)
-            y_tolerance = 0.2   # 0.2% tolerance for Y axis (tighter - 0.3% was too loose for 0.3% target)
+            # Tighter tolerances with fast voltage readings and glitch filtering
+            # Much more precise now that we filter sensor glitches and read every 20ms
+            x_tolerance = 0.3   # 0.3% tolerance for X axis (tighter precision with fast readings)
+            y_tolerance = 0.15  # 0.15% tolerance for Y axis (very tight for precise positioning)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
