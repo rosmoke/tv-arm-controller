@@ -493,7 +493,24 @@ class PathRecorder:
         # FORCE VERIFICATION: Ensure directions were set properly
         logging.info("🔍 DIRECTION SETUP COMPLETED - MOTORS SHOULD NOW HAVE PROPER DIRECTIONS")
         
-        # Set initial speeds
+        # CRITICAL: Set directions BEFORE setting speeds (X motor was missing directions!)
+        # For X motor (inverted): target > current = REVERSE, target < current = FORWARD
+        if target_x > current_x:
+            self.controller.x_motor.set_direction_reverse()  # Inverted: increasing = reverse
+            logging.info(f"🔧 X DIRECTION: REVERSE (inverted) for {current_x:.1f}% → {target_x:.1f}%")
+        elif target_x < current_x:
+            self.controller.x_motor.set_direction_forward()   # Inverted: decreasing = forward  
+            logging.info(f"🔧 X DIRECTION: FORWARD (inverted) for {current_x:.1f}% → {target_x:.1f}%")
+        
+        # For Y motor (inverted): target > current = REVERSE, target < current = FORWARD
+        if target_y > current_y:
+            self.controller.y_motor.set_direction_reverse()  # Inverted: increasing = reverse
+            logging.info(f"🔧 Y DIRECTION: REVERSE (inverted) for {current_y:.1f}% → {target_y:.1f}%")
+        elif target_y < current_y:
+            self.controller.y_motor.set_direction_forward()   # Inverted: decreasing = forward
+            logging.info(f"🔧 Y DIRECTION: FORWARD (inverted) for {current_y:.1f}% → {target_y:.1f}%")
+        
+        # Set initial speeds AFTER directions are set
         self.controller.x_motor.set_speed(50.0)
         self.controller.y_motor.set_speed(50.0)
         
