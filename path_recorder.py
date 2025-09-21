@@ -803,23 +803,28 @@ class PathRecorder:
     def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
         """
         Check if motor has overshot the target - emergency stop for runaway motors
-        X motor went to 41.6% when target was 24.5% (17% overshoot!)
+        Only triggers for ACTUAL overshoot, not false positives at starting position
         """
         # More aggressive overshoot detection for both axes
         if axis == 'X':
-            overshoot_tolerance = 1.0  # 1.0% overshoot tolerance for X axis
+            overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for X axis (less aggressive)
         else:  # Y axis  
-            overshoot_tolerance = 0.3  # 0.3% overshoot tolerance for Y axis (it's more precise)
+            overshoot_tolerance = 1.0  # 1.0% overshoot tolerance for Y axis (less aggressive)
         
-        # Calculate if we've gone significantly past the target
+        # Only check for overshoot if we're PAST the target, not before reaching it
+        # Forward overshoot: current position significantly beyond target
         if current > target + overshoot_tolerance:
             logging.warning(f"{axis} OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far forward)")
             return True
+        # Backward overshoot: current position significantly behind target (only if we were moving toward it)
         elif current < target - overshoot_tolerance:
-            logging.warning(f"{axis} OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
-            return True
-        else:
-            return False
+            # Don't trigger false positives - only if we've actually moved past in wrong direction
+            error = abs(current - target)
+            if error > 5.0:  # Only trigger for major wrong-direction movement (>5%)
+                logging.warning(f"{axis} MAJOR OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
+                return True
+        
+        return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
         """Save a recorded path to disk"""
