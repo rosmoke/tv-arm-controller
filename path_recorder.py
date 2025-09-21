@@ -436,15 +436,18 @@ class PathRecorder:
         # Get current position to determine correct directions
         current_x, current_y = self.controller.get_current_position()
         
-        # Set correct directions for X motor
+        # Set correct directions for X motor with detailed logging
         if target_x > current_x:
             self.controller.x_motor.set_direction_forward()
-            logging.info(f"X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%)")
+            logging.info(f"X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
         elif target_x < current_x:
             self.controller.x_motor.set_direction_reverse()
-            logging.info(f"X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%)")
+            logging.info(f"X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
         else:
             logging.info(f"X direction: NONE (already at {target_x:.1f}%)")
+            
+        # CRITICAL: Log the expected movement direction
+        logging.info(f"X EXPECTED: {'INCREASE' if target_x > current_x else 'DECREASE' if target_x < current_x else 'STAY'} from {current_x:.1f}% to {target_x:.1f}%")
         
         # Set correct directions for Y motor
         if target_y > current_y:
@@ -501,9 +504,21 @@ class PathRecorder:
                 x_error = abs(current_x - target_x)
                 y_error = abs(current_y - target_y)
                 
-                # Check each axis independently - stop when reached or overshot target
+                # Check each axis independently - stop when reached OR OVERSHOT target
                 x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
+                
+                # CRITICAL: Check for overshoot - stop immediately if moving past target
+                x_overshot = self._check_overshoot(current_x, target_x, 'X')
+                y_overshot = self._check_overshoot(current_y, target_y, 'Y')
+                
+                # If overshot, consider it "at target" to stop the motor
+                if x_overshot:
+                    x_at_target = True
+                    logging.warning(f"🎯 X OVERSHOT: {current_x:.1f}% past target {target_x:.1f}% - stopping motor")
+                if y_overshot:
+                    y_at_target = True
+                    logging.warning(f"🎯 Y OVERSHOT: {current_y:.1f}% past target {target_y:.1f}% - stopping motor")
                 
                 # Only log position every 20 iterations to reduce spam
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
@@ -750,6 +765,23 @@ class PathRecorder:
             return True
         else:
             logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
+            return False
+    
+    def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
+        """
+        Check if motor has overshot the target by more than 2% (clear overshoot)
+        This prevents motors from running away in the wrong direction
+        """
+        overshoot_tolerance = 2.0  # 2% overshoot tolerance
+        
+        # Calculate if we've gone significantly past the target
+        if current > target + overshoot_tolerance:
+            logging.warning(f"{axis} OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far forward)")
+            return True
+        elif current < target - overshoot_tolerance:
+            logging.warning(f"{axis} OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
+            return True
+        else:
             return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
