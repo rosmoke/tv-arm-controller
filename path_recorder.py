@@ -506,9 +506,9 @@ class PathRecorder:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
                     if corrections_sent:
-                        time.sleep(2.0)  # Fixed wait time
+                        time.sleep(0.2)  # Much faster checking when corrections sent
                     else:
-                        time.sleep(0.5)  # Short wait if no corrections needed
+                        time.sleep(0.1)  # Very frequent checking for precise target detection
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
