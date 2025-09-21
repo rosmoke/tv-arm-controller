@@ -55,15 +55,15 @@ hardware:
       slow_zone_margin: 0.105 # Start slowing down within this margin (105mV)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
-      min_voltage: 0.821
+      min_voltage: 0.851
       max_voltage: 3.017
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
-      safety_margin: 0.005  # Voltage margin from absolute limits (5mV)
-      slow_zone_margin: 0.05 # Start slowing down within this margin (50mV)
+      safety_margin: 0.0  # No margin - stop exactly at limit (0.851V)
+      slow_zone_margin: 0.105 # Start slowing down within this margin (105mV)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
   
   # Actual TV mount positions (calibrated)
