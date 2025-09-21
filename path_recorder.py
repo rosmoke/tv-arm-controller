@@ -423,6 +423,8 @@ class PathRecorder:
                     self.controller.x_motor.set_speed(0)
                     logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
+                elif hasattr(self, 'x_stopped') and self.x_stopped:
+                    logging.debug(f"X already stopped at {current_x:.1f}% (target: {target_x:.1f}%)")
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
@@ -462,6 +464,7 @@ class PathRecorder:
                             last_error = abs(self.x_last_position - target_x)
                             if x_error > last_error:  # Error is increasing = moving away from target
                                 logging.warning(f"🚫 X WRONG DIRECTION: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                                logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%")
                                 self.controller.x_motor.stop_motor()
                                 self.controller.x_motor.set_speed(0)
                                 self.x_stopped = True
