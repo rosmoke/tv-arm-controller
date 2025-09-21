@@ -803,26 +803,22 @@ class PathRecorder:
     def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
         """
         Check if motor has overshot the target - emergency stop for runaway motors
-        Only triggers for ACTUAL overshoot, not false positives at starting position
+        ONLY checks for forward overshoot (going past target), not backward (starting position)
         """
-        # More aggressive overshoot detection for both axes
+        # Conservative overshoot detection - only for real runaway motors
         if axis == 'X':
-            overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for X axis (less aggressive)
+            overshoot_tolerance = 3.0  # 3.0% overshoot tolerance for X axis 
         else:  # Y axis  
-            overshoot_tolerance = 1.0  # 1.0% overshoot tolerance for Y axis (less aggressive)
+            overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for Y axis
         
-        # Only check for overshoot if we're PAST the target, not before reaching it
-        # Forward overshoot: current position significantly beyond target
+        # ONLY check for forward overshoot - when motor goes significantly PAST the target
+        # This prevents the false positive "backward overshoot" at starting positions
         if current > target + overshoot_tolerance:
-            logging.warning(f"{axis} OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far forward)")
+            logging.warning(f"{axis} FORWARD OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance}% (went too far past target)")
             return True
-        # Backward overshoot: current position significantly behind target (only if we were moving toward it)
-        elif current < target - overshoot_tolerance:
-            # Don't trigger false positives - only if we've actually moved past in wrong direction
-            error = abs(current - target)
-            if error > 5.0:  # Only trigger for major wrong-direction movement (>5%)
-                logging.warning(f"{axis} MAJOR OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
-                return True
+        
+        # NO backward overshoot detection - it causes false positives at starting positions
+        # Backward detection was causing: "1.8% < 24.5% - 2.0%" = "MAJOR OVERSHOOT" (WRONG!)
         
         return False
     
