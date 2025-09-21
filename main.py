@@ -355,10 +355,11 @@ class TVArmApplication:
                 print("8. Move to WALL position")
                 print("9. Move to EXTENDED position")
                 print("10. Manual step-through path playback")
-                print("11. Exit teaching mode")
+                print("11. Manual arrow key control")
+                print("12. Exit teaching mode")
                 print()
                 
-                choice = input("Enter your choice (1-11): ").strip()
+                choice = input("Enter your choice (1-12): ").strip()
                 
                 if choice == '1':
                     path_name = input("Enter path name (or press Enter for auto-generated): ").strip()
@@ -455,11 +456,15 @@ class TVArmApplication:
                     self._manual_step_playback()
                 
                 elif choice == '11':
+                    # Manual arrow key control
+                    self._manual_arrow_control()
+                
+                elif choice == '12':
                     print("Exiting teaching mode...")
                     break
                 
                 else:
-                    print("Invalid choice. Please enter 1-11.")
+                    print("Invalid choice. Please enter 1-12.")
                     
         except KeyboardInterrupt:
             print("\nTeaching mode interrupted.")
@@ -586,6 +591,23 @@ class TVArmApplication:
             print("Manual step-through cancelled.")
             if self.path_recorder.is_playing:
                 self.path_recorder.stop_playback()
+    
+    def _manual_arrow_control(self):
+        """Manual arrow key control mode"""
+        try:
+            from manual_control import ManualController
+            
+            print("\n🎮 Starting Manual Arrow Key Control...")
+            print("Make sure your terminal supports arrow keys.")
+            print()
+            
+            manual = ManualController(self.controller)
+            manual.run()
+            
+        except ImportError:
+            print("❌ Manual control module not available")
+        except Exception as e:
+            print(f"❌ Error in manual control: {e}")
     
     def list_recorded_paths(self):
         """List all recorded paths (command line mode)"""
