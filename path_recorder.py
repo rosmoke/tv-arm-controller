@@ -222,7 +222,7 @@ class PathRecorder:
             # Balanced tolerances with dynamic speed control for precision
             # Tight enough for accuracy, loose enough to handle small sensor variations
             x_tolerance = 0.4   # 0.4% tolerance for X axis (precise but achievable)
-            y_tolerance = 0.3   # 0.3% tolerance for Y axis (tighter control for Y)
+            y_tolerance = 0.2   # 0.2% tolerance for Y axis (tighter - 0.3% was too loose for 0.3% target)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
@@ -407,6 +407,10 @@ class PathRecorder:
                 # Check each axis independently - stop when reached or overshot target
                 x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
+                
+                # Debug logging for target checking
+                logging.info(f"Target check: X={current_x:.1f}%→{target_x:.1f}% (tol:{x_tolerance}%) = {'✓' if x_at_target else '✗'}")
+                logging.info(f"Target check: Y={current_y:.1f}%→{target_y:.1f}% (tol:{y_tolerance}%) = {'✓' if y_at_target else '✗'}")
                 
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
