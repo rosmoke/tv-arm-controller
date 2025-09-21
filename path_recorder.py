@@ -563,6 +563,8 @@ class PathRecorder:
                     self.x_stopped = True
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     # ENFORCE STOP - motor should not be moving if marked as stopped
+                    # CRITICAL: Once stopped, NEVER allow any movement that could reverse direction
+                    self.controller.x_motor.stop_motor()
                     self.controller.x_motor.set_speed(0)
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
@@ -574,6 +576,8 @@ class PathRecorder:
                     self.y_stopped = True
                 elif hasattr(self, 'y_stopped') and self.y_stopped:
                     # ENFORCE STOP - motor should not be moving if marked as stopped
+                    # CRITICAL: Once stopped, NEVER allow any movement that could reverse direction
+                    self.controller.y_motor.stop_motor()
                     self.controller.y_motor.set_speed(0)
                 
                 # Check if both axes are at target
@@ -844,7 +848,8 @@ class PathRecorder:
                 logging.warning(f"{axis} OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance}% (went too far backward)")
                 return True
         
-        # No overshoot detected
+        # CRITICAL: Never allow backward movement during extend or forward movement during retract
+        # This prevents the system from making "corrections" that reverse direction
         return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
