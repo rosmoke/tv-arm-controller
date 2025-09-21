@@ -398,9 +398,11 @@ class PathRecorder:
         logging.info("Sending initial movement commands to both motors...")
         self.controller.set_x_position(target_x, use_closed_loop=False)
         self.controller.set_y_position(target_y, use_closed_loop=False)
+        logging.info(f"✅ Movement commands sent: X→{target_x:.1f}%, Y→{target_y:.1f}%")
         
         # Start monitoring immediately - no fixed delay
         logging.info("Starting position monitoring...")
+        iteration_count = 0
         
         # Initialize position tracking for overshoot detection
         self.x_last_position = None
@@ -465,6 +467,7 @@ class PathRecorder:
                     self.controller.x_motor.set_speed(0)
                     logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
+                    logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     logging.debug(f"X already stopped at {current_x:.1f}% (target: {target_x:.1f}%)")
                 
@@ -499,7 +502,7 @@ class PathRecorder:
                     
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
-                        logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
+                        logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes) [iteration {iteration_count}]")
                     elif x_error > x_tolerance and not x_at_target:
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'x_last_position') and self.x_last_position is not None:
@@ -514,6 +517,7 @@ class PathRecorder:
                                 self.controller.x_motor.stop_motor()
                                 self.controller.x_motor.set_speed(0)
                                 self.x_stopped = True
+                                logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
                             else:
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, movement: {movement:.1f}%, allowing voltage variations)")
                         else:
@@ -525,7 +529,7 @@ class PathRecorder:
                     
                     # Only send commands to Y motor if it hasn't been stopped yet
                     if hasattr(self, 'y_stopped') and self.y_stopped:
-                        logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
+                        logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes) [iteration {iteration_count}]")
                     elif y_error > y_tolerance and not y_at_target:
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'y_last_position') and self.y_last_position is not None:
