@@ -489,26 +489,27 @@ class PathRecorder:
                             last_error = abs(self.y_last_position - target_y)
                             movement = abs(current_y - self.y_last_position)
                             
-                            # Only check direction if significant movement (>0.3%) to avoid sensor noise
-                            if movement > 0.3 and y_error > last_error + 0.2:  # Error increased significantly
+                            # Y motor is slow to respond - be more lenient with direction checking
+                            # Only check direction if significant movement (>0.5%) and clear wrong direction
+                            if movement > 0.5 and y_error > last_error + 0.4:  # Much higher thresholds for Y
                                 logging.warning(f"🚫 Y WRONG DIRECTION: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
                                 logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
                                 self.controller.y_motor.stop_motor()
                                 self.controller.y_motor.set_speed(0)
                                 self.y_stopped = True
                             else:
-                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, movement: {movement:.1f}%)")
+                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, movement: {movement:.1f}%, Y needs time)")
                         else:
-                            logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
+                            logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check, Y slow to respond)")
                         # Update last position for next check
                         self.y_last_position = current_y
                     elif y_at_target:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
                     if corrections_sent:
-                        time.sleep(0.2)  # Much faster checking when corrections sent
+                        time.sleep(0.05)  # Ultra fast checking when corrections sent
                     else:
-                        time.sleep(0.1)  # Very frequent checking for precise target detection
+                        time.sleep(0.02)  # Extremely frequent checking for precise target detection
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
