@@ -467,9 +467,10 @@ class PathRecorder:
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
                     logging.info(f"🛑 STOPPING X motor - reached target {target_x:.1f}% (current: {current_x:.1f}%)")
+                    # Triple-check stop commands to prevent overshoot
                     self.controller.x_motor.stop_motor()
-                    # Double-check stop command
                     self.controller.x_motor.set_speed(0)
+                    self.controller.x_motor.stop_motor()  # Extra stop command
                     logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
                     logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
@@ -508,8 +509,8 @@ class PathRecorder:
                     # Dynamic speed calculation based on distance to target - independent for X and Y
                     def calculate_x_approach_speed(x_error, base_speed):
                         """Calculate X motor speed based on distance to target"""
-                        if x_error <= 0.1:  # Within 0.1% of target
-                            approach_speed = base_speed * 0.7  # 70% speed when very close
+                        if x_error <= 0.5:  # Within 0.5% of target - slow down for precision
+                            approach_speed = base_speed * 0.7  # 70% speed when approaching
                             logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% of {base_speed}%)")
                         else:  # Far from target
                             approach_speed = base_speed  # Full speed
@@ -528,7 +529,7 @@ class PathRecorder:
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         if iteration_count % 50 == 0:  # Only log every 50 iterations to reduce spam
                             logging.info(f"X axis LOCKED: {current_x:.1f}% [iter {iteration_count}]")
-                    elif x_error > x_tolerance and not x_at_target:
+                    elif x_error > x_tolerance and not x_at_target and not (hasattr(self, 'x_stopped') and self.x_stopped):
                         # Check if motor is moving in wrong direction (away from target)
                         if hasattr(self, 'x_last_position') and self.x_last_position is not None:
                             last_error = abs(self.x_last_position - target_x)
