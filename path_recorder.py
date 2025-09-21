@@ -186,6 +186,7 @@ class PathRecorder:
         
         self.is_playing = True
         self.current_playback_path = path_data
+        self.current_path_name = path_name  # Store path name for skip logic
         self.playback_speed = speed_multiplier
         self.manual_step_mode = manual_step
         
@@ -231,6 +232,24 @@ class PathRecorder:
                 
                 target_x = point.x_position
                 target_y = point.y_position
+                
+                # Check if we should skip this datapoint (for extend/retract paths)
+                current_x, current_y = self.controller.get_current_position()
+                
+                # For extend path: skip if already past (extended beyond) the target
+                # For retract path: skip if already past (retracted beyond) the target
+                path_name = getattr(self, 'current_path_name', '').lower()
+                
+                if 'extend' in path_name:
+                    # EXTEND: Skip if current position is already higher than target (already extended past)
+                    if current_x >= target_x and current_y >= target_y:
+                        logging.info(f"🔄 SKIPPING DATAPOINT {i+1}: Already extended past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                        continue
+                elif 'retract' in path_name:
+                    # RETRACT: Skip if current position is already lower than target (already retracted past)
+                    if current_x <= target_x and current_y <= target_y:
+                        logging.info(f"🔄 SKIPPING DATAPOINT {i+1}: Already retracted past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                        continue
                 
                 logging.info(f"=== DATAPOINT {i+1}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
@@ -411,10 +430,36 @@ class PathRecorder:
         logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'}, "
                     f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'}")
         
-        # Send initial movement commands to both motors
+        # Send initial movement commands to both motors with correct directions
         logging.info("Sending initial movement commands to both motors...")
-        self.controller.set_x_position(target_x, use_closed_loop=False)
-        self.controller.set_y_position(target_y, use_closed_loop=False)
+        
+        # Get current position to determine correct directions
+        current_x, current_y = self.controller.get_current_position()
+        
+        # Set correct directions for X motor
+        if target_x > current_x:
+            self.controller.x_motor.set_direction_forward()
+            logging.info(f"X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%)")
+        elif target_x < current_x:
+            self.controller.x_motor.set_direction_reverse()
+            logging.info(f"X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%)")
+        else:
+            logging.info(f"X direction: NONE (already at {target_x:.1f}%)")
+        
+        # Set correct directions for Y motor
+        if target_y > current_y:
+            self.controller.y_motor.set_direction_forward()
+            logging.info(f"Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%)")
+        elif target_y < current_y:
+            self.controller.y_motor.set_direction_reverse()
+            logging.info(f"Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%)")
+        else:
+            logging.info(f"Y direction: NONE (already at {target_y:.1f}%)")
+        
+        # Set initial speeds
+        self.controller.x_motor.set_speed(50.0)
+        self.controller.y_motor.set_speed(50.0)
+        
         logging.info(f"✅ Movement commands sent: X→{target_x:.1f}%, Y→{target_y:.1f}%")
         
         # Start monitoring immediately - no fixed delay
