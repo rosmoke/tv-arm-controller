@@ -452,6 +452,10 @@ class PathRecorder:
         expected_x_direction = 1 if target_x > start_x else -1 if target_x < start_x else 0
         expected_y_direction = 1 if target_y > start_y else -1 if target_y < start_y else 0
         
+        # Store initial directions for overshoot detection
+        self.initial_direction_x = expected_x_direction
+        self.initial_direction_y = expected_y_direction
+        
         logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'} ({expected_x_direction}), "
                     f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'} ({expected_y_direction})")
         
@@ -874,9 +878,27 @@ class PathRecorder:
 
     def _is_axis_at_target(self, current: float, target: float, tolerance: float, axis: str) -> bool:
         """
-        Check if axis has reached target within tolerance
+        Check if axis has reached target within tolerance OR overshot target
         """
         error = abs(current - target)
+        
+        # Check for overshoot - if motor went past target, consider it "at target" to stop it
+        # This prevents runaway motors that go too far past the target
+        if hasattr(self, 'initial_direction_x') and axis == 'X':
+            if self.initial_direction_x > 0 and current > target + tolerance:  # Forward overshoot
+                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {tolerance:.1f}% (forward overshoot)")
+                return True
+            elif self.initial_direction_x < 0 and current < target - tolerance:  # Reverse overshoot  
+                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {tolerance:.1f}% (reverse overshoot)")
+                return True
+                
+        if hasattr(self, 'initial_direction_y') and axis == 'Y':
+            if self.initial_direction_y > 0 and current > target + tolerance:  # Forward overshoot
+                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {tolerance:.1f}% (forward overshoot)")
+                return True
+            elif self.initial_direction_y < 0 and current < target - tolerance:  # Reverse overshoot
+                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {tolerance:.1f}% (reverse overshoot)")
+                return True
         
         # Only log debug info if error is very large (debugging tolerance issues)
         if error > 10.0:
