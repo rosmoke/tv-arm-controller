@@ -244,7 +244,11 @@ class PathRecorder:
                     delattr(self, 'x_last_position')
                 if hasattr(self, 'y_last_position'):
                     delattr(self, 'y_last_position')
-                logging.info(f"🔄 Reset motor flags for fresh start")
+                if hasattr(self, 'x_last_valid_position'):
+                    delattr(self, 'x_last_valid_position')
+                if hasattr(self, 'y_last_valid_position'):
+                    delattr(self, 'y_last_valid_position')
+                logging.info(f"🔄 Reset motor flags and sensor filters for fresh start")
                 
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
@@ -411,7 +415,34 @@ class PathRecorder:
             
             try:
                 # Get current position for both axes
-                current_x, current_y = self.controller.get_current_position()
+                raw_x, raw_y = self.controller.get_current_position()
+                
+                # Filter out obvious sensor glitches for Y axis (you mentioned false readings)
+                # If Y reading changes by more than 20% in one cycle, it's likely a glitch
+                if hasattr(self, 'y_last_valid_position') and self.y_last_valid_position is not None:
+                    y_change = abs(raw_y - self.y_last_valid_position)
+                    if y_change > 20.0:  # More than 20% change in one reading cycle
+                        logging.warning(f"🔧 Y SENSOR GLITCH DETECTED: {self.y_last_valid_position:.1f}% → {raw_y:.1f}% (Δ{y_change:.1f}%) - using last valid reading")
+                        current_y = self.y_last_valid_position  # Use last valid reading
+                    else:
+                        current_y = raw_y
+                        self.y_last_valid_position = raw_y
+                else:
+                    current_y = raw_y
+                    self.y_last_valid_position = raw_y
+                
+                # X axis - less filtering needed, but still check for major glitches
+                if hasattr(self, 'x_last_valid_position') and self.x_last_valid_position is not None:
+                    x_change = abs(raw_x - self.x_last_valid_position)
+                    if x_change > 15.0:  # More than 15% change in one reading cycle
+                        logging.warning(f"🔧 X SENSOR GLITCH DETECTED: {self.x_last_valid_position:.1f}% → {raw_x:.1f}% (Δ{x_change:.1f}%) - using last valid reading")
+                        current_x = self.x_last_valid_position  # Use last valid reading
+                    else:
+                        current_x = raw_x
+                        self.x_last_valid_position = raw_x
+                else:
+                    current_x = raw_x
+                    self.x_last_valid_position = raw_x
                 
                 x_error = abs(current_x - target_x)
                 y_error = abs(current_y - target_y)
