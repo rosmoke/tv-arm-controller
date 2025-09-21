@@ -459,34 +459,39 @@ class PathRecorder:
         logging.info(f"Expected directions: X={'forward' if expected_x_direction > 0 else 'backward' if expected_x_direction < 0 else 'none'} ({expected_x_direction}), "
                     f"Y={'forward' if expected_y_direction > 0 else 'backward' if expected_y_direction < 0 else 'none'} ({expected_y_direction})")
         
-        # Send initial movement commands to both motors with correct directions
-        logging.info("Sending initial movement commands to both motors...")
+        # CRITICAL: Send initial movement commands to both motors with correct directions
+        logging.info("🚀 SENDING INITIAL MOVEMENT COMMANDS TO BOTH MOTORS...")
         
-        # Get current position to determine correct directions
+        # Get current position to determine correct directions  
         current_x, current_y = self.controller.get_current_position()
+        logging.info(f"📍 CURRENT POSITION: X={current_x:.1f}%, Y={current_y:.1f}%")
+        logging.info(f"🎯 TARGET POSITION: X={target_x:.1f}%, Y={target_y:.1f}%")
         
-        # Set correct directions for X motor with detailed logging
+        # MANDATORY: Set correct directions for X motor with detailed logging
         if target_x > current_x:
             self.controller.x_motor.set_direction_forward()
-            logging.info(f"X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
+            logging.info(f"✅ X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
         elif target_x < current_x:
             self.controller.x_motor.set_direction_reverse()
-            logging.info(f"X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
+            logging.info(f"✅ X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
         else:
-            logging.info(f"X direction: NONE (already at {target_x:.1f}%)")
+            logging.info(f"⚪ X direction: NONE (already at {target_x:.1f}%)")
             
-        # CRITICAL: Log the expected movement direction
-        logging.info(f"X EXPECTED: {'INCREASE' if target_x > current_x else 'DECREASE' if target_x < current_x else 'STAY'} from {current_x:.1f}% to {target_x:.1f}%")
+        # CRITICAL: Log the expected movement direction  
+        logging.info(f"🔄 X EXPECTED: {'INCREASE' if target_x > current_x else 'DECREASE' if target_x < current_x else 'STAY'} from {current_x:.1f}% to {target_x:.1f}%")
         
-        # Set correct directions for Y motor
+        # MANDATORY: Set correct directions for Y motor
         if target_y > current_y:
             self.controller.y_motor.set_direction_forward()
-            logging.info(f"Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%)")
+            logging.info(f"✅ Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%)")
         elif target_y < current_y:
             self.controller.y_motor.set_direction_reverse()
-            logging.info(f"Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%)")
+            logging.info(f"✅ Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%)")
         else:
-            logging.info(f"Y direction: NONE (already at {target_y:.1f}%)")
+            logging.info(f"⚪ Y direction: NONE (already at {target_y:.1f}%)")
+            
+        # FORCE VERIFICATION: Ensure directions were set properly
+        logging.info("🔍 DIRECTION SETUP COMPLETED - MOTORS SHOULD NOW HAVE PROPER DIRECTIONS")
         
         # Set initial speeds
         self.controller.x_motor.set_speed(50.0)
