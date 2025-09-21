@@ -235,6 +235,17 @@ class PathRecorder:
                 logging.info(f"=== DATAPOINT {i+1}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
                 
+                # Reset motor lock flags for new datapoint
+                if hasattr(self, 'x_stopped'):
+                    delattr(self, 'x_stopped')
+                if hasattr(self, 'y_stopped'):
+                    delattr(self, 'y_stopped')
+                if hasattr(self, 'x_last_position'):
+                    delattr(self, 'x_last_position')
+                if hasattr(self, 'y_last_position'):
+                    delattr(self, 'y_last_position')
+                logging.info(f"🔄 Reset motor flags for fresh start")
+                
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
                     target_x, target_y, x_tolerance, y_tolerance, max_wait_per_point
