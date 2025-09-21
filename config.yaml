@@ -63,7 +63,7 @@ hardware:
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit (0.851V)
-      slow_zone_margin: 0.105 # Start slowing down within this margin (105mV)
+      slow_zone_margin: 0.013 # Start slowing down within this margin (13mV = 0.6%)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
   
   # Actual TV mount positions (calibrated)
