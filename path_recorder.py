@@ -289,6 +289,9 @@ class PathRecorder:
                     adjusted_y_tolerance = 0.1  # Tighter tolerance for Y near 0%  
                     logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance}% for target {target_y}% (normal: {y_tolerance}%)")
                 
+                # Debug: Log the tolerances being used
+                logging.info(f"🎯 TOLERANCES: X={adjusted_x_tolerance}%, Y={adjusted_y_tolerance}% for targets X={target_x}%, Y={target_y}%")
+                
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
                     target_x, target_y, adjusted_x_tolerance, adjusted_y_tolerance, max_wait_per_point
@@ -529,8 +532,8 @@ class PathRecorder:
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
                     logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
-                # Stop motors that have reached their targets
-                if x_at_target and not hasattr(self, 'x_stopped'):
+                # Stop motors that have reached their targets - but not in first few iterations (prevent false positives)
+                if x_at_target and not hasattr(self, 'x_stopped') and iteration_count > 3:
                     logging.info(f"🛑 STOPPING X motor - reached target {target_x:.1f}% (current: {current_x:.1f}%)")
                     # Triple-check stop commands to prevent overshoot
                     self.controller.x_motor.stop_motor()
@@ -539,16 +542,20 @@ class PathRecorder:
                     logging.info(f"🎯 X axis STOPPED at {current_x:.1f}%")
                     self.x_stopped = True
                     logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
+                elif x_at_target and iteration_count <= 3:
+                    logging.warning(f"⚠️ X claims to be at target in early iteration {iteration_count} - ignoring (current: {current_x:.1f}%, target: {target_x:.1f}%)")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     logging.debug(f"X already stopped at {current_x:.1f}% (target: {target_x:.1f}%)")
                 
-                if y_at_target and not hasattr(self, 'y_stopped'):
+                if y_at_target and not hasattr(self, 'y_stopped') and iteration_count > 3:
                     logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
                     self.controller.y_motor.stop_motor()
                     # Double-check stop command
                     self.controller.y_motor.set_speed(0)
                     logging.info(f"🎯 Y axis STOPPED at {current_y:.1f}%")
                     self.y_stopped = True
+                elif y_at_target and iteration_count <= 3:
+                    logging.warning(f"⚠️ Y claims to be at target in early iteration {iteration_count} - ignoring (current: {current_y:.1f}%, target: {target_y:.1f}%)")
                 
                 # Check if both axes are at target
                 if x_at_target and y_at_target:
