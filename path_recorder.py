@@ -236,7 +236,7 @@ class PathRecorder:
                 
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
-                    target_x, target_y, x_tolerance, max_wait_per_point
+                    target_x, target_y, x_tolerance, y_tolerance, max_wait_per_point
                 )
                 
                 if not success:
@@ -362,7 +362,7 @@ class PathRecorder:
             logging.error(f"{axis}: Error reading final position: {e}")
         return False
     
-    def _move_to_position_simultaneous(self, target_x: float, target_y: float, tolerance: float, max_wait: float) -> bool:
+    def _move_to_position_simultaneous(self, target_x: float, target_y: float, x_tolerance: float, y_tolerance: float, max_wait: float) -> bool:
         """Move both X and Y axes simultaneously to target position"""
         start_time = time.time()
         consecutive_good_readings = 0
