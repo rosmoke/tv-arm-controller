@@ -222,7 +222,7 @@ class PathRecorder:
             # Tighter tolerances with fast voltage readings and glitch filtering
             # Much more precise now that we filter sensor glitches and read every 20ms
             x_tolerance = 0.3   # 0.3% tolerance for X axis (tighter precision with fast readings)
-            y_tolerance = 0.15  # 0.15% tolerance for Y axis (very tight for precise positioning)
+            y_tolerance = 0.08  # 0.08% tolerance for Y axis (ultra-tight - 0.2% vs 0.3% = 0.1% error was too loose)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
