@@ -233,11 +233,30 @@ class PathRecorder:
                 target_x = point.x_position
                 target_y = point.y_position
                 
+                # Check if we should skip this datapoint (correct skip logic)
+                current_x, current_y = self.controller.get_current_position()
+                
                 # Track the actual datapoint number we're working on (1-based)
                 actual_datapoint_number = point.point_number if hasattr(point, 'point_number') else i + 1
                 
-                # TODO: Smart skip logic disabled temporarily - was causing incorrect skipping
-                # Will re-implement after fixing the core movement logic
+                # For extend path: skip if current position is ALREADY PAST this datapoint
+                # For retract path: skip if current position is ALREADY PAST this datapoint  
+                path_name = getattr(self, 'current_path_name', '').lower()
+                
+                should_skip = False
+                if 'extend' in path_name:
+                    # EXTEND: Skip if we're already extended past this datapoint (both X AND Y past target)
+                    if current_x > target_x and current_y > target_y:
+                        should_skip = True
+                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already extended past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                elif 'retract' in path_name:
+                    # RETRACT: Skip if we're already retracted past this datapoint (both X AND Y past target)
+                    if current_x < target_x and current_y < target_y:
+                        should_skip = True
+                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already retracted past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                
+                if should_skip:
+                    continue
                 
                 logging.info(f"=== DATAPOINT {actual_datapoint_number}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
