@@ -658,6 +658,31 @@ class PathRecorder:
                     
                     # All correction logic disabled - motors just continue until target reached or timeout
                     
+                    # Helper functions for speed calculation (still needed even without corrections)
+                    def calculate_x_approach_speed(x_error, base_speed):
+                        """Calculate X motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
+                        if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
+                            approach_speed = base_speed * 0.3  # 30% speed when very close
+                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
+                        elif x_error <= 1.0:  # Within 1% of target - slow down significantly  
+                            approach_speed = base_speed * 0.5  # 50% speed when approaching
+                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - approaching target)")
+                        else:  # Far from target
+                            approach_speed = base_speed  # Full speed
+                        return approach_speed
+                    
+                    def calculate_y_approach_speed(y_error, base_speed):
+                        """Calculate Y motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
+                        if y_error <= 0.08:  # Within 0.08% of target - very slow for precision
+                            approach_speed = base_speed * 0.3  # 30% speed when very close
+                            logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
+                        elif y_error <= 0.3:  # Within 0.3% of target - slow down significantly
+                            approach_speed = base_speed * 0.5  # 50% speed when approaching
+                            logging.info(f"Y SLOW DOWN: {y_error:.2f}% error → {approach_speed:.0f}% speed (50% - approaching target)")
+                        else:  # Far from target
+                            approach_speed = base_speed  # Full speed
+                        return approach_speed
+                    
                     # No corrections - just wait for motors to reach targets or timeout
                     if False:  # DISABLED BROKEN CODE
                         if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
