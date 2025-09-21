@@ -384,6 +384,10 @@ class PathRecorder:
         self.controller.set_x_position(target_x, use_closed_loop=False)
         self.controller.set_y_position(target_y, use_closed_loop=False)
         
+        # Allow time for motors to start moving before checking position
+        logging.info("Waiting 3 seconds for motors to start moving...")
+        time.sleep(3.0)
+        
         # Initialize position tracking for overshoot detection
         self.x_last_position = None
         self.y_last_position = None
