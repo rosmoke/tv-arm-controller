@@ -657,6 +657,9 @@ class PathRecorder:
                     corrections_sent = False
                     
                     # All correction logic disabled - motors just continue until target reached or timeout
+                    
+                    # No corrections - just wait for motors to reach targets or timeout
+                    if False:  # DISABLED BROKEN CODE
                         if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
                             approach_speed = base_speed * 0.3  # 30% speed when very close
                             logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
@@ -777,6 +780,8 @@ class PathRecorder:
                         self.y_last_position = current_y
                     elif y_at_target:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
+                    
+                    # Close the disabled code block
                     
                     if corrections_sent:
                         time.sleep(0.05)  # Ultra fast checking when corrections sent
