@@ -458,13 +458,9 @@ class PathRecorder:
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
                     elif x_error > x_tolerance and not x_at_target:
-                        # NO CORRECTIONS - only initial movement allowed for unidirectional path
-                        logging.info(f"🚫 X NO CORRECTIONS: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, no corrections allowed)")
-                        # Stop motor to prevent any corrections that could reverse direction
-                        if not hasattr(self, 'x_stopped'):
-                            self.controller.x_motor.stop_motor()
-                            self.controller.x_motor.set_speed(0)
-                            self.x_stopped = True
+                        # Motor still moving toward target - let it continue (no corrections needed)
+                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, still moving)")
+                        # Don't stop motor - let it continue its initial movement
                     elif x_at_target:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
                     
@@ -472,13 +468,9 @@ class PathRecorder:
                     if hasattr(self, 'y_stopped') and self.y_stopped:
                         logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
                     elif y_error > y_tolerance and not y_at_target:
-                        # NO CORRECTIONS - only initial movement allowed for unidirectional path
-                        logging.info(f"🚫 Y NO CORRECTIONS: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, no corrections allowed)")
-                        # Stop motor to prevent any corrections that could reverse direction
-                        if not hasattr(self, 'y_stopped'):
-                            self.controller.y_motor.stop_motor()
-                            self.controller.y_motor.set_speed(0)
-                            self.y_stopped = True
+                        # Motor still moving toward target - let it continue (no corrections needed)
+                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, still moving)")
+                        # Don't stop motor - let it continue its initial movement
                     elif y_at_target:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
