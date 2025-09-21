@@ -39,12 +39,6 @@
       "timestamp": "2025-09-21T10:00:02Z",
       "x_position": 0.2,
       "y_position": 0.4
-    },
-    {
-      "point_number": 7,
-      "timestamp": "2025-09-21T10:00:01Z",
-      "x_position": 0.0,
-      "y_position": 0.0
     }
   ]
 }
