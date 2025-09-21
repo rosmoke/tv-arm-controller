@@ -467,13 +467,14 @@ class PathRecorder:
                                 self.controller.x_motor.set_speed(0)
                                 self.x_stopped = True
                             else:
-                                # Balanced speeds for X motor
+                                # X motor speeds (base speeds, Y will be 2x these)
                                 if x_error > 15.0:
-                                    speed = 50.0  # Moderate speed for large movements
+                                    x_speed = 25.0  # Moderate speed for large movements
                                 elif x_error > 8.0:
-                                    speed = 35.0  # Medium speed for medium movements
+                                    x_speed = 17.5  # Medium speed for medium movements
                                 else:
-                                    speed = 20.0  # Careful speed for fine adjustments
+                                    x_speed = 10.0  # Careful speed for fine adjustments
+                                speed = x_speed
                                 
                                 logging.info(f"X needs correction: {current_x:.1f}% → {target_x:.1f}% (speed: {speed:.0f}%, cmd: {x_command_count})")
                                 self.controller.set_x_position(target_x, use_closed_loop=False)
@@ -502,13 +503,14 @@ class PathRecorder:
                                 self.controller.y_motor.set_speed(0)
                                 self.y_stopped = True
                             else:
-                                # Balanced speeds for Y motor - fast enough to reach target, slow enough to control
+                                # Y motor speeds (2x X motor speeds for faster movement)
                                 if y_error > 12.0:
-                                    speed = 45.0  # Moderate speed for large Y movements
+                                    y_speed = 50.0  # 2x X moderate speed (25.0 * 2)
                                 elif y_error > 6.0:
-                                    speed = 35.0  # Medium speed for medium Y movements
+                                    y_speed = 35.0  # 2x X medium speed (17.5 * 2)
                                 else:
-                                    speed = 25.0  # Careful speed for fine Y adjustments
+                                    y_speed = 20.0  # 2x X careful speed (10.0 * 2)
+                                speed = y_speed
                                 
                                 logging.info(f"Y needs correction: {current_y:.1f}% → {target_y:.1f}% (speed: {speed:.0f}%, cmd: {y_command_count})")
                                 self.controller.set_y_position(target_y, use_closed_loop=False)
