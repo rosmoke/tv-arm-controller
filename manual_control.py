@@ -23,7 +23,8 @@ class ManualController:
         
         # Control settings
         self.step_size = 2.0  # Percentage to move per key press
-        self.continuous_speed = 60.0  # Speed for continuous movement
+        self.continuous_speed = 60.0  # Speed for continuous movement (0-100 UI scale)
+        self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
         self.position_update_interval = 0.2  # How often to show position
         
         # Current movement state
@@ -67,22 +68,25 @@ class ManualController:
     
     def process_key(self, key: str):
         """Process key press and control motors directly"""
+        # Calculate actual motor speed (UI speed * multiplier)
+        actual_speed = min(100.0, self.continuous_speed * self.speed_multiplier)
+        
         if key == '\x1b[A':  # Up arrow - Y motor forward
             print("↑ Y UP")
             self.tv_controller.y_motor.set_direction_forward()
-            self.tv_controller.y_motor.set_speed(self.continuous_speed)
+            self.tv_controller.y_motor.set_speed(actual_speed)
         elif key == '\x1b[B':  # Down arrow - Y motor reverse
             print("↓ Y DOWN")
             self.tv_controller.y_motor.set_direction_reverse()
-            self.tv_controller.y_motor.set_speed(self.continuous_speed)
+            self.tv_controller.y_motor.set_speed(actual_speed)
         elif key == '\x1b[C':  # Right arrow - X motor forward
             print("→ X RIGHT")
             self.tv_controller.x_motor.set_direction_forward()
-            self.tv_controller.x_motor.set_speed(self.continuous_speed)
+            self.tv_controller.x_motor.set_speed(actual_speed)
         elif key == '\x1b[D':  # Left arrow - X motor reverse
             print("← X LEFT")
             self.tv_controller.x_motor.set_direction_reverse()
-            self.tv_controller.x_motor.set_speed(self.continuous_speed)
+            self.tv_controller.x_motor.set_speed(actual_speed)
         elif key == ' ':  # Spacebar - stop all
             print("⏹️  STOP ALL")
             self.tv_controller.x_motor.stop_motor()
