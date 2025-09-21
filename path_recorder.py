@@ -520,17 +520,8 @@ class PathRecorder:
                 x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
                 y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
                 
-                # CRITICAL: Check for overshoot - stop immediately if moving past target
-                x_overshot = self._check_overshoot(current_x, target_x, 'X')
-                y_overshot = self._check_overshoot(current_y, target_y, 'Y')
-                
-                # If overshot, consider it "at target" to stop the motor
-                if x_overshot:
-                    x_at_target = True
-                    logging.warning(f"🎯 X OVERSHOT: {current_x:.1f}% past target {target_x:.1f}% - stopping motor")
-                if y_overshot:
-                    y_at_target = True
-                    logging.warning(f"🎯 Y OVERSHOT: {current_y:.1f}% past target {target_y:.1f}% - stopping motor")
+                # TODO: Overshoot detection was causing false positives - disabled temporarily
+                # The system was incorrectly detecting 1.8% as "overshot" from 51.0% target
                 
                 # Only log position every 20 iterations to reduce spam
                 if iteration_count % 20 == 0 or x_at_target or y_at_target:
@@ -777,12 +768,15 @@ class PathRecorder:
         """
         error = abs(current - target)
         
+        # DEBUG: Always log this to catch the bug
+        logging.info(f"🔍 {axis} TARGET CHECK: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
+        
         # Only accept if strictly within tolerance - prevent boundary edge cases
         if error < tolerance:
             logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
             return True
         else:
-            logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
+            logging.info(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
             return False
     
     def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
