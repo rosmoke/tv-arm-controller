@@ -113,26 +113,30 @@ class DCMotorController:
         min_slow_zone = min_voltage + slow_zone_margin  
         max_slow_zone = max_voltage - slow_zone_margin
         
-        # Check if we're at absolute limits (STOP)
-        if current_voltage <= min_voltage or current_voltage >= max_voltage:
-            logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute limit ({min_voltage:.3f}V - {max_voltage:.3f}V)")
-            return True, 0
-            
-        # Check if we're in safety margin (STOP)
-        if current_voltage <= min_safety_limit or current_voltage >= max_safety_limit:
-            logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V in safety margin ({min_safety_limit:.3f}V - {max_safety_limit:.3f}V)")
-            return True, 0
+        # ONLY restrict movement TOWARD dangerous limits, not away from them
         
-        # Check if we're approaching limits in the direction we're moving
         if direction == 'forward':
-            # Moving forward (increasing voltage) - check max limits
-            if current_voltage >= max_slow_zone:
-                logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching max limit, reducing to {safety_slow_speed}%")
+            # Moving forward (increasing voltage) - only check MAX limits
+            if current_voltage >= max_voltage:
+                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MAX limit ({max_voltage:.3f}V)")
+                return True, 0
+            elif current_voltage >= max_safety_limit:
+                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V in MAX safety margin ({max_safety_limit:.3f}V)")
+                return True, 0
+            elif current_voltage >= max_slow_zone:
+                logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching MAX limit, reducing to {safety_slow_speed}%")
                 return False, safety_slow_speed
+                
         elif direction == 'reverse':
-            # Moving reverse (decreasing voltage) - check min limits  
-            if current_voltage <= min_slow_zone:
-                logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching min limit, reducing to {safety_slow_speed}%")
+            # Moving reverse (decreasing voltage) - only check MIN limits
+            if current_voltage <= min_voltage:
+                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MIN limit ({min_voltage:.3f}V)")
+                return True, 0
+            elif current_voltage <= min_safety_limit:
+                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V in MIN safety margin ({min_safety_limit:.3f}V)")
+                return True, 0
+            elif current_voltage <= min_slow_zone:
+                logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching MIN limit, reducing to {safety_slow_speed}%")
                 return False, safety_slow_speed
         
         # All clear - no safety restrictions
