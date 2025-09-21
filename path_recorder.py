@@ -563,10 +563,11 @@ class PathRecorder:
                     self.controller.x_motor.stop_motor()  # Double stop for safety
                     self.x_stopped = True
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
-                    # ENFORCE STOP - motor should not be moving if marked as stopped
-                    # CRITICAL: Once stopped, NEVER allow any movement that could reverse direction
-                    self.controller.x_motor.stop_motor()
-                    self.controller.x_motor.set_speed(0)
+                    # TEMPORARILY DISABLED: Motor locking is preventing X from reaching target
+                    # TODO: Fix motor stop logic - X is getting locked prematurely
+                    logging.warning(f"X motor marked as stopped but still {x_error:.1f}% away from target - IGNORING LOCK")
+                    # self.controller.x_motor.stop_motor()
+                    # self.controller.x_motor.set_speed(0)
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🎯 Y motor reached target {target_y:.1f}% (current: {current_y:.1f}%)")
@@ -576,10 +577,11 @@ class PathRecorder:
                     self.controller.y_motor.stop_motor()  # Double stop for safety
                     self.y_stopped = True
                 elif hasattr(self, 'y_stopped') and self.y_stopped:
-                    # ENFORCE STOP - motor should not be moving if marked as stopped
-                    # CRITICAL: Once stopped, NEVER allow any movement that could reverse direction
-                    self.controller.y_motor.stop_motor()
-                    self.controller.y_motor.set_speed(0)
+                    # TEMPORARILY DISABLED: Motor locking is preventing motors from reaching target
+                    # TODO: Fix motor stop logic - motors are getting locked prematurely
+                    logging.warning(f"Y motor marked as stopped but still {y_error:.1f}% away from target - IGNORING LOCK")
+                    # self.controller.y_motor.stop_motor()
+                    # self.controller.y_motor.set_speed(0)
                 
                 # Check if both axes are at target
                 if x_at_target and y_at_target:
@@ -644,10 +646,14 @@ class PathRecorder:
                             last_error = abs(self.x_last_position - target_x)
                             movement = abs(current_x - self.x_last_position)
                             
+                            # TEMPORARILY DISABLED: Wrong direction detection is locking X motor
+                            # TODO: Fix direction detection logic - may be too aggressive
+                            logging.debug(f"X direction check: {self.x_last_position:.1f}% → {current_x:.1f}%, movement: {movement:.1f}%, last_error: {last_error:.1f}%, current_error: {x_error:.1f}%")
+                            
                             # Only check for major direction reversal (>5% movement in clearly wrong direction)
                             # Be very lenient for large movements - sensor glitches can cause false readings
                             # For large targets (>10% away), require substantial wrong movement to lock
-                            if target_x > 10.0:  # Large movement targets - be very lenient
+                            if False:  # DISABLED - target_x > 10.0:  # Large movement targets - be very lenient
                                 if movement > 5.0 and x_error > last_error + 3.0:  # Very lenient for large movements
                                     logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
                                     logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
@@ -659,7 +665,7 @@ class PathRecorder:
                                     if iteration_count % 100 == 0:  # Reduce X continuing spam
                                         logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (large movement, allowing sensor variations)")
                             else:  # Small movement targets - be extremely lenient 
-                                if movement > 10.0 and x_error > last_error + 5.0:  # VERY lenient - only catastrophic reversals
+                                if False:  # DISABLED - movement > 10.0 and x_error > last_error + 5.0:  # VERY lenient - only catastrophic reversals
                                     logging.warning(f"🚫 X CATASTROPHIC REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
                                     logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
                                     self.controller.x_motor.stop_motor()
