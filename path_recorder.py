@@ -467,48 +467,31 @@ class PathRecorder:
         logging.info(f"📍 CURRENT POSITION: X={current_x:.1f}%, Y={current_y:.1f}%")
         logging.info(f"🎯 TARGET POSITION: X={target_x:.1f}%, Y={target_y:.1f}%")
         
-        # MANDATORY: Set correct directions for X motor with detailed logging
+        # MANDATORY: Set correct directions for X motor (INVERTED!) with detailed logging
         if target_x > current_x:
-            self.controller.x_motor.set_direction_forward()
-            logging.info(f"✅ X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
+            self.controller.x_motor.set_direction_reverse()  # INVERTED: increasing % = reverse direction
+            logging.info(f"✅ X direction: REVERSE (INVERTED) ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
         elif target_x < current_x:
-            self.controller.x_motor.set_direction_reverse()
-            logging.info(f"✅ X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
+            self.controller.x_motor.set_direction_forward()   # INVERTED: decreasing % = forward direction
+            logging.info(f"✅ X direction: FORWARD (INVERTED) ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
         else:
             logging.info(f"⚪ X direction: NONE (already at {target_x:.1f}%)")
             
         # CRITICAL: Log the expected movement direction  
         logging.info(f"🔄 X EXPECTED: {'INCREASE' if target_x > current_x else 'DECREASE' if target_x < current_x else 'STAY'} from {current_x:.1f}% to {target_x:.1f}%")
         
-        # MANDATORY: Set correct directions for Y motor
+        # MANDATORY: Set correct directions for Y motor (INVERTED!)
         if target_y > current_y:
-            self.controller.y_motor.set_direction_forward()
-            logging.info(f"✅ Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%)")
+            self.controller.y_motor.set_direction_reverse()  # INVERTED: increasing % = reverse direction
+            logging.info(f"✅ Y direction: REVERSE (INVERTED) ({current_y:.1f}% → {target_y:.1f}%)")
         elif target_y < current_y:
-            self.controller.y_motor.set_direction_reverse()
-            logging.info(f"✅ Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%)")
+            self.controller.y_motor.set_direction_forward()   # INVERTED: decreasing % = forward direction
+            logging.info(f"✅ Y direction: FORWARD (INVERTED) ({current_y:.1f}% → {target_y:.1f}%)")
         else:
             logging.info(f"⚪ Y direction: NONE (already at {target_y:.1f}%)")
             
         # FORCE VERIFICATION: Ensure directions were set properly
         logging.info("🔍 DIRECTION SETUP COMPLETED - MOTORS SHOULD NOW HAVE PROPER DIRECTIONS")
-        
-        # CRITICAL: Set directions BEFORE setting speeds (X motor was missing directions!)
-        # For X motor (inverted): target > current = REVERSE, target < current = FORWARD
-        if target_x > current_x:
-            self.controller.x_motor.set_direction_reverse()  # Inverted: increasing = reverse
-            logging.info(f"🔧 X DIRECTION: REVERSE (inverted) for {current_x:.1f}% → {target_x:.1f}%")
-        elif target_x < current_x:
-            self.controller.x_motor.set_direction_forward()   # Inverted: decreasing = forward  
-            logging.info(f"🔧 X DIRECTION: FORWARD (inverted) for {current_x:.1f}% → {target_x:.1f}%")
-        
-        # For Y motor (inverted): target > current = REVERSE, target < current = FORWARD
-        if target_y > current_y:
-            self.controller.y_motor.set_direction_reverse()  # Inverted: increasing = reverse
-            logging.info(f"🔧 Y DIRECTION: REVERSE (inverted) for {current_y:.1f}% → {target_y:.1f}%")
-        elif target_y < current_y:
-            self.controller.y_motor.set_direction_forward()   # Inverted: decreasing = forward
-            logging.info(f"🔧 Y DIRECTION: FORWARD (inverted) for {current_y:.1f}% → {target_y:.1f}%")
         
         # Set initial speeds AFTER directions are set
         self.controller.x_motor.set_speed(50.0)
