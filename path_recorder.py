@@ -513,18 +513,31 @@ class PathRecorder:
                             last_error = abs(self.x_last_position - target_x)
                             movement = abs(current_x - self.x_last_position)
                             
-                            # Only check for major direction reversal (>2% movement in clearly wrong direction)
-                            # Allow voltage fluctuations and small movements - focus on preventing true direction reversals
-                            if movement > 2.0 and x_error > last_error + 1.0:  # Much more lenient - only major wrong direction
-                                logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
-                                logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
-                                self.controller.x_motor.stop_motor()
-                                self.controller.x_motor.set_speed(0)
-                                self.x_stopped = True
-                                logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
-                            else:
-                                if iteration_count % 100 == 0:  # Reduce X continuing spam
-                                    logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%)")
+                            # Only check for major direction reversal (>5% movement in clearly wrong direction)
+                            # Be very lenient for large movements - sensor glitches can cause false readings
+                            # For large targets (>10% away), require substantial wrong movement to lock
+                            if target_x > 10.0:  # Large movement targets - be very lenient
+                                if movement > 5.0 and x_error > last_error + 3.0:  # Very lenient for large movements
+                                    logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                                    logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
+                                    self.controller.x_motor.stop_motor()
+                                    self.controller.x_motor.set_speed(0)
+                                    self.x_stopped = True
+                                    logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
+                                else:
+                                    if iteration_count % 100 == 0:  # Reduce X continuing spam
+                                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (large movement, allowing sensor variations)")
+                            else:  # Small movement targets - original sensitivity
+                                if movement > 2.0 and x_error > last_error + 1.0:
+                                    logging.warning(f"🚫 X MAJOR DIRECTION REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                                    logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
+                                    self.controller.x_motor.stop_motor()
+                                    self.controller.x_motor.set_speed(0)
+                                    self.x_stopped = True
+                                    logging.warning(f"🔒 X MOTOR LOCKED due to direction reversal [iteration {iteration_count}]")
+                                else:
+                                    if iteration_count % 100 == 0:  # Reduce X continuing spam
+                                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%)")
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
@@ -544,16 +557,27 @@ class PathRecorder:
                             movement = abs(current_y - self.y_last_position)
                             
                             # Y motor is very slow to respond - only stop for major direction reversals
-                            # Allow all voltage fluctuations - focus only on preventing true direction reversals
-                            if movement > 1.5 and y_error > last_error + 0.8:  # Very lenient - Y is slow and has voltage variations
-                                logging.warning(f"🚫 Y MAJOR DIRECTION REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
-                                logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
-                                self.controller.y_motor.stop_motor()
-                                self.controller.y_motor.set_speed(0)
-                                self.y_stopped = True
-                            else:
-                                if iteration_count % 100 == 0:  # Reduce Y continuing spam  
-                                    logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%)")
+                            # Be very lenient for large movements - sensor glitches can cause false readings
+                            if target_y > 10.0:  # Large movement targets - be very lenient
+                                if movement > 5.0 and y_error > last_error + 3.0:  # Very lenient for large movements
+                                    logging.warning(f"🚫 Y MAJOR DIRECTION REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                                    logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
+                                    self.controller.y_motor.stop_motor()
+                                    self.controller.y_motor.set_speed(0)
+                                    self.y_stopped = True
+                                else:
+                                    if iteration_count % 100 == 0:  # Reduce Y continuing spam  
+                                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (large movement, allowing sensor variations)")
+                            else:  # Small movement targets - original sensitivity
+                                if movement > 1.5 and y_error > last_error + 0.8:  # Very lenient - Y is slow and has voltage variations
+                                    logging.warning(f"🚫 Y MAJOR DIRECTION REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                                    logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
+                                    self.controller.y_motor.stop_motor()
+                                    self.controller.y_motor.set_speed(0)
+                                    self.y_stopped = True
+                                else:
+                                    if iteration_count % 100 == 0:  # Reduce Y continuing spam  
+                                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%)")
                         else:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
