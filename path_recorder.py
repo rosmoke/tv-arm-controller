@@ -240,18 +240,21 @@ class PathRecorder:
                 # For retract path: skip if already past (retracted beyond) the target
                 path_name = getattr(self, 'current_path_name', '').lower()
                 
+                # Track the actual datapoint number we're working on (1-based)
+                actual_datapoint_number = point.point_number if hasattr(point, 'point_number') else i + 1
+                
                 if 'extend' in path_name:
                     # EXTEND: Skip if current position is already higher than target (already extended past)
                     if current_x >= target_x and current_y >= target_y:
-                        logging.info(f"🔄 SKIPPING DATAPOINT {i+1}: Already extended past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already extended past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
                         continue
                 elif 'retract' in path_name:
                     # RETRACT: Skip if current position is already lower than target (already retracted past)
                     if current_x <= target_x and current_y <= target_y:
-                        logging.info(f"🔄 SKIPPING DATAPOINT {i+1}: Already retracted past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
+                        logging.info(f"🔄 SKIPPING DATAPOINT {actual_datapoint_number}: Already retracted past X={target_x:.1f}%, Y={target_y:.1f}% (current: X={current_x:.1f}%, Y={current_y:.1f}%)")
                         continue
                 
-                logging.info(f"=== DATAPOINT {i+1}/{len(self.current_playback_path)} ===")
+                logging.info(f"=== DATAPOINT {actual_datapoint_number}/{len(self.current_playback_path)} ===")
                 logging.info(f"Target: X={target_x:.1f}%, Y={target_y:.1f}%")
                 
                 # Reset motor lock flags for new datapoint
@@ -297,7 +300,7 @@ class PathRecorder:
                 
                 # Both axes reached target
                 current_x, current_y = self.controller.get_current_position()
-                logging.info(f"✅ REACHED DATAPOINT {i+1}: X={current_x:.1f}%, Y={current_y:.1f}%")
+                logging.info(f"✅ REACHED DATAPOINT {actual_datapoint_number}: X={current_x:.1f}%, Y={current_y:.1f}%")
                 
                 if self.playback_callback:
                     self.playback_callback("playing", "", i + 1)
@@ -307,9 +310,11 @@ class PathRecorder:
                     if i + 1 < len(self.current_playback_path):  # Not the last point
                         next_point = self.current_playback_path[i + 1]
                         print("\n" + "="*60)
-                        print(f"🎯 REACHED DATAPOINT {i+1}/{len(self.current_playback_path)}")
+                        # Get the next datapoint's actual number
+                        next_datapoint_number = next_point.point_number if hasattr(next_point, 'point_number') else i + 2
+                        print(f"🎯 REACHED DATAPOINT {actual_datapoint_number}/{len(self.current_playback_path)}")
                         print(f"Current: X={current_x:.1f}%, Y={current_y:.1f}%")
-                        print(f"Next target: X={next_point.x_position:.1f}%, Y={next_point.y_position:.1f}%")
+                        print(f"Next target: DATAPOINT {next_datapoint_number} - X={next_point.x_position:.1f}%, Y={next_point.y_position:.1f}%")
                         print("="*60)
                         print("Press Enter to continue to next datapoint, or 'q' to quit...")
                         print(">>> ", end="", flush=True)
@@ -328,7 +333,7 @@ class PathRecorder:
                             time.sleep(1.0)
                     else:
                         print("\n" + "="*60)
-                        print(f"🎉 COMPLETED! Reached final datapoint {i+1}/{len(self.current_playback_path)}")
+                        print(f"🎉 COMPLETED! Reached final datapoint {actual_datapoint_number}/{len(self.current_playback_path)}")
                         print(f"Final position: X={current_x:.1f}%, Y={current_y:.1f}%")
                         print("="*60)
                 else:
