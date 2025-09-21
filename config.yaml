@@ -40,12 +40,6 @@ hardware:
     position_tolerance: 1.0   # Position tolerance for closed-loop control (%) - reduced for precision
     max_move_time: 10.0       # Maximum time to reach target position (seconds)
     
-    # Backlash compensation settings
-    backlash_compensation:
-      enable: true
-      y_axis_backlash_time: 3.5  # Time to overcome Y-axis backlash (seconds)
-      x_axis_backlash_time: 0.0  # X-axis backlash time (0 = no backlash)
-      backlash_speed: 70         # Speed to use during backlash compensation (%)
     
   # Position limits and calibration
   calibration:

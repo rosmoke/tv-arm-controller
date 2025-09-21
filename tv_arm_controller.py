@@ -32,7 +32,7 @@ class DCMotorController:
     
     def __init__(self, ain1_pin: int, ain2_pin: int, pwm_pin: int, stby_pin: int = None, 
                  frequency: int = 1000, min_position: float = 0.0, max_position: float = 100.0,
-                 invert_direction: bool = False, backlash_time: float = 0.0, backlash_speed: float = 70):
+                 invert_direction: bool = False):
         self.ain1_pin = ain1_pin
         self.ain2_pin = ain2_pin  
         self.pwm_pin = pwm_pin
@@ -45,15 +45,6 @@ class DCMotorController:
         self.target_position = 50.0
         self.pwm = None
         self.moving = False
-        
-        # Backlash compensation
-        self.backlash_time = backlash_time
-        self.backlash_speed = backlash_speed
-        self.last_direction = None  # 'forward', 'reverse', or None
-        
-        # Debug logging for backlash
-        if backlash_time > 0:
-            logging.info(f"Motor backlash compensation enabled: {backlash_time:.1f}s at {backlash_speed}% speed")
         
         if GPIO:
             GPIO.setup(self.ain1_pin, GPIO.OUT)
@@ -72,54 +63,18 @@ class DCMotorController:
         logging.info(f"DC Motor pins {self.ain1_pin}/{self.ain2_pin}: direction inversion {inversion_status}")
     
     def set_direction_forward(self):
-        """Set motor direction to forward with backlash compensation"""
-        self._apply_backlash_compensation('forward')
+        """Set motor direction to forward"""
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.HIGH)
             GPIO.output(self.ain2_pin, GPIO.LOW)
         logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set FORWARD (AIN1=HIGH, AIN2=LOW)")
     
     def set_direction_reverse(self):
-        """Set motor direction to reverse with backlash compensation"""
-        self._apply_backlash_compensation('reverse')
+        """Set motor direction to reverse"""
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.LOW)
             GPIO.output(self.ain2_pin, GPIO.HIGH)
         logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set REVERSE (AIN1=LOW, AIN2=HIGH)")
-    
-    def _apply_backlash_compensation(self, new_direction: str):
-        """Apply backlash compensation when direction changes"""
-        if self.backlash_time <= 0:
-            self.last_direction = new_direction
-            return
-            
-        # Check if direction changed
-        if self.last_direction is not None and self.last_direction != new_direction:
-            logging.info(f"Direction change detected: {self.last_direction} → {new_direction}, applying {self.backlash_time:.1f}s backlash compensation")
-            
-            # Set direction immediately (without recursion)
-            if GPIO:
-                if new_direction == 'forward':
-                    GPIO.output(self.ain1_pin, GPIO.HIGH)
-                    GPIO.output(self.ain2_pin, GPIO.LOW)
-                else:
-                    GPIO.output(self.ain1_pin, GPIO.LOW)
-                    GPIO.output(self.ain2_pin, GPIO.HIGH)
-            
-            # Apply backlash speed briefly to overcome mechanical play
-            original_speed = self.current_speed if hasattr(self, 'current_speed') else 0
-            self.set_speed(self.backlash_speed)
-            time.sleep(self.backlash_time)
-            
-            # Restore original speed
-            if original_speed > 0:
-                self.set_speed(original_speed)
-            else:
-                self.stop_motor()
-                
-            logging.info(f"Backlash compensation complete")
-        
-        self.last_direction = new_direction
     
     def stop_motor(self):
         """Stop motor (coast)"""
@@ -532,12 +487,6 @@ class TVArmController:
         # Initialize DC motors with TB6612FNG driver
         motor_config = config['hardware']['dc_motor']
         
-        # Get backlash compensation settings
-        backlash_config = motor_config.get('backlash_compensation', {})
-        x_backlash_time = backlash_config.get('x_axis_backlash_time', 0.0)
-        y_backlash_time = backlash_config.get('y_axis_backlash_time', 0.0)
-        backlash_speed = backlash_config.get('backlash_speed', 70)
-        
         # X-axis motor (Motor A)
         self.x_motor = DCMotorController(
             ain1_pin=config['hardware']['motor_x_ain1_pin'],
@@ -547,9 +496,7 @@ class TVArmController:
             frequency=motor_config['frequency'],
             min_position=motor_config['min_position'],
             max_position=motor_config['max_position'],
-            invert_direction=motor_config.get('invert_x_direction', False),
-            backlash_time=x_backlash_time,
-            backlash_speed=backlash_speed
+            invert_direction=motor_config.get('invert_x_direction', False)
         )
         
         # Y-axis motor (Motor B)
@@ -561,9 +508,7 @@ class TVArmController:
             frequency=motor_config['frequency'],
             min_position=motor_config['min_position'],
             max_position=motor_config['max_position'],
-            invert_direction=motor_config.get('invert_y_direction', False),
-            backlash_time=y_backlash_time,
-            backlash_speed=backlash_speed
+            invert_direction=motor_config.get('invert_y_direction', False)
         )
         
         # Initialize position sensors
