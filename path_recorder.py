@@ -504,35 +504,18 @@ class PathRecorder:
     
     def _is_axis_at_target(self, current: float, target: float, tolerance: float, axis: str) -> bool:
         """
-        Check if axis has reached or overshot target
-        Returns True if within tolerance OR if we've passed the target
+        Check if axis has reached target within tolerance
+        Only accepts positions within the specified tolerance range
         """
         error = abs(current - target)
         
-        # If within tolerance, we're at target
+        # Only accept if within tolerance - no crossing logic
         if error <= tolerance:
+            logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
             return True
-        
-        # Check if we've overshot the target (passed it)
-        # This requires knowing the previous position to detect direction
-        last_position_attr = f'{axis.lower()}_last_position'
-        
-        if not hasattr(self, last_position_attr) or getattr(self, last_position_attr) is None:
-            # First reading - store current position
-            setattr(self, last_position_attr, current)
+        else:
+            logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
             return False
-        
-        last_position = getattr(self, last_position_attr)
-        
-        # Determine if we've crossed the target (only if we have valid last position)
-        if last_position is not None:
-            if (last_position < target <= current) or (current <= target < last_position):
-                logging.info(f"{axis} CROSSED target: {last_position:.1f}% → {current:.1f}% (target: {target:.1f}%)")
-                return True
-        
-        # Update last position
-        setattr(self, last_position_attr, current)
-        return False
     
     def save_path(self, path_name: str, path_data: List[PathPoint]) -> bool:
         """Save a recorded path to disk"""
