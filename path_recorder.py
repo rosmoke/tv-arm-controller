@@ -170,6 +170,9 @@ class PathRecorder:
         if self.is_playing:
             logging.warning("Already playing back a path")
             return False
+            
+        # Store current path name for direction determination
+        self.current_path_name = path_name
         
         if self.is_recording:
             logging.warning("Cannot start playback while recording")
@@ -467,28 +470,51 @@ class PathRecorder:
         logging.info(f"📍 CURRENT POSITION: X={current_x:.1f}%, Y={current_y:.1f}%")
         logging.info(f"🎯 TARGET POSITION: X={target_x:.1f}%, Y={target_y:.1f}%")
         
-        # MANDATORY: Set correct directions for X motor (INVERTED!) with detailed logging
-        if target_x > current_x:
-            self.controller.x_motor.set_direction_reverse()  # INVERTED: increasing % = reverse direction
-            logging.info(f"✅ X direction: REVERSE (INVERTED) ({current_x:.1f}% → {target_x:.1f}%) - EXTENDING")
-        elif target_x < current_x:
-            self.controller.x_motor.set_direction_forward()   # INVERTED: decreasing % = forward direction
-            logging.info(f"✅ X direction: FORWARD (INVERTED) ({current_x:.1f}% → {target_x:.1f}%) - RETRACTING")
+        # CRITICAL: Set directions based on PATH TYPE (extend vs retract) not just position difference
+        # This ensures extend always extends, retract always retracts, regardless of position
+        path_name = getattr(self, 'current_path_name', 'unknown')
+        
+        if 'extend' in path_name.lower():
+            # EXTEND PATH: Always use directions that physically extend the arm
+            self.controller.x_motor.set_direction_forward()  # X motor: FORWARD for extending
+            logging.info(f"✅ X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - EXTEND PATH")
+        elif 'retract' in path_name.lower():
+            # RETRACT PATH: Always use directions that physically retract the arm  
+            self.controller.x_motor.set_direction_reverse()  # X motor: REVERSE for retracting
+            logging.info(f"✅ X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - RETRACT PATH")
         else:
-            logging.info(f"⚪ X direction: NONE (already at {target_x:.1f}%)")
+            # FALLBACK: Use position-based logic for unknown paths
+            if target_x > current_x:
+                self.controller.x_motor.set_direction_forward()  # Assume extending
+                logging.info(f"✅ X direction: FORWARD ({current_x:.1f}% → {target_x:.1f}%) - UNKNOWN PATH (assuming extend)")
+            else:
+                self.controller.x_motor.set_direction_reverse()  # Assume retracting
+                logging.info(f"✅ X direction: REVERSE ({current_x:.1f}% → {target_x:.1f}%) - UNKNOWN PATH (assuming retract)")
+                
+        logging.info(f"🔄 X PATH-BASED DIRECTION: {path_name} → {'FORWARD (extend)' if 'extend' in path_name.lower() else 'REVERSE (retract)' if 'retract' in path_name.lower() else 'position-based'}")
             
         # CRITICAL: Log the expected movement direction  
         logging.info(f"🔄 X EXPECTED: {'INCREASE' if target_x > current_x else 'DECREASE' if target_x < current_x else 'STAY'} from {current_x:.1f}% to {target_x:.1f}%")
         
-        # MANDATORY: Set correct directions for Y motor (INVERTED!)
-        if target_y > current_y:
-            self.controller.y_motor.set_direction_reverse()  # INVERTED: increasing % = reverse direction
-            logging.info(f"✅ Y direction: REVERSE (INVERTED) ({current_y:.1f}% → {target_y:.1f}%)")
-        elif target_y < current_y:
-            self.controller.y_motor.set_direction_forward()   # INVERTED: decreasing % = forward direction
-            logging.info(f"✅ Y direction: FORWARD (INVERTED) ({current_y:.1f}% → {target_y:.1f}%)")
+        # CRITICAL: Set Y motor directions based on PATH TYPE (same logic as X motor)
+        if 'extend' in path_name.lower():
+            # EXTEND PATH: Always use directions that physically extend the arm
+            self.controller.y_motor.set_direction_forward()  # Y motor: FORWARD for extending  
+            logging.info(f"✅ Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%) - EXTEND PATH")
+        elif 'retract' in path_name.lower():
+            # RETRACT PATH: Always use directions that physically retract the arm
+            self.controller.y_motor.set_direction_reverse()  # Y motor: REVERSE for retracting
+            logging.info(f"✅ Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%) - RETRACT PATH")
         else:
-            logging.info(f"⚪ Y direction: NONE (already at {target_y:.1f}%)")
+            # FALLBACK: Use position-based logic for unknown paths
+            if target_y > current_y:
+                self.controller.y_motor.set_direction_forward()  # Assume extending
+                logging.info(f"✅ Y direction: FORWARD ({current_y:.1f}% → {target_y:.1f}%) - UNKNOWN PATH (assuming extend)")
+            else:
+                self.controller.y_motor.set_direction_reverse()  # Assume retracting  
+                logging.info(f"✅ Y direction: REVERSE ({current_y:.1f}% → {target_y:.1f}%) - UNKNOWN PATH (assuming retract)")
+                
+        logging.info(f"🔄 Y PATH-BASED DIRECTION: {path_name} → {'FORWARD (extend)' if 'extend' in path_name.lower() else 'REVERSE (retract)' if 'retract' in path_name.lower() else 'position-based'}")
             
         # FORCE VERIFICATION: Ensure directions were set properly
         logging.info("🔍 DIRECTION SETUP COMPLETED - MOTORS SHOULD NOW HAVE PROPER DIRECTIONS")
@@ -801,11 +827,18 @@ class PathRecorder:
                         base_y_speed = 50.0  # Default speed for Y motor (will be multiplied by 1.5x in motor controller)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
-                        # Determine direction for Y motor (INVERTED LOGIC!)
-                        if target_y > current_y:
-                            self.controller.y_motor.set_direction_reverse()  # INVERTED: increasing % = reverse
+                        # Determine direction for Y motor using PATH-BASED logic (same as initial setup)
+                        path_name = getattr(self, 'current_path_name', 'unknown')
+                        if 'extend' in path_name.lower():
+                            self.controller.y_motor.set_direction_forward()  # EXTEND: FORWARD
+                        elif 'retract' in path_name.lower():
+                            self.controller.y_motor.set_direction_reverse()  # RETRACT: REVERSE
                         else:
-                            self.controller.y_motor.set_direction_forward()   # INVERTED: decreasing % = forward
+                            # Fallback to position-based
+                            if target_y > current_y:
+                                self.controller.y_motor.set_direction_forward()
+                            else:
+                                self.controller.y_motor.set_direction_reverse()
                         
                         self.controller.y_motor.set_speed(new_y_speed)
                         corrections_sent = True

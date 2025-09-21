@@ -20,13 +20,19 @@
       "point_number": 3,
       "timestamp": "2025-09-21T10:00:04Z",
       "x_position": 51.0,
-      "y_position": 52.5
+      "y_position": 42.5
     },
     {
       "point_number": 4,
       "timestamp": "2025-09-21T10:00:03Z",
       "x_position": 24.5,
       "y_position": 28.0
+    },
+    {
+      "point_number": 4,
+      "timestamp": "2025-09-21T10:00:03Z",
+      "x_position": 15.0,
+      "y_position": 15.0
     },
     {
       "point_number": 5,
