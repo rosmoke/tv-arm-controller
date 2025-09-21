@@ -1,0 +1,44 @@
+{
+  "name": "extend",
+  "description": "TV arm extension path - custom datapoints",
+  "recorded_at": "2025-09-21T10:00:00Z",
+  "total_points": 6,
+  "datapoints": [
+    {
+      "point_number": 1,
+      "timestamp": "2025-09-21T10:00:01Z",
+      "x_position": 0.0,
+      "y_position": 0.0
+    },
+    {
+      "point_number": 2,
+      "timestamp": "2025-09-21T10:00:02Z",
+      "x_position": 1.0,
+      "y_position": 0.3
+    },
+    {
+      "point_number": 3,
+      "timestamp": "2025-09-21T10:00:03Z",
+      "x_position": 24.5,
+      "y_position": 25.5
+    },
+    {
+      "point_number": 4,
+      "timestamp": "2025-09-21T10:00:04Z",
+      "x_position": 51.0,
+      "y_position": 52.5
+    },
+    {
+      "point_number": 5,
+      "timestamp": "2025-09-21T10:00:05Z",
+      "x_position": 70.0,
+      "y_position": 66.5
+    },
+    {
+      "point_number": 6,
+      "timestamp": "2025-09-21T10:00:06Z",
+      "x_position": 94.6,
+      "y_position": 89.2
+    }
+  ]
+}

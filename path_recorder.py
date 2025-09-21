@@ -219,7 +219,9 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            tolerance = 2.0  # 2% tolerance - motors need more realistic tolerance to confirm arrival
+            # Different tolerances for X and Y axes as requested
+            x_tolerance = 4.0  # 4% tolerance for X axis
+            y_tolerance = 2.0  # 2% tolerance for Y axis
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
@@ -394,8 +396,8 @@ class PathRecorder:
                 logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%)")
                 
                 # Check each axis independently - stop when reached or overshot target
-                x_at_target = self._is_axis_at_target(current_x, target_x, tolerance, 'X')
-                y_at_target = self._is_axis_at_target(current_y, target_y, tolerance, 'Y')
+                x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
+                y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
                 
                 # Stop motors that have reached their targets
                 if x_at_target and not hasattr(self, 'x_stopped'):
@@ -438,7 +440,7 @@ class PathRecorder:
                     # Only send commands to X motor if it hasn't been stopped yet
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
-                    elif x_error > tolerance and not x_at_target:
+                    elif x_error > x_tolerance and not x_at_target:
                         x_command_count += 1
                         if x_command_count > max_commands_per_axis:
                             logging.warning(f"🚨 X EMERGENCY STOP - too many commands ({x_command_count})")
@@ -458,12 +460,12 @@ class PathRecorder:
                             self.controller.set_x_position(target_x, use_closed_loop=False)
                             corrections_sent = True
                     elif x_at_target:
-                        logging.info(f"X axis OK: {current_x:.1f}% (within {tolerance}% of {target_x:.1f}%)")
+                            logging.info(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
                     
                     # Only send commands to Y motor if it hasn't been stopped yet
                     if hasattr(self, 'y_stopped') and self.y_stopped:
                         logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
-                    elif y_error > tolerance and not y_at_target:
+                    elif y_error > y_tolerance and not y_at_target:
                         y_command_count += 1
                         if y_command_count > max_commands_per_axis:
                             logging.warning(f"🚨 Y EMERGENCY STOP - too many commands ({y_command_count})")
@@ -483,7 +485,7 @@ class PathRecorder:
                             self.controller.set_y_position(target_y, use_closed_loop=False)
                             corrections_sent = True
                     elif y_at_target:
-                        logging.info(f"Y axis OK: {current_y:.1f}% (within {tolerance}% of {target_y:.1f}%)")
+                            logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
                     if corrections_sent:
                         time.sleep(2.0)  # Fixed wait time
