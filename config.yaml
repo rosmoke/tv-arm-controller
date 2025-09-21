@@ -51,8 +51,8 @@ hardware:
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
-      safety_margin: 0.0  # No margin - stop exactly at limit (1.6V)
-      slow_zone_margin: 0.105 # Start slowing down within this margin (105mV)
+      safety_margin: 0.0  # No margin - stop exactly at limit (1.663V and 2.884V)
+      slow_zone_margin: 0.005 # Start slowing down within this margin (5mV = ~0.4%)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
       min_voltage: 0.851
