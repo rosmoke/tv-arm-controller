@@ -458,9 +458,20 @@ class PathRecorder:
                     if hasattr(self, 'x_stopped') and self.x_stopped:
                         logging.info(f"X axis LOCKED: {current_x:.1f}% (motor stopped, ignoring position changes)")
                     elif x_error > x_tolerance and not x_at_target:
-                        # Motor still moving toward target - let it continue (no corrections needed)
-                        logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, still moving)")
-                        # Don't stop motor - let it continue its initial movement
+                        # Check if motor is moving in wrong direction (away from target)
+                        if hasattr(self, 'x_last_position') and self.x_last_position is not None:
+                            last_error = abs(self.x_last_position - target_x)
+                            if x_error > last_error:  # Error is increasing = moving away from target
+                                logging.warning(f"🚫 X WRONG DIRECTION: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                                self.controller.x_motor.stop_motor()
+                                self.controller.x_motor.set_speed(0)
+                                self.x_stopped = True
+                            else:
+                                logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, moving toward target)")
+                        else:
+                            logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
+                        # Update last position for next check
+                        self.x_last_position = current_x
                     elif x_at_target:
                         logging.info(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
                     
@@ -468,9 +479,20 @@ class PathRecorder:
                     if hasattr(self, 'y_stopped') and self.y_stopped:
                         logging.info(f"Y axis LOCKED: {current_y:.1f}% (motor stopped, ignoring position changes)")
                     elif y_error > y_tolerance and not y_at_target:
-                        # Motor still moving toward target - let it continue (no corrections needed)
-                        logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, still moving)")
-                        # Don't stop motor - let it continue its initial movement
+                        # Check if motor is moving in wrong direction (away from target)
+                        if hasattr(self, 'y_last_position') and self.y_last_position is not None:
+                            last_error = abs(self.y_last_position - target_y)
+                            if y_error > last_error:  # Error is increasing = moving away from target
+                                logging.warning(f"🚫 Y WRONG DIRECTION: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                                self.controller.y_motor.stop_motor()
+                                self.controller.y_motor.set_speed(0)
+                                self.y_stopped = True
+                            else:
+                                logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, moving toward target)")
+                        else:
+                            logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
+                        # Update last position for next check
+                        self.y_last_position = current_y
                     elif y_at_target:
                         logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
