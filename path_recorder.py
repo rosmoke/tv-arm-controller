@@ -801,11 +801,11 @@ class PathRecorder:
                         base_y_speed = 50.0  # Default speed for Y motor (will be multiplied by 1.5x in motor controller)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
-                        # Determine direction for Y motor
+                        # Determine direction for Y motor (INVERTED LOGIC!)
                         if target_y > current_y:
-                            self.controller.y_motor.set_direction_forward()
+                            self.controller.y_motor.set_direction_reverse()  # INVERTED: increasing % = reverse
                         else:
-                            self.controller.y_motor.set_direction_reverse()
+                            self.controller.y_motor.set_direction_forward()   # INVERTED: decreasing % = forward
                         
                         self.controller.y_motor.set_speed(new_y_speed)
                         corrections_sent = True
