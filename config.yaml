@@ -51,9 +51,9 @@ hardware:
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
-      safety_margin: 0.05   # Voltage margin from absolute limits (50mV)
-      slow_zone_margin: 0.1 # Start slowing down within this margin (100mV)
-      safety_slow_speed: 30 # Reduced speed when in slow zone (%)
+      safety_margin: 0.01   # Voltage margin from absolute limits (10mV)
+      slow_zone_margin: 0.03 # Start slowing down within this margin (30mV)
+      safety_slow_speed: 40 # Reduced speed when in slow zone (%)
     y_axis:
       min_voltage: 0.821
       max_voltage: 3.017
@@ -62,9 +62,9 @@ hardware:
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
-      safety_margin: 0.05   # Voltage margin from absolute limits (50mV)
-      slow_zone_margin: 0.1 # Start slowing down within this margin (100mV)
-      safety_slow_speed: 30 # Reduced speed when in slow zone (%)
+      safety_margin: 0.01   # Voltage margin from absolute limits (10mV)
+      slow_zone_margin: 0.03 # Start slowing down within this margin (30mV)
+      safety_slow_speed: 40 # Reduced speed when in slow zone (%)
   
   # Actual TV mount positions (calibrated)
   positions:
