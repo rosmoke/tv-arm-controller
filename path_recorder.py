@@ -651,12 +651,12 @@ class PathRecorder:
                 else:
                     consecutive_good_readings = 0
                     
-                    # Send correction commands only for axes that need adjustment
+                    # UNIDIRECTIONAL: NO CORRECTIONS ALLOWED
+                    # Motors move in one direction only until they reach target or overshoot
+                    # No direction changes, no corrections - just stop when target reached
                     corrections_sent = False
                     
-                    # Dynamic speed calculation based on distance to target - independent for X and Y
-                    def calculate_x_approach_speed(x_error, base_speed):
-                        """Calculate X motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
+                    # All correction logic disabled - motors just continue until target reached or timeout
                         if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
                             approach_speed = base_speed * 0.3  # 30% speed when very close
                             logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
@@ -712,13 +712,12 @@ class PathRecorder:
                         base_x_speed = 50.0  # Default speed for X motor
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
-                        # Determine direction for X motor
-                        if target_x > current_x:
-                            self.controller.x_motor.set_direction_forward()
-                        else:
-                            self.controller.x_motor.set_direction_reverse()
+                        # UNIDIRECTIONAL: Never change direction - only adjust speed
+                        # Direction was set correctly at start and must never change
+                        # Changing direction violates unidirectional movement principle
                         
                         self.controller.x_motor.set_speed(new_x_speed)
+                        logging.debug(f"X speed adjustment: {new_x_speed:.1f}% (direction unchanged)")
                         corrections_sent = True
                         
                         # Update last position for next check
