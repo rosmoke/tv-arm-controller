@@ -505,15 +505,21 @@ class PathRecorder:
                     # Send correction commands only for axes that need adjustment
                     corrections_sent = False
                     
-                    # Dynamic speed calculation based on distance to target
-                    def calculate_approach_speed(error, base_speed, axis_name):
-                        """Calculate speed based on distance to target - slow down when close"""
-                        if error <= 1.0:  # Very close to target
-                            approach_speed = base_speed * 0.3  # 30% speed for final approach
-                            logging.info(f"{axis_name} FINAL APPROACH: {error:.1f}% error → {approach_speed:.0f}% speed (30% of {base_speed}%)")
-                        elif error <= 3.0:  # Getting close to target
-                            approach_speed = base_speed * 0.7  # 70% speed for approach
-                            logging.info(f"{axis_name} APPROACH: {error:.1f}% error → {approach_speed:.0f}% speed (70% of {base_speed}%)")
+                    # Dynamic speed calculation based on distance to target - independent for X and Y
+                    def calculate_x_approach_speed(x_error, base_speed):
+                        """Calculate X motor speed based on distance to target"""
+                        if x_error <= 0.1:  # Within 0.1% of target
+                            approach_speed = base_speed * 0.7  # 70% speed when very close
+                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% of {base_speed}%)")
+                        else:  # Far from target
+                            approach_speed = base_speed  # Full speed
+                        return approach_speed
+                    
+                    def calculate_y_approach_speed(y_error, base_speed):
+                        """Calculate Y motor speed based on distance to target"""
+                        if y_error <= 0.1:  # Within 0.1% of target
+                            approach_speed = base_speed * 0.7  # 70% speed when very close
+                            logging.info(f"Y SLOW DOWN: {y_error:.2f}% error → {approach_speed:.0f}% speed (70% of {base_speed}%)")
                         else:  # Far from target
                             approach_speed = base_speed  # Full speed
                         return approach_speed
@@ -558,7 +564,7 @@ class PathRecorder:
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
                         base_x_speed = 50.0  # Default speed for X motor
-                        new_x_speed = calculate_approach_speed(x_error, base_x_speed, "X")
+                        new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # Determine direction for X motor
                         if target_x > current_x:
@@ -611,7 +617,7 @@ class PathRecorder:
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
                         base_y_speed = 50.0  # Default speed for Y motor (will be multiplied by 1.5x in motor controller)
-                        new_y_speed = calculate_approach_speed(y_error, base_y_speed, "Y")
+                        new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
                         # Determine direction for Y motor
                         if target_y > current_y:
