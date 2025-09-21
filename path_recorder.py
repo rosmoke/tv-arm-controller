@@ -219,9 +219,9 @@ class PathRecorder:
     def _playback_loop(self):
         """Background thread that plays back recorded path with step-by-step verification"""
         try:
-            # Different tolerances for X and Y axes as requested
-            x_tolerance = 4.0  # 4% tolerance for X axis
-            y_tolerance = 2.0  # 2% tolerance for Y axis
+            # Tighter tolerances for better datapoint accuracy
+            x_tolerance = 1.5  # 1.5% tolerance for X axis (reduced from 4%)
+            y_tolerance = 1.0  # 1.0% tolerance for Y axis (reduced from 2%)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):
