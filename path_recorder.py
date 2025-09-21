@@ -223,7 +223,7 @@ class PathRecorder:
             # Balanced tolerances - both motors working well now
             # Allow progression to final datapoint instead of timeout on small errors
             x_tolerance = 0.5   # 0.5% tolerance for X axis (good accuracy achieved)
-            y_tolerance = 1.5   # 1.5% tolerance for Y axis (user requested - more forgiving)
+            y_tolerance = 0.3   # 0.3% tolerance for Y axis (tightened from 1.5% - was causing false "reached" at 29% instead of 28%)
             max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
             
             for i, point in enumerate(self.current_playback_path):

@@ -204,6 +204,26 @@ class DCMotorController:
         
         logging.info(f"DC Motor closed-loop move to {target_percent:.1f}% (tolerance: {tolerance:.1f}%)")
         
+        # CRITICAL FIX: Set initial direction for closed-loop control (was missing!)
+        # This was why X motor got speed but no direction commands
+        if target_percent > self.current_position:
+            if self.invert_direction:
+                self.set_direction_reverse()
+                logging.info(f"DC Motor direction: REVERSE (inverted) for {self.current_position:.1f}% → {target_percent:.1f}%")
+            else:
+                self.set_direction_forward()
+                logging.info(f"DC Motor direction: FORWARD for {self.current_position:.1f}% → {target_percent:.1f}%")
+        elif target_percent < self.current_position:
+            if self.invert_direction:
+                self.set_direction_forward()
+                logging.info(f"DC Motor direction: FORWARD (inverted) for {self.current_position:.1f}% → {target_percent:.1f}%")
+            else:
+                self.set_direction_reverse()
+                logging.info(f"DC Motor direction: REVERSE for {self.current_position:.1f}% → {target_percent:.1f}%")
+        else:
+            logging.info(f"DC Motor already at target {target_percent:.1f}%")
+            return True
+        
         while time.time() - start_time < max_wait_time:
             # Get current actual position from potentiometer
             actual_position = position_callback()
