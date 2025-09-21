@@ -293,8 +293,9 @@ class PathRecorder:
                     adjusted_y_tolerance = 0.1  # Tighter tolerance for Y near 0%  
                     logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance}% for target {target_y}% (normal: {y_tolerance}%)")
                 
-                # Debug: Log the tolerances being used
-                logging.info(f"🎯 TOLERANCES: X={adjusted_x_tolerance}%, Y={adjusted_y_tolerance}% for targets X={target_x}%, Y={target_y}%")
+                # Only log tolerances if they seem unusual
+                if adjusted_x_tolerance > 1.0 or adjusted_y_tolerance > 1.0:
+                    logging.warning(f"🎯 UNUSUAL TOLERANCES: X={adjusted_x_tolerance}%, Y={adjusted_y_tolerance}% for targets X={target_x}%, Y={target_y}%")
                 
                 # Move both axes simultaneously
                 success = self._move_to_position_simultaneous(
@@ -538,7 +539,7 @@ class PathRecorder:
                     self.x_stopped = True
                     logging.info(f"🔒 X MOTOR LOCKED due to reaching target [iteration {iteration_count}]")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
-                    logging.debug(f"X already stopped at {current_x:.1f}% (target: {target_x:.1f}%)")
+                    pass  # X already stopped - no need to log every iteration
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🛑 STOPPING Y motor - reached target {target_y:.1f}% (current: {current_y:.1f}%)")
@@ -768,15 +769,16 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # DEBUG: Always log this to catch the bug
-        logging.info(f"🔍 {axis} TARGET CHECK: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
+        # Only log debug info if error is very large (debugging tolerance issues)
+        if error > 10.0:
+            logging.warning(f"🔍 {axis} LARGE ERROR: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
         
         # Only accept if strictly within tolerance - prevent boundary edge cases
         if error < tolerance:
             logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
             return True
         else:
-            logging.info(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
+            logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
             return False
     
     def _check_overshoot(self, current: float, target: float, axis: str) -> bool:
