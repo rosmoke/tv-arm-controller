@@ -2,7 +2,7 @@
   "name": "retract",
   "description": "TV arm retraction path - reversed from extend path",
   "recorded_at": "2025-09-21T10:00:00Z",
-  "total_points": 7,
+  "total_points": 6,
   "datapoints": [
     {
       "point_number": 1,
