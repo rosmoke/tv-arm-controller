@@ -297,14 +297,14 @@ class PathRecorder:
                 adjusted_x_tolerance = x_tolerance
                 adjusted_y_tolerance = y_tolerance
                 
-                # For targets near 0%, use tighter tolerance for better accuracy
+                # For targets near 0%, use much tighter tolerance for better accuracy
                 if target_x <= 1.0:
-                    adjusted_x_tolerance = 0.1  # Tighter tolerance for X near 0%
-                    logging.info(f"🎯 X NEAR ZERO: Using tight tolerance {adjusted_x_tolerance}% for target {target_x}% (normal: {x_tolerance}%)")
+                    adjusted_x_tolerance = max(0.02, target_x * 0.1)  # 10% of target, minimum 0.02%
+                    logging.info(f"🎯 X NEAR ZERO: Using tight tolerance {adjusted_x_tolerance:.3f}% for target {target_x}% (normal: {x_tolerance}%)")
                 
                 if target_y <= 1.0:
-                    adjusted_y_tolerance = 0.1  # Tighter tolerance for Y near 0%  
-                    logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance}% for target {target_y}% (normal: {y_tolerance}%)")
+                    adjusted_y_tolerance = max(0.02, target_y * 0.1)  # 10% of target, minimum 0.02%
+                    logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance:.3f}% for target {target_y}% (normal: {y_tolerance}%)")
                 
                 # Only log tolerances if they seem unusual
                 if adjusted_x_tolerance > 1.0 or adjusted_y_tolerance > 1.0:
