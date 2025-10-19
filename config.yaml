@@ -35,7 +35,7 @@ hardware:
     default_speed: 80 # Default motor speed (%) - increased for better movement
     y_speed_multiplier: 1.5  # Y motor speed multiplier - Y runs 1.5x faster than X for balanced movement
     movement_timeout: 10  # Maximum time for movement (seconds)
-    invert_x_direction: true   # X motor direction inverted - FORWARD decreases, REVERSE increases
+    invert_x_direction: false  # X motor direction normal - FORWARD increases, REVERSE decreases
     invert_y_direction: true   # Y motor direction inverted - FORWARD decreases, REVERSE increases
     use_closed_loop: true     # Use closed-loop control with position feedback
     position_tolerance: 1.0   # Position tolerance for closed-loop control (%) - reduced for precision
@@ -45,19 +45,19 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 1.694  # X-axis minimum voltage set to 1.694V
-      max_voltage: 2.884  # Actual physical maximum X-axis voltage (88.7%)
+      min_voltage: 2.5  # X-axis minimum voltage set to 2.485V
+      max_voltage: 3.95   # X-axis maximum voltage set to 3.95V
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
       enable_filtering: false  # Disable filtering during movement testing
       # Safety limits
-      safety_margin: 0.0  # No margin - stop exactly at limit (1.663V and 2.884V)
-      slow_zone_margin: 0.057 # Start slowing down at 1.72V (57mV from 1.663V minimum)
+      safety_margin: 0.0  # No margin - stop exactly at limit (2.485V and 3.95V)
+      slow_zone_margin: 0.1 # Start slowing down at 2.585V (100mV from 2.485V minimum)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
-      min_voltage: 0.873  # Y-axis minimum voltage set to 0.873V
-      max_voltage: 2.95
+      min_voltage: 1.255  # Y-axis minimum voltage set to 1.255V
+      max_voltage: 4.09   # Y-axis maximum voltage set to 4.09V
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
