@@ -227,7 +227,7 @@ class PathRecorder:
             # Allow progression to final datapoint instead of timeout on small errors
             x_tolerance = 0.5   # 0.5% tolerance for X axis (good accuracy achieved)
             y_tolerance = 0.2   # 0.2% tolerance for Y axis (tightened further to prevent 0.8%→0.6% overshoot acceptance)
-            max_wait_per_point = 30.0  # Timeout to prevent infinite loops when motors don't move
+            max_wait_per_point = 60.0  # Longer timeout since motors are working, just need more time
             
             for i, point in enumerate(self.current_playback_path):
                 if not self.is_playing:
@@ -773,7 +773,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 45.0  # Default speed for X motor (increased for much faster movement)
+                        base_x_speed = 80.0  # Default speed for X motor (much faster to keep up with Y motor)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
@@ -1293,11 +1293,11 @@ def calculate_x_approach_speed(x_error, base_speed):
         approach_speed = max(15.0, base_speed * 0.2)  # 20% speed, min 15%
         logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
     elif x_error <= 0.5:  # Close to target - very slow but with sufficient power
-        approach_speed = max(18.0, base_speed * 0.25)  # 25% speed, min 18%
-        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (25% - precision zone)")
+        approach_speed = max(25.0, base_speed * 0.3)  # 30% speed, min 25% (increased for small movements)
+        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
     elif x_error <= 1.5:  # Approaching target - moderate slow
-        approach_speed = max(20.0, base_speed * 0.4)  # 40% speed, min 20%
-        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - deceleration)")
+        approach_speed = max(30.0, base_speed * 0.5)  # 50% speed, min 30% (increased for reliability)
+        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
     elif x_error <= 5.0:  # Getting closer - much faster
         approach_speed = base_speed * 1.2  # 120% speed (increased from 80%)
         logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (120% - approaching)")
