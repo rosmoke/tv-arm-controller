@@ -49,7 +49,7 @@ hardware:
       max_voltage: 4.20  # X-axis maximum voltage (correct value)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 40.0  # Increased to allow normal movement without false rejections
+      max_drift_percent: 60.0  # Increased to handle cross-talk detection (3.13V to 1.059V = 56% drift)
       enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
