@@ -465,8 +465,23 @@ class PathRecorder:
         # CRITICAL: Send initial movement commands to both motors with correct directions
         logging.info("🚀 SENDING INITIAL MOVEMENT COMMANDS TO BOTH MOTORS...")
         
-        # Get current position to determine correct directions  
-        current_x, current_y = self.controller.get_current_position()
+        # Get current position to determine correct directions (with retries for I2C stability)
+        for attempt in range(3):
+            try:
+                current_x, current_y = self.controller.get_current_position()
+                if current_x > 0.1 or current_y > 0.1:  # Valid reading (not default 0.0)
+                    break
+                else:
+                    logging.warning(f"Position reading attempt {attempt + 1}: X={current_x:.1f}%, Y={current_y:.1f}% (may be sensor error)")
+                    if attempt < 2:
+                        time.sleep(0.5)  # Wait before retry
+            except Exception as e:
+                logging.warning(f"Position reading attempt {attempt + 1} failed: {e}")
+                if attempt < 2:
+                    time.sleep(0.5)  # Wait before retry
+                else:
+                    current_x, current_y = 50.0, 50.0  # Safe fallback
+        
         logging.info(f"📍 CURRENT POSITION: X={current_x:.1f}%, Y={current_y:.1f}%")
         logging.info(f"🎯 TARGET POSITION: X={target_x:.1f}%, Y={target_y:.1f}%")
         
@@ -1290,14 +1305,14 @@ class PathRecorder:
 def calculate_x_approach_speed(x_error, base_speed):
     """Calculate X motor speed - BLAZING fast when far, slow when close for precision"""
     if x_error <= 0.1:  # Very close to target - ultra slow but with minimum power
-        approach_speed = max(15.0, base_speed * 0.2)  # 20% speed, min 15%
-        logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
+        approach_speed = max(30.0, base_speed * 0.4)  # 40% speed, min 30% (higher minimum for static friction)
+        logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - final approach)")
     elif x_error <= 0.5:  # Close to target - very slow but with sufficient power
-        approach_speed = max(25.0, base_speed * 0.3)  # 30% speed, min 25% (increased for small movements)
-        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
-    elif x_error <= 1.5:  # Approaching target - very slow for tiny movements
-        approach_speed = max(12.0, base_speed * 0.2)  # 20% speed, min 12% (much slower for 1.6% targets)
-        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - tiny movement)")
+        approach_speed = max(35.0, base_speed * 0.5)  # 50% speed, min 35% (much higher for tiny movements)
+        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - precision zone)")
+    elif x_error <= 1.5:  # Approaching target - slow but reliable
+        approach_speed = max(40.0, base_speed * 0.6)  # 60% speed, min 40% (higher for small targets)
+        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (60% - small movement)")
     elif x_error <= 3.0:  # Small movements - still slow
         approach_speed = max(15.0, base_speed * 0.3)  # 30% speed, min 15% (controlled for small targets)
         logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - small movement)")
