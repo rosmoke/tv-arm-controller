@@ -50,7 +50,7 @@ hardware:
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
-      enable_filtering: false  # Disable filtering during movement testing
+      enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit (2.485V and 3.95V)
@@ -62,7 +62,7 @@ hardware:
       min_position: 0
       max_position: 100
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
-      enable_filtering: false  # Disable filtering during movement testing
+      enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit
