@@ -939,13 +939,13 @@ class PathRecorder:
                     # Close the disabled code block
                     
                     if corrections_sent:
-                        time.sleep(0.5)  # Further increased to reduce I2C bus pressure
+                        time.sleep(1.5)  # Emergency I2C protection - much longer delays
                     else:
-                        time.sleep(0.5)  # Further increased to prevent I2C bus saturation
+                        time.sleep(1.0)  # Emergency I2C protection - longer delays
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
-                time.sleep(0.5)
+                time.sleep(1.0)  # Emergency I2C protection
         
         # Timeout - stop both motors
         self.controller.x_motor.stop_motor()

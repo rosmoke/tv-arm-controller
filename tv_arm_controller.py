@@ -468,14 +468,14 @@ class PositionSensor:
         for attempt in range(self.max_retries):
             try:
                 # Faster settling time for path playback functionality
-                time.sleep(0.010)  # Faster settling time (10ms - balance speed and stability)
+                time.sleep(0.100)  # Emergency settling time (100ms - I2C bus protection)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
                 for i in range(2):
                     readings.append(self.analog_in.voltage)
                     if i < 1:
-                        time.sleep(0.015)  # Longer delay between readings (I2C bus protection)
+                        time.sleep(0.050)  # Much longer delay between readings (emergency I2C protection)
                 
                 # Average the readings to reduce noise
                 voltage = sum(readings) / len(readings)
