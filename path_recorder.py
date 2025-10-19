@@ -624,9 +624,13 @@ class PathRecorder:
                     # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
                     if consecutive_x_overshoot >= max_consecutive_overshoot:
                         logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_x:.1f}% (target: {target_x:.1f}%)")
-                        self.controller.x_motor.stop_motor()
-                        self.controller.x_motor.set_speed(0)
+                        # EMERGENCY BRAKE - immediate stop for overshoot
+                        self.controller.x_motor.brake_motor()  # Short brake - immediate stop
+                        time.sleep(0.3)  # Longer brake for emergency stop
+                        self.controller.x_motor.stop_motor()   # Then coast
+                        self.controller.x_motor.set_speed(0)   # Zero speed
                         self.x_stopped = True
+                        logging.error(f"🛑 X MOTOR EMERGENCY BRAKED at {current_x:.1f}%")
                         
                 except Exception as e:
                     logging.warning(f"X sensor error in target check: {e}")
@@ -640,9 +644,13 @@ class PathRecorder:
                     # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
                     if consecutive_y_overshoot >= max_consecutive_overshoot:
                         logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_y:.1f}% (target: {target_y:.1f}%)")
-                        self.controller.y_motor.stop_motor()
-                        self.controller.y_motor.set_speed(0)
+                        # EMERGENCY BRAKE - immediate stop for overshoot
+                        self.controller.y_motor.brake_motor()  # Short brake - immediate stop
+                        time.sleep(0.3)  # Longer brake for emergency stop
+                        self.controller.y_motor.stop_motor()   # Then coast
+                        self.controller.y_motor.set_speed(0)   # Zero speed
                         self.y_stopped = True
+                        logging.error(f"🛑 Y MOTOR EMERGENCY BRAKED at {current_y:.1f}%")
                         
                 except Exception as e:
                     logging.warning(f"Y sensor error in target check: {e}")
@@ -710,8 +718,11 @@ class PathRecorder:
                         # Clear the stopped flag so motor can continue
                         delattr(self, 'y_stopped')
                 
-                # Check if both axes are at target
-                if x_at_target and y_at_target:
+                # Check if both axes are at target (but NOT stopped due to overshoot)
+                x_success = x_at_target and x_error < x_tolerance  # Actually at target, not just stopped
+                y_success = y_at_target and y_error < y_tolerance  # Actually at target, not just stopped
+                
+                if x_success and y_success:
                     consecutive_good_readings += 1
                     logging.info(f"✅ Both axes at target ({consecutive_good_readings}/{required_readings} checks)")
                     
