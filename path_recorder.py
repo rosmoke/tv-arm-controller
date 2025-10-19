@@ -607,7 +607,7 @@ class PathRecorder:
                         current_x, target_x, x_tolerance, 'X', consecutive_x_overshoot, max_consecutive_overshoot)
                     
                     # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
-                    if x_at_target and consecutive_x_overshoot >= max_consecutive_overshoot:
+                    if consecutive_x_overshoot >= max_consecutive_overshoot:
                         logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_x:.1f}% (target: {target_x:.1f}%)")
                         self.controller.x_motor.stop_motor()
                         self.controller.x_motor.set_speed(0)
@@ -623,7 +623,7 @@ class PathRecorder:
                         current_y, target_y, y_tolerance, 'Y', consecutive_y_overshoot, max_consecutive_overshoot)
                     
                     # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
-                    if y_at_target and consecutive_y_overshoot >= max_consecutive_overshoot:
+                    if consecutive_y_overshoot >= max_consecutive_overshoot:
                         logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_y:.1f}% (target: {target_y:.1f}%)")
                         self.controller.y_motor.stop_motor()
                         self.controller.y_motor.set_speed(0)
@@ -773,7 +773,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 35.0  # Default speed for X motor (reduced - was too fast and overshooting)
+                        base_x_speed = 25.0  # Default speed for X motor (much slower - prevent overshoot on small targets)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
@@ -1295,12 +1295,15 @@ def calculate_x_approach_speed(x_error, base_speed):
     elif x_error <= 0.5:  # Close to target - very slow but with sufficient power
         approach_speed = max(25.0, base_speed * 0.3)  # 30% speed, min 25% (increased for small movements)
         logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
-    elif x_error <= 1.5:  # Approaching target - moderate slow
-        approach_speed = max(30.0, base_speed * 0.5)  # 50% speed, min 30% (increased for reliability)
-        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
-    elif x_error <= 5.0:  # Getting closer - much faster
-        approach_speed = base_speed * 1.2  # 120% speed (increased from 80%)
-        logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (120% - approaching)")
+    elif x_error <= 1.5:  # Approaching target - very slow for tiny movements
+        approach_speed = max(12.0, base_speed * 0.2)  # 20% speed, min 12% (much slower for 1.6% targets)
+        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - tiny movement)")
+    elif x_error <= 3.0:  # Small movements - still slow
+        approach_speed = max(15.0, base_speed * 0.3)  # 30% speed, min 15% (controlled for small targets)
+        logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - small movement)")
+    elif x_error <= 5.0:  # Getting closer - moderate
+        approach_speed = base_speed * 0.8  # 80% speed (reduced from 120%)
+        logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
     elif x_error <= 10.0:  # Medium distance - very fast
         approach_speed = base_speed * 1.6  # 160% speed (increased from 110%)
         logging.info(f"X FAST: {x_error:.2f}% error → {approach_speed:.0f}% speed (160% - medium distance)")
