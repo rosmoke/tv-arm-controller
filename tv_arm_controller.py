@@ -467,8 +467,8 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Much longer settling time for I2C stability with mixed power supplies
-                time.sleep(0.100)  # Long settling time (100ms - I2C stability)
+                # Normal settling time - cross-talk eliminated with common 3.3V supply
+                time.sleep(0.010)  # Normal settling time (10ms - good balance)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
