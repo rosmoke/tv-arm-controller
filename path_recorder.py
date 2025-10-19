@@ -605,6 +605,14 @@ class PathRecorder:
                 try:
                     x_at_target, consecutive_x_overshoot = self._is_axis_at_target_resilient(
                         current_x, target_x, x_tolerance, 'X', consecutive_x_overshoot, max_consecutive_overshoot)
+                    
+                    # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
+                    if x_at_target and consecutive_x_overshoot >= max_consecutive_overshoot:
+                        logging.error(f"🚨 X MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_x:.1f}% (target: {target_x:.1f}%)")
+                        self.controller.x_motor.stop_motor()
+                        self.controller.x_motor.set_speed(0)
+                        self.x_stopped = True
+                        
                 except Exception as e:
                     logging.warning(f"X sensor error in target check: {e}")
                     x_at_target = False  # Assume not at target if sensor fails
@@ -613,6 +621,14 @@ class PathRecorder:
                 try:
                     y_at_target, consecutive_y_overshoot = self._is_axis_at_target_resilient(
                         current_y, target_y, y_tolerance, 'Y', consecutive_y_overshoot, max_consecutive_overshoot)
+                    
+                    # OVERSHOOT HANDLING: Stop motor immediately if overshoot confirmed
+                    if y_at_target and consecutive_y_overshoot >= max_consecutive_overshoot:
+                        logging.error(f"🚨 Y MOTOR EMERGENCY STOP - OVERSHOOT CONFIRMED! {current_y:.1f}% (target: {target_y:.1f}%)")
+                        self.controller.y_motor.stop_motor()
+                        self.controller.y_motor.set_speed(0)
+                        self.y_stopped = True
+                        
                 except Exception as e:
                     logging.warning(f"Y sensor error in target check: {e}")
                     y_at_target = False  # Assume not at target if sensor fails
