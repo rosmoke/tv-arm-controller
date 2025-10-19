@@ -380,7 +380,7 @@ class PositionSensor:
     
     def __init__(self, ads: Any, channel: int, min_voltage: float = 0.1, 
                  max_voltage: float = 3.2, max_drift_percent: float = 10.0, 
-                 enable_filtering: bool = True):
+                 enable_filtering: bool = True, max_retries: int = 5):
         self.ads = ads
         self.channel = channel
         self.min_voltage = min_voltage
@@ -393,7 +393,7 @@ class PositionSensor:
         self.last_valid_voltage = None
         self.consecutive_errors = 0
         self.max_consecutive_errors = 3
-        self.max_retries = 5
+        self.max_retries = max_retries
         
         if ADS and AnalogIn and ads is not None:
             self.analog_in = AnalogIn(ads, getattr(ADS, f'P{channel}'))
@@ -589,7 +589,8 @@ class TVArmController:
             x_cal['min_voltage'], 
             x_cal['max_voltage'],
             x_cal.get('max_drift_percent', 10.0),
-            x_cal.get('enable_filtering', True)
+            x_cal.get('enable_filtering', True),
+            x_cal.get('max_retries', 5)
         )
         
         self.y_sensor = PositionSensor(
@@ -598,7 +599,8 @@ class TVArmController:
             y_cal['min_voltage'],
             y_cal['max_voltage'],
             y_cal.get('max_drift_percent', 10.0),
-            y_cal.get('enable_filtering', True)
+            y_cal.get('enable_filtering', True),
+            y_cal.get('max_retries', 5)
         )
         
         # Current positions
