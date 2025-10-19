@@ -227,7 +227,7 @@ class PathRecorder:
             # Allow progression to final datapoint instead of timeout on small errors
             x_tolerance = 0.5   # 0.5% tolerance for X axis (good accuracy achieved)
             y_tolerance = 0.2   # 0.2% tolerance for Y axis (tightened further to prevent 0.8%→0.6% overshoot acceptance)
-            max_wait_per_point = 35.0  # Extended timeout for Y motor to fully reach targets
+            max_wait_per_point = 60.0  # Extended timeout for slower precision speeds
             
             for i, point in enumerate(self.current_playback_path):
                 if not self.is_playing:
