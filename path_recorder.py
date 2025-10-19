@@ -709,21 +709,22 @@ class PathRecorder:
                     
                     # Helper functions for speed calculation (still needed even without corrections)
                     def calculate_x_approach_speed(x_error, base_speed):
-                        """Calculate X motor speed with aggressive deceleration to prevent overshoot"""
+                        """Calculate X motor speed with VERY aggressive deceleration to prevent overshoot"""
                         if x_error <= 0.1:  # Very close to target - ultra slow
-                            approach_speed = max(20.0, base_speed * 0.2)  # 20% speed, min 20%
-                            logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
-                        elif x_error <= 0.3:  # Close to target - very slow
-                            approach_speed = max(25.0, base_speed * 0.3)  # 30% speed, min 25%
-                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
-                        elif x_error <= 0.8:  # Approaching target - moderate slow
-                            approach_speed = max(30.0, base_speed * 0.5)  # 50% speed, min 30%
-                            logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
-                        elif x_error <= 2.0:  # Getting closer - slight slow
-                            approach_speed = base_speed * 0.7  # 70% speed
-                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching)")
-                        else:  # Far from target - full speed
-                            approach_speed = base_speed  # Full speed
+                            approach_speed = max(8.0, base_speed * 0.15)  # 15% speed, min 8%
+                            logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (15% - final approach)")
+                        elif x_error <= 0.5:  # Close to target - very slow
+                            approach_speed = max(10.0, base_speed * 0.2)  # 20% speed, min 10%
+                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - precision zone)")
+                        elif x_error <= 1.5:  # Approaching target - moderate slow
+                            approach_speed = max(12.0, base_speed * 0.3)  # 30% speed, min 12%
+                            logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - deceleration)")
+                        elif x_error <= 3.0:  # Getting closer - slight slow
+                            approach_speed = base_speed * 0.4  # 40% speed (reduced from 70%)
+                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - approaching)")
+                        else:  # Far from target - reduced speed
+                            approach_speed = base_speed * 0.6  # 60% speed (reduced from full)
+                            logging.info(f"X NORMAL: {x_error:.2f}% error → {approach_speed:.0f}% speed (60% - normal)")
                         return approach_speed
                     
                     def calculate_y_approach_speed(y_error, base_speed):
@@ -807,7 +808,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 25.0  # Default speed for X motor (reduced further for precision)
+                        base_x_speed = 18.0  # Default speed for X motor (reduced significantly to prevent overshoot)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
