@@ -23,13 +23,19 @@ class ManualController:
         
         # Control settings
         self.step_size = 2.0  # Percentage to move per key press
-        self.continuous_speed = 60.0  # Speed for continuous movement (0-100 UI scale)
+        self.continuous_speed = 48.0  # Speed for continuous movement (reduced 20% from 60.0)
         self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
-        self.position_update_interval = 0.2  # How often to show position
+        self.position_update_interval = 0.4  # How often to show position (reduced from 0.2s)
         
         # Current movement state
         self.moving_x = 0  # -1 = left, 0 = stop, 1 = right
         self.moving_y = 0  # -1 = down, 0 = stop, 1 = up
+        
+        # Position caching to reduce I2C calls
+        self.last_position_read = 0
+        self.cached_x_pos = 0
+        self.cached_y_pos = 0
+        self.position_cache_duration = 0.2  # Cache position for 500ms
         
         # Terminal settings for raw key input
         self.old_settings = None
@@ -130,11 +136,23 @@ class ManualController:
         
         return True
     
+    def _get_cached_position(self):
+        """Get position with caching to reduce I2C calls"""
+        current_time = time.time()
+        if current_time - self.last_position_read > self.position_cache_duration:
+            try:
+                self.cached_x_pos, self.cached_y_pos = self.tv_controller.get_current_position()
+                self.last_position_read = current_time
+            except Exception as e:
+                print(f"❌ Position read error: {e}")
+                # Keep using cached values on error
+        return self.cached_x_pos, self.cached_y_pos
+    
     def _check_motor_safety(self, axis: str, direction: str, requested_speed: float) -> float:
         """Check safety limits and return safe speed (0 = stop)"""
         try:
-            # Get current position
-            x_pos, y_pos = self.tv_controller.get_current_position()
+            # Get cached position to reduce I2C calls
+            x_pos, y_pos = self._get_cached_position()
             
             if axis == 'x':
                 # Get X sensor voltage
@@ -192,13 +210,13 @@ class ManualController:
                 current_time = time.time()
                 if current_time - last_position_update > self.position_update_interval:
                     try:
-                        x, y = self.tv_controller.get_current_position()
+                        x, y = self._get_cached_position()
                         print(f"\r📍 X={x:5.1f}%, Y={y:5.1f}% | Speed: {self.continuous_speed:.0f}%        ", end="", flush=True)
                         last_position_update = current_time
                     except:
                         pass
                 
-                time.sleep(0.1)  # Control loop frequency
+                time.sleep(0.5)  # Control loop frequency (reduced from 0.1s to reduce I2C load)
                 
             except Exception as e:
                 print(f"\n❌ Error in control loop: {e}")
@@ -250,7 +268,7 @@ class ManualController:
                         self.tv_controller.y_motor.stop_motor()
                         last_key_time = current_time  # Reset to prevent repeated stopping
                 
-                time.sleep(0.02)  # Fast polling for responsive control
+                time.sleep(0.08)  # Reduced polling frequency to reduce I2C bus load
             
             # Stop all motors when exiting
             self.tv_controller.x_motor.stop_motor()

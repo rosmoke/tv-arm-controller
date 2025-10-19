@@ -551,8 +551,8 @@ class PathRecorder:
                         x_reading, y_reading = self.controller.get_current_position()
                         readings_x.append(x_reading)
                         readings_y.append(y_reading)
-                        if i < 2:  # Small delay between readings
-                            time.sleep(0.01)  # 10ms between readings
+                        if i < 2:  # Longer delay between readings to reduce I2C bus pressure
+                            time.sleep(0.05)  # 50ms between readings (5x longer)
                     except Exception as e:
                         logging.warning(f"Sensor reading {i+1} failed: {e}")
                         continue
@@ -575,7 +575,7 @@ class PathRecorder:
                     else:
                         logging.info(f"🔄 CONTINUING WITH CAUTION - Will retry sensor reading")
                         # Use last known position if available, otherwise skip this iteration
-                        time.sleep(0.1)  # Brief pause to let sensors recover
+                        time.sleep(0.3)  # Longer pause to let I2C bus and sensors recover
                         continue
                 else:
                     # Reset failure counter on successful reading
@@ -697,8 +697,8 @@ class PathRecorder:
                     def calculate_x_approach_speed(x_error, base_speed):
                         """Calculate X motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
                         if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
-                            approach_speed = max(35.0, base_speed * 0.6)  # Minimum 35% speed to overcome safety limits + friction
-                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (min 35% - overriding safety limits)")
+                            approach_speed = max(28.0, base_speed * 0.6)  # Minimum 28% speed (reduced 20% from 35%)
+                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (min 28% - overriding safety limits)")
                         elif x_error <= 1.0:  # Within 1% of target - slow down significantly  
                             approach_speed = base_speed * 0.7  # 70% speed when approaching (was 50%)
                             logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching target)")
@@ -772,7 +772,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 50.0  # Default speed for X motor
+                        base_x_speed = 40.0  # Default speed for X motor (reduced 20% from 50.0)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # UNIDIRECTIONAL: Never change direction - only adjust speed
@@ -824,7 +824,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_y_speed = 50.0  # Default speed for Y motor (will be multiplied by 1.5x in motor controller)
+                        base_y_speed = 40.0  # Default speed for Y motor (reduced 20% from 50.0)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
                         # Determine direction for Y motor using PATH-BASED logic (same as initial setup)
@@ -851,9 +851,9 @@ class PathRecorder:
                     # Close the disabled code block
                     
                     if corrections_sent:
-                        time.sleep(0.2)  # Increased from 0.05s to reduce I2C bus pressure
+                        time.sleep(0.5)  # Further increased to reduce I2C bus pressure
                     else:
-                        time.sleep(0.2)  # Increased from 0.02s to prevent I2C bus saturation
+                        time.sleep(0.5)  # Further increased to prevent I2C bus saturation
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
