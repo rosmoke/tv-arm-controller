@@ -695,26 +695,38 @@ class PathRecorder:
                     
                     # Helper functions for speed calculation (still needed even without corrections)
                     def calculate_x_approach_speed(x_error, base_speed):
-                        """Calculate X motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
-                        if x_error <= 0.3:  # Within 0.3% of target - very slow for precision
-                            approach_speed = max(28.0, base_speed * 0.6)  # Minimum 28% speed (reduced 20% from 35%)
-                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (min 28% - overriding safety limits)")
-                        elif x_error <= 1.0:  # Within 1% of target - slow down significantly  
-                            approach_speed = base_speed * 0.7  # 70% speed when approaching (was 50%)
-                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching target)")
-                        else:  # Far from target
+                        """Calculate X motor speed with aggressive deceleration to prevent overshoot"""
+                        if x_error <= 0.1:  # Very close to target - ultra slow
+                            approach_speed = max(15.0, base_speed * 0.2)  # 20% speed, min 15%
+                            logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
+                        elif x_error <= 0.3:  # Close to target - very slow
+                            approach_speed = max(18.0, base_speed * 0.3)  # 30% speed, min 18%
+                            logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
+                        elif x_error <= 0.8:  # Approaching target - moderate slow
+                            approach_speed = base_speed * 0.5  # 50% speed
+                            logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
+                        elif x_error <= 2.0:  # Getting closer - slight slow
+                            approach_speed = base_speed * 0.7  # 70% speed
+                            logging.info(f"X SLOW DOWN: {x_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching)")
+                        else:  # Far from target - full speed
                             approach_speed = base_speed  # Full speed
                         return approach_speed
                     
                     def calculate_y_approach_speed(y_error, base_speed):
-                        """Calculate Y motor speed based on distance to target - aggressive slowdown to prevent overshoot"""
-                        if y_error <= 0.08:  # Within 0.08% of target - very slow for precision
-                            approach_speed = base_speed * 0.3  # 30% speed when very close
-                            logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (30% - preventing overshoot)")
-                        elif y_error <= 0.3:  # Within 0.3% of target - slow down significantly
-                            approach_speed = base_speed * 0.5  # 50% speed when approaching
-                            logging.info(f"Y SLOW DOWN: {y_error:.2f}% error → {approach_speed:.0f}% speed (50% - approaching target)")
-                        else:  # Far from target
+                        """Calculate Y motor speed with aggressive deceleration to prevent overshoot"""
+                        if y_error <= 0.05:  # Very close to target - ultra slow
+                            approach_speed = base_speed * 0.2  # 20% speed
+                            logging.info(f"Y ULTRA PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
+                        elif y_error <= 0.15:  # Close to target - very slow
+                            approach_speed = base_speed * 0.3  # 30% speed
+                            logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
+                        elif y_error <= 0.4:  # Approaching target - moderate slow
+                            approach_speed = base_speed * 0.5  # 50% speed
+                            logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
+                        elif y_error <= 1.0:  # Getting closer - slight slow
+                            approach_speed = base_speed * 0.7  # 70% speed
+                            logging.info(f"Y SLOW DOWN: {y_error:.2f}% error → {approach_speed:.0f}% speed (70% - approaching)")
+                        else:  # Far from target - full speed
                             approach_speed = base_speed  # Full speed
                         return approach_speed
                     
@@ -772,7 +784,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 40.0  # Default speed for X motor (reduced 20% from 50.0)
+                        base_x_speed = 25.0  # Default speed for X motor (reduced further for precision)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # UNIDIRECTIONAL: Never change direction - only adjust speed
@@ -824,7 +836,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_y_speed = 40.0  # Default speed for Y motor (reduced 20% from 50.0)
+                        base_y_speed = 25.0  # Default speed for Y motor (reduced further for precision)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
                         # Determine direction for Y motor using PATH-BASED logic (same as initial setup)

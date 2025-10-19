@@ -23,7 +23,7 @@ class ManualController:
         
         # Control settings
         self.step_size = 2.0  # Percentage to move per key press
-        self.continuous_speed = 48.0  # Speed for continuous movement (reduced 20% from 60.0)
+        self.continuous_speed = 30.0  # Speed for continuous movement (reduced further for precision)
         self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
         self.position_update_interval = 0.4  # How often to show position (reduced from 0.2s)
         
@@ -216,7 +216,7 @@ class ManualController:
                     except:
                         pass
                 
-                time.sleep(0.5)  # Control loop frequency (reduced from 0.1s to reduce I2C load)
+                time.sleep(0.05)  # Much faster response (50ms for quick motor stopping)
                 
             except Exception as e:
                 print(f"\n❌ Error in control loop: {e}")
@@ -268,7 +268,7 @@ class ManualController:
                         self.tv_controller.y_motor.stop_motor()
                         last_key_time = current_time  # Reset to prevent repeated stopping
                 
-                time.sleep(0.08)  # Reduced polling frequency to reduce I2C bus load
+                time.sleep(0.02)  # Faster key detection (20ms for responsive control)
             
             # Stop all motors when exiting
             self.tv_controller.x_motor.stop_motor()
