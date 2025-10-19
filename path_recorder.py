@@ -773,7 +773,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 80.0  # Default speed for X motor (much faster to keep up with Y motor)
+                        base_x_speed = 35.0  # Default speed for X motor (reduced - was too fast and overshooting)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
@@ -869,7 +869,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_y_speed = 45.0  # Default speed for Y motor (increased for much faster movement)
+                        base_y_speed = 80.0  # Default speed for Y motor (much faster - was too slow at 14%)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
@@ -1319,11 +1319,11 @@ def calculate_y_approach_speed(y_error, base_speed):
         approach_speed = max(8.0, base_speed * 0.15)  # 15% speed, min 8%
         logging.info(f"Y ULTRA PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (15% - final approach)")
     elif y_error <= 0.5:  # Close to target - very slow
-        approach_speed = max(10.0, base_speed * 0.2)  # 20% speed, min 10%
-        logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (20% - precision zone)")
-    elif y_error <= 1.5:  # Approaching target - moderate slow
-        approach_speed = max(12.0, base_speed * 0.3)  # 30% speed, min 12%
-        logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (30% - deceleration)")
+        approach_speed = max(20.0, base_speed * 0.25)  # 25% speed, min 20% (increased for reliability)
+        logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (25% - precision zone)")
+    elif y_error <= 1.5:  # Approaching target - moderate slow  
+        approach_speed = max(30.0, base_speed * 0.4)  # 40% speed, min 30% (much higher for 1.1% movements)
+        logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (40% - deceleration)")
     elif y_error <= 3.0:  # Getting closer - much faster
         approach_speed = base_speed * 0.8  # 80% speed (increased from 50%)
         logging.info(f"Y MODERATE: {y_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
