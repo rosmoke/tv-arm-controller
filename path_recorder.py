@@ -809,12 +809,45 @@ class PathRecorder:
                         base_x_speed = 25.0  # Default speed for X motor (reduced further for precision)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
-                        # UNIDIRECTIONAL: Never change direction - only adjust speed
-                        # Direction was set correctly at start and must never change
-                        # Changing direction violates unidirectional movement principle
-                        
-                        self.controller.x_motor.set_speed(new_x_speed)
-                        logging.debug(f"X speed adjustment: {new_x_speed:.1f}% (direction unchanged)")
+                        # SAFETY CHECK: Apply safety limits before setting speed
+                        try:
+                            x_voltage = self.controller.x_sensor.read_voltage()
+                            x_config = self.controller.config['hardware']['calibration']['x_axis']
+                            
+                            # Determine current direction based on path type
+                            path_name = getattr(self, 'current_path_name', 'unknown')
+                            if 'retract' in path_name.lower():
+                                x_direction = 'reverse'
+                            else:
+                                x_direction = 'forward'
+                            
+                            should_stop, max_safe_speed = self.controller.x_motor.check_safety_limits(
+                                x_voltage, x_config['min_voltage'], x_config['max_voltage'],
+                                x_config['safety_margin'], x_config['slow_zone_margin'], 
+                                x_config['safety_slow_speed'], x_direction
+                            )
+                            
+                            if should_stop:
+                                logging.warning(f"🛑 X SAFETY STOP: Voltage {x_voltage:.3f}V at limit")
+                                self.controller.x_motor.stop_motor()
+                                self.controller.x_motor.set_speed(0)
+                                self.x_stopped = True
+                            else:
+                                # Apply the more restrictive of safety limit or approach speed
+                                final_x_speed = min(new_x_speed, max_safe_speed)
+                                if final_x_speed < new_x_speed:
+                                    logging.warning(f"🐌 X SAFETY SLOW: {new_x_speed:.1f}% → {final_x_speed:.1f}% (voltage: {x_voltage:.3f}V)")
+                                
+                                # UNIDIRECTIONAL: Never change direction - only adjust speed
+                                # Direction was set correctly at start and must never change
+                                # Changing direction violates unidirectional movement principle
+                                
+                                self.controller.x_motor.set_speed(final_x_speed)
+                                logging.debug(f"X speed adjustment: {final_x_speed:.1f}% (direction unchanged)")
+                        except Exception as e:
+                            logging.warning(f"X safety check failed: {e}, using original speed")
+                            self.controller.x_motor.set_speed(new_x_speed)
+                            
                         corrections_sent = True
                         
                         # Update last position for next check
@@ -872,20 +905,63 @@ class PathRecorder:
                         base_y_speed = 25.0  # Default speed for Y motor (reduced further for precision)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
-                        # Determine direction for Y motor using PATH-BASED logic (same as initial setup)
-                        path_name = getattr(self, 'current_path_name', 'unknown')
-                        if 'extend' in path_name.lower():
-                            self.controller.y_motor.set_direction_forward()  # EXTEND: FORWARD
-                        elif 'retract' in path_name.lower():
-                            self.controller.y_motor.set_direction_reverse()  # RETRACT: REVERSE
-                        else:
-                            # Fallback to position-based
-                            if target_y > current_y:
-                                self.controller.y_motor.set_direction_forward()
+                        # SAFETY CHECK: Apply safety limits before setting speed
+                        try:
+                            y_voltage = self.controller.y_sensor.read_voltage()
+                            y_config = self.controller.config['hardware']['calibration']['y_axis']
+                            
+                            # Determine current direction based on path type
+                            path_name = getattr(self, 'current_path_name', 'unknown')
+                            if 'retract' in path_name.lower():
+                                y_direction = 'reverse'
                             else:
+                                y_direction = 'forward'
+                            
+                            should_stop, max_safe_speed = self.controller.y_motor.check_safety_limits(
+                                y_voltage, y_config['min_voltage'], y_config['max_voltage'],
+                                y_config['safety_margin'], y_config['slow_zone_margin'], 
+                                y_config['safety_slow_speed'], y_direction
+                            )
+                            
+                            if should_stop:
+                                logging.warning(f"🛑 Y SAFETY STOP: Voltage {y_voltage:.3f}V at limit")
+                                self.controller.y_motor.stop_motor()
+                                self.controller.y_motor.set_speed(0)
+                                self.y_stopped = True
+                            else:
+                                # Apply the more restrictive of safety limit or approach speed
+                                final_y_speed = min(new_y_speed, max_safe_speed)
+                                if final_y_speed < new_y_speed:
+                                    logging.warning(f"🐌 Y SAFETY SLOW: {new_y_speed:.1f}% → {final_y_speed:.1f}% (voltage: {y_voltage:.3f}V)")
+                                
+                                # Determine direction for Y motor using PATH-BASED logic (same as initial setup)
+                                if 'extend' in path_name.lower():
+                                    self.controller.y_motor.set_direction_forward()  # EXTEND: FORWARD
+                                elif 'retract' in path_name.lower():
+                                    self.controller.y_motor.set_direction_reverse()  # RETRACT: REVERSE
+                                else:
+                                    # Fallback to position-based
+                                    if target_y > current_y:
+                                        self.controller.y_motor.set_direction_forward()
+                                    else:
+                                        self.controller.y_motor.set_direction_reverse()
+                                
+                                self.controller.y_motor.set_speed(final_y_speed)
+                        except Exception as e:
+                            logging.warning(f"Y safety check failed: {e}, using original speed")
+                            # Fallback direction setting
+                            path_name = getattr(self, 'current_path_name', 'unknown')
+                            if 'extend' in path_name.lower():
+                                self.controller.y_motor.set_direction_forward()
+                            elif 'retract' in path_name.lower():
                                 self.controller.y_motor.set_direction_reverse()
-                        
-                        self.controller.y_motor.set_speed(new_y_speed)
+                            else:
+                                if target_y > current_y:
+                                    self.controller.y_motor.set_direction_forward()
+                                else:
+                                    self.controller.y_motor.set_direction_reverse()
+                            self.controller.y_motor.set_speed(new_y_speed)
+                            
                         corrections_sent = True
                         
                         # Update last position for next check
