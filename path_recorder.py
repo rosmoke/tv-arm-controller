@@ -533,6 +533,11 @@ class PathRecorder:
         self.x_last_position = None
         self.y_last_position = None
         x_command_count = 0
+        
+        # Initialize catastrophic reversal detection counters
+        consecutive_x_reversals = 0
+        consecutive_y_reversals = 0
+        max_consecutive_reversals = 3  # Require 3 consecutive bad readings before locking
         y_command_count = 0
         max_commands_per_axis = 15  # Emergency stop after 15 commands per axis (more attempts)
 
@@ -767,17 +772,25 @@ class PathRecorder:
                             # RE-ENABLED: Wrong direction detection (but much more lenient)
                             logging.debug(f"X direction check: {self.x_last_position:.1f}% → {current_x:.1f}%, movement: {movement:.1f}%, last_error: {last_error:.1f}%, current_error: {x_error:.1f}%")
                             
-                            # Only check for MAJOR direction reversal (>15% movement in clearly wrong direction)
-                            # Be extremely lenient to avoid false positives that broke extend
-                            # Only lock for truly catastrophic reversals
-                            if movement > 15.0 and x_error > last_error + 10.0:  # EXTREMELY lenient - only massive reversals
-                                logging.warning(f"🚫 X CATASTROPHIC REVERSAL: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
+                            # Resilient catastrophic reversal detection - require multiple consecutive bad readings
+                            if movement > 15.0 and x_error > last_error + 10.0:  # Potential reversal detected
+                                consecutive_x_reversals += 1
+                                logging.warning(f"⚠️ X POTENTIAL REVERSAL {consecutive_x_reversals}/{max_consecutive_reversals}: {self.x_last_position:.1f}% → {current_x:.1f}% (moving away from {target_x:.1f}%)")
                                 logging.warning(f"   Last error: {last_error:.1f}%, Current error: {x_error:.1f}%, Movement: {movement:.1f}%")
-                                self.controller.x_motor.stop_motor()
-                                self.controller.x_motor.set_speed(0)
-                                self.x_stopped = True
-                                logging.warning(f"🔒 X MOTOR LOCKED due to catastrophic reversal [iteration {iteration_count}]")
+                                
+                                if consecutive_x_reversals >= max_consecutive_reversals:
+                                    logging.warning(f"🚫 X CATASTROPHIC REVERSAL CONFIRMED: {max_consecutive_reversals} consecutive bad readings")
+                                    self.controller.x_motor.stop_motor()
+                                    self.controller.x_motor.set_speed(0)
+                                    self.x_stopped = True
+                                    logging.warning(f"🔒 X MOTOR LOCKED due to confirmed catastrophic reversal [iteration {iteration_count}]")
+                                else:
+                                    logging.info(f"🔄 X CONTINUING with caution - need {max_consecutive_reversals - consecutive_x_reversals} more bad readings to lock")
                             else:
+                                # Reset counter on good reading
+                                if consecutive_x_reversals > 0:
+                                    logging.info(f"✅ X REVERSAL COUNTER RESET: Was {consecutive_x_reversals}, now 0 (good reading)")
+                                    consecutive_x_reversals = 0
                                 if iteration_count % 100 == 0:  # Reduce X continuing spam
                                     logging.debug(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (movement: {movement:.1f}%, error: {x_error:.1f}%, allowing variations)")
                         else:
@@ -823,13 +836,24 @@ class PathRecorder:
                                     if iteration_count % 100 == 0:  # Reduce Y continuing spam  
                                         logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (large movement, allowing sensor variations)")
                             else:  # Small movement targets - be extremely lenient for Y motor
-                                if movement > 15.0 and y_error > last_error + 8.0:  # EXTREMELY lenient - Y motor has sensor delay issues
-                                    logging.warning(f"🚫 Y CATASTROPHIC REVERSAL: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
+                                if movement > 15.0 and y_error > last_error + 8.0:  # Potential Y reversal detected
+                                    consecutive_y_reversals += 1
+                                    logging.warning(f"⚠️ Y POTENTIAL REVERSAL {consecutive_y_reversals}/{max_consecutive_reversals}: {self.y_last_position:.1f}% → {current_y:.1f}% (moving away from {target_y:.1f}%)")
                                     logging.warning(f"   Last error: {last_error:.1f}%, Current error: {y_error:.1f}%, Movement: {movement:.1f}%")
-                                    self.controller.y_motor.stop_motor()
-                                    self.controller.y_motor.set_speed(0)
-                                    self.y_stopped = True
+                                    
+                                    if consecutive_y_reversals >= max_consecutive_reversals:
+                                        logging.warning(f"🚫 Y CATASTROPHIC REVERSAL CONFIRMED: {max_consecutive_reversals} consecutive bad readings")
+                                        self.controller.y_motor.stop_motor()
+                                        self.controller.y_motor.set_speed(0)
+                                        self.y_stopped = True
+                                        logging.warning(f"🔒 Y MOTOR LOCKED due to confirmed catastrophic reversal [iteration {iteration_count}]")
+                                    else:
+                                        logging.info(f"🔄 Y CONTINUING with caution - need {max_consecutive_reversals - consecutive_y_reversals} more bad readings to lock")
                                 else:
+                                    # Reset counter on good reading
+                                    if consecutive_y_reversals > 0:
+                                        logging.info(f"✅ Y REVERSAL COUNTER RESET: Was {consecutive_y_reversals}, now 0 (good reading)")
+                                        consecutive_y_reversals = 0
                                     if iteration_count % 100 == 0:  # Reduce Y continuing spam
                                         logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, allowing sensor delays)")
                         else:
