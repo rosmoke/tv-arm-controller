@@ -91,7 +91,7 @@ class LivePotentiometerReader:
             i2c = busio.I2C(board.SCL, board.SDA)
             self.ads = ADS.ADS1115(i2c, address=0x48)
             self.ads.gain = 1  # ±4.096V range
-            self.ads.data_rate = 128  # Samples per second (faster now that cross-talk is eliminated)
+            self.ads.data_rate = 64   # Samples per second (balanced for stability and speed)
             
             # Initialize analog input channels
             self.x_channel = AnalogIn(self.ads, getattr(ADS, f'P{self.x_config["channel"]}'))  # X-axis from config

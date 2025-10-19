@@ -468,14 +468,14 @@ class PositionSensor:
         for attempt in range(self.max_retries):
             try:
                 # Normal settling time - cross-talk eliminated with common 3.3V supply
-                time.sleep(0.010)  # Normal settling time (10ms - good balance)
+                time.sleep(0.020)  # Slightly longer settling time (20ms - I2C bus protection)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
                 for i in range(2):
                     readings.append(self.analog_in.voltage)
                     if i < 1:
-                        time.sleep(0.005)  # Short delay between readings
+                        time.sleep(0.015)  # Longer delay between readings (I2C bus protection)
                 
                 # Average the readings to reduce noise
                 voltage = sum(readings) / len(readings)
