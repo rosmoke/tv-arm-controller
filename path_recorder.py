@@ -248,15 +248,15 @@ class PathRecorder:
                 should_skip = False
                 if 'extend' in path_name:
                     # EXTEND: percentages should INCREASE (0% → 96%)
-                    # Skip if we're already ABOVE this datapoint (either X OR Y higher than target)
-                    if current_x > target_x or current_y > target_y:
+                    # CONSERVATIVE SKIPPING: Only skip if SIGNIFICANTLY above target (5%+ margin for both axes)
+                    skip_margin = 5.0  # 5% margin to account for sensor errors
+                    if (current_x > target_x + skip_margin) and (current_y > target_y + skip_margin):
                         should_skip = True
-                        if current_x > target_x and current_y > target_y:
-                            logging.info(f"🔄 EXTEND SKIP: Already above datapoint {actual_datapoint_number} - X={current_x:.1f}%>{target_x:.1f}%, Y={current_y:.1f}%>{target_y:.1f}%")
-                        elif current_x > target_x:
-                            logging.info(f"🔄 EXTEND SKIP: X already above datapoint {actual_datapoint_number} - X={current_x:.1f}%>{target_x:.1f}% (Y={current_y:.1f}%→{target_y:.1f}%)")
-                        else:
-                            logging.info(f"🔄 EXTEND SKIP: Y already above datapoint {actual_datapoint_number} - Y={current_y:.1f}%>{target_y:.1f}% (X={current_x:.1f}%→{target_x:.1f}%)")
+                        logging.info(f"🔄 EXTEND SKIP: Significantly above datapoint {actual_datapoint_number} - X={current_x:.1f}%>{target_x:.1f}%+{skip_margin}%, Y={current_y:.1f}%>{target_y:.1f}%+{skip_margin}%")
+                    else:
+                        # Don't skip - go to the datapoint anyway for accuracy
+                        should_skip = False
+                        logging.info(f"✅ EXTEND CONTINUE: Going to datapoint {actual_datapoint_number} - X={current_x:.1f}%→{target_x:.1f}%, Y={current_y:.1f}%→{target_y:.1f}% (conservative approach)")
                 elif 'retract' in path_name:
                     # RETRACT: percentages should DECREASE (96% → 0%)
                     # Skip if this datapoint is ABOVE our current position (we can't go UP during retract)
@@ -465,22 +465,27 @@ class PathRecorder:
         # CRITICAL: Send initial movement commands to both motors with correct directions
         logging.info("🚀 SENDING INITIAL MOVEMENT COMMANDS TO BOTH MOTORS...")
         
-        # Get current position to determine correct directions (with retries for I2C stability)
-        for attempt in range(3):
+        # Get current position to determine correct directions (with aggressive retries for I2C stability)
+        current_x, current_y = 0.0, 0.0
+        for attempt in range(5):  # More attempts
             try:
                 current_x, current_y = self.controller.get_current_position()
-                if current_x > 0.1 or current_y > 0.1:  # Valid reading (not default 0.0)
+                # More lenient validation - accept any non-zero reading or reasonable values
+                if (current_x > 0.01 or current_y > 0.01) or (0.0 <= current_x <= 100.0 and 0.0 <= current_y <= 100.0):
+                    logging.info(f"✅ Position reading attempt {attempt + 1} SUCCESS: X={current_x:.1f}%, Y={current_y:.1f}%")
                     break
                 else:
-                    logging.warning(f"Position reading attempt {attempt + 1}: X={current_x:.1f}%, Y={current_y:.1f}% (may be sensor error)")
-                    if attempt < 2:
-                        time.sleep(0.5)  # Wait before retry
+                    logging.warning(f"❌ Position reading attempt {attempt + 1}: X={current_x:.1f}%, Y={current_y:.1f}% (invalid)")
+                    if attempt < 4:
+                        time.sleep(1.0)  # Longer wait before retry
             except Exception as e:
-                logging.warning(f"Position reading attempt {attempt + 1} failed: {e}")
-                if attempt < 2:
-                    time.sleep(0.5)  # Wait before retry
+                logging.warning(f"❌ Position reading attempt {attempt + 1} failed: {e}")
+                if attempt < 4:
+                    time.sleep(1.0)  # Longer wait before retry
                 else:
-                    current_x, current_y = 50.0, 50.0  # Safe fallback
+                    # Final fallback - use a reasonable middle position
+                    current_x, current_y = 25.0, 25.0
+                    logging.error(f"🚨 All position readings failed, using fallback: X={current_x:.1f}%, Y={current_y:.1f}%")
         
         logging.info(f"📍 CURRENT POSITION: X={current_x:.1f}%, Y={current_y:.1f}%")
         logging.info(f"🎯 TARGET POSITION: X={target_x:.1f}%, Y={target_y:.1f}%")
@@ -557,7 +562,7 @@ class PathRecorder:
         # Initialize overshoot detection counters
         consecutive_x_overshoot = 0
         consecutive_y_overshoot = 0
-        max_consecutive_overshoot = 2  # Require 2 consecutive overshoot readings before stopping
+        max_consecutive_overshoot = 1  # Immediate stop on first overshoot detection (no delay)
         y_command_count = 0
         max_commands_per_axis = 15  # Emergency stop after 15 commands per axis (more attempts)
 
@@ -1040,7 +1045,7 @@ class PathRecorder:
         
         # Simple overshoot detection based on path direction
         # Retract = going towards 0, Extend = going towards 100
-        overshoot_tolerance = 3.0  # 3% overshoot tolerance
+        overshoot_tolerance = 1.5  # 1.5% overshoot tolerance (tighter detection)
         
         # Get path type to determine movement direction
         path_name = getattr(self, 'current_path_name', 'unknown')
@@ -1086,7 +1091,7 @@ class PathRecorder:
         
         # Simple overshoot detection based on path direction
         # Retract = going towards 0, Extend = going towards 100
-        overshoot_tolerance = 3.0  # 3% overshoot tolerance
+        overshoot_tolerance = 1.5  # 1.5% overshoot tolerance (tighter detection)
         
         # Get path type to determine movement direction
         path_name = getattr(self, 'current_path_name', 'unknown')
@@ -1154,9 +1159,9 @@ class PathRecorder:
         """
         # Conservative overshoot tolerance - only for real runaway motors
         if axis == 'X':
-            overshoot_tolerance = 3.0  # 3.0% overshoot tolerance for X axis 
+            overshoot_tolerance = 1.5  # 1.5% overshoot tolerance for X axis (tighter detection) 
         else:  # Y axis  
-            overshoot_tolerance = 2.0  # 2.0% overshoot tolerance for Y axis
+            overshoot_tolerance = 1.5  # 1.5% overshoot tolerance for Y axis (tighter detection)
         
         # Only check for overshoot in the direction of movement
         if expected_direction > 0:  # Moving forward/increasing (extend)
