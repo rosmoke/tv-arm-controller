@@ -467,27 +467,15 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Adaptive filtering: Less aggressive during movement, more aggressive when stationary
-                # Quick movement detection: if we have a recent reading, check if we're moving fast
-                fast_movement = False
-                if self.last_valid_voltage is not None:
-                    quick_voltage = self.analog_in.voltage  # Quick single reading to check movement
-                    voltage_change_rate = abs(quick_voltage - self.last_valid_voltage)
-                    if voltage_change_rate > 0.05:  # 50mV change suggests movement
-                        fast_movement = True
+                # Simple consistent filtering - works for both movement and stationary
+                time.sleep(0.005)  # Moderate settling time (5ms - compromise)
                 
-                if fast_movement:
-                    # During movement: Minimal filtering for responsiveness
-                    time.sleep(0.002)  # Minimal settling time (2ms)
-                    readings = [self.analog_in.voltage]  # Single reading for speed
-                else:
-                    # When stationary: Full filtering for stability
-                    time.sleep(0.01)  # Full settling time (10ms)
-                    readings = []
-                    for i in range(3):  # Multiple readings for averaging
-                        readings.append(self.analog_in.voltage)
-                        if i < 2:
-                            time.sleep(0.01)
+                # Take 2 readings and average (faster than 3, more stable than 1)
+                readings = []
+                for i in range(2):
+                    readings.append(self.analog_in.voltage)
+                    if i < 1:
+                        time.sleep(0.005)  # Short delay between readings
                 
                 # Average the readings to reduce noise
                 voltage = sum(readings) / len(readings)
@@ -522,9 +510,13 @@ class PositionSensor:
             logging.warning(f"Using last valid voltage for channel {self.channel}: {self.last_valid_voltage:.3f}V")
             return self.last_valid_voltage
         
-        # Return a safe default value
-        logging.error(f"All voltage readings failed for channel {self.channel}, using safe default")
-        return (self.min_voltage + self.max_voltage) / 2
+        # Return last valid voltage if available, otherwise safe default
+        if self.last_valid_voltage is not None:
+            logging.error(f"All voltage readings failed for channel {self.channel}, using last valid voltage: {self.last_valid_voltage:.3f}V")
+            return self.last_valid_voltage
+        else:
+            logging.error(f"All voltage readings failed for channel {self.channel}, using safe default")
+            return (self.min_voltage + self.max_voltage) / 2
     
     def _is_voltage_valid(self, voltage: float) -> bool:
         """Check if voltage reading is valid with enhanced glitch detection"""
@@ -546,15 +538,10 @@ class PositionSensor:
                 logging.warning(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
                 return False
             
-            # Additional glitch detection for channel cross-talk (movement-aware)
-            # Adjust thresholds based on how fast we might be moving
-            voltage_threshold = 0.2  # 200mV base threshold
-            position_threshold = 15.0  # 15% base threshold
-            
-            # During very fast movement, relax thresholds slightly
-            if voltage_diff > 0.1:  # If we're seeing significant change
-                voltage_threshold = 0.3  # Allow up to 300mV during movement
-                position_threshold = 25.0  # Allow up to 25% during very fast movement
+            # Additional glitch detection for channel cross-talk (relaxed for movement)
+            # Only catch extreme cross-talk glitches, allow normal movement
+            voltage_threshold = 0.5  # 500mV threshold (relaxed from 200mV)
+            position_threshold = 35.0  # 35% threshold (relaxed from 15%)
             
             if voltage_diff > voltage_threshold:
                 position_old = ((self.last_valid_voltage - self.min_voltage) / voltage_range) * 100
@@ -562,7 +549,7 @@ class PositionSensor:
                 position_diff = abs(position_new - position_old)
                 
                 if position_diff > position_threshold:
-                    logging.warning(f"🚨 SUSPECTED CROSS-TALK on channel {self.channel}: {position_old:.1f}% → {position_new:.1f}% ({position_diff:.1f}% jump, {voltage_diff:.3f}V)")
+                    logging.warning(f"🚨 EXTREME CROSS-TALK on channel {self.channel}: {position_old:.1f}% → {position_new:.1f}% ({position_diff:.1f}% jump, {voltage_diff:.3f}V)")
                     return False
         
         return True

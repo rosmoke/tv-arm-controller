@@ -49,7 +49,7 @@ hardware:
       max_voltage: 4.0   # X-axis maximum voltage set to 3.95V
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
+        max_drift_percent: 40.0  # Increased to allow normal movement without false rejections
       enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
@@ -61,7 +61,7 @@ hardware:
       max_voltage: 4.0   # Y-axis maximum voltage set to 4.09V
       min_position: 0
       max_position: 100
-      max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
+        max_drift_percent: 40.0  # Increased to allow normal movement without false rejections
       enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
