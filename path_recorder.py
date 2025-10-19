@@ -670,11 +670,13 @@ class PathRecorder:
                 # Stop motors that have reached their targets (but don't reset counter)  
                 if x_at_target and not hasattr(self, 'x_stopped'):
                     logging.info(f"🎯 X motor reached target {target_x:.1f}% (current: {current_x:.1f}%, error: {x_error:.1f}%, tolerance: {x_tolerance}%)")
-                    # FORCE STOP - multiple commands to ensure motor actually stops
-                    self.controller.x_motor.stop_motor()
-                    self.controller.x_motor.set_speed(0)
-                    self.controller.x_motor.stop_motor()  # Double stop for safety
+                    # AGGRESSIVE BRAKE - use brake instead of stop for immediate stopping
+                    self.controller.x_motor.brake_motor()  # Short brake - immediate stop
+                    time.sleep(0.2)  # Let brake take effect
+                    self.controller.x_motor.stop_motor()   # Then coast
+                    self.controller.x_motor.set_speed(0)   # Zero speed
                     self.x_stopped = True
+                    logging.info(f"🛑 X motor FORCE STOPPED at {current_x:.1f}%")
                 elif hasattr(self, 'x_stopped') and self.x_stopped:
                     # RE-ENABLED: Motor stop logic (but only if truly at target)
                     if x_error < x_tolerance:  # Only stop if actually at target
@@ -689,11 +691,13 @@ class PathRecorder:
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🎯 Y motor reached target {target_y:.1f}% (current: {current_y:.1f}%)")
-                    # FORCE STOP - multiple commands to ensure motor actually stops  
-                    self.controller.y_motor.stop_motor()
-                    self.controller.y_motor.set_speed(0)
-                    self.controller.y_motor.stop_motor()  # Double stop for safety
+                    # AGGRESSIVE BRAKE - use brake instead of stop for immediate stopping
+                    self.controller.y_motor.brake_motor()  # Short brake - immediate stop
+                    time.sleep(0.2)  # Let brake take effect
+                    self.controller.y_motor.stop_motor()   # Then coast
+                    self.controller.y_motor.set_speed(0)   # Zero speed
                     self.y_stopped = True
+                    logging.info(f"🛑 Y motor FORCE STOPPED at {current_y:.1f}%")
                 elif hasattr(self, 'y_stopped') and self.y_stopped:
                     # RE-ENABLED: Motor stop logic (but only if truly at target)  
                     if y_error < y_tolerance:  # Only stop if actually at target
@@ -1313,9 +1317,9 @@ def calculate_x_approach_speed(x_error, base_speed):
     elif x_error <= 1.5:  # Approaching target - slow but reliable
         approach_speed = max(40.0, base_speed * 0.6)  # 60% speed, min 40% (higher for small targets)
         logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (60% - small movement)")
-    elif x_error <= 3.0:  # Small movements - still slow
-        approach_speed = max(15.0, base_speed * 0.3)  # 30% speed, min 15% (controlled for small targets)
-        logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - small movement)")
+    elif x_error <= 3.0:  # Small movements - need sufficient power
+        approach_speed = max(50.0, base_speed * 0.8)  # 80% speed, min 50% (much higher to overcome friction)
+        logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (80% - small movement)")
     elif x_error <= 5.0:  # Getting closer - moderate
         approach_speed = base_speed * 0.8  # 80% speed (reduced from 120%)
         logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
