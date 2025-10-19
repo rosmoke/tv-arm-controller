@@ -90,16 +90,16 @@ class LivePotentiometerReader:
             # Initialize I2C and ADS1115
             i2c = busio.I2C(board.SCL, board.SDA)
             self.ads = ADS.ADS1115(i2c, address=0x48)
-            self.ads.gain = 1  # ±4.096V range
-            self.ads.data_rate = 860  # Samples per second
+            self.ads.gain = 2  # ±2.048V range (from config)
+            self.ads.data_rate = 32  # Samples per second (from config)
             
             # Initialize analog input channels
-            self.x_channel = AnalogIn(self.ads, ADS.P0)  # X-axis on A0
-            self.y_channel = AnalogIn(self.ads, ADS.P2)  # Y-axis on A2
+            self.x_channel = AnalogIn(self.ads, getattr(ADS, f'P{self.x_config["channel"]}'))  # X-axis from config
+            self.y_channel = AnalogIn(self.ads, getattr(ADS, f'P{self.y_config["channel"]}'))  # Y-axis from config
             
             print("✅ ADS1115 initialized successfully")
-            print(f"   X-axis: Channel {self.x_config['channel']} (A0)")
-            print(f"   Y-axis: Channel {self.y_config['channel']} (A2)")
+            print(f"   X-axis: Channel {self.x_config['channel']} (A{self.x_config['channel']})")
+            print(f"   Y-axis: Channel {self.y_config['channel']} (A{self.y_config['channel']})")
             
         except Exception as e:
             print(f"❌ Failed to initialize ADS1115: {e}")
@@ -144,6 +144,12 @@ class LivePotentiometerReader:
         """Display current readings in a formatted way"""
         x_voltage = self.read_voltage(self.x_config)
         y_voltage = self.read_voltage(self.y_config)
+        
+        # Handle None values
+        if x_voltage is None:
+            x_voltage = 0.0
+        if y_voltage is None:
+            y_voltage = 0.0
         
         x_position = self.voltage_to_position(x_voltage, self.x_config)
         y_position = self.voltage_to_position(y_voltage, self.y_config)
