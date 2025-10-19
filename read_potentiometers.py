@@ -90,7 +90,7 @@ class LivePotentiometerReader:
             # Initialize I2C and ADS1115
             i2c = busio.I2C(board.SCL, board.SDA)
             self.ads = ADS.ADS1115(i2c, address=0x48)
-            self.ads.gain = 2  # ±2.048V range (from config)
+            self.ads.gain = 1  # ±4.096V range (from config)
             self.ads.data_rate = 32  # Samples per second (from config)
             
             # Initialize analog input channels

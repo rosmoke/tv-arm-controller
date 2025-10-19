@@ -19,7 +19,7 @@ hardware:
   # ADS1115 ADC configuration
   ads1115:
     address: 0x48  # Default I2C address
-    gain: 2        # ±2.048V range (better resolution, less noise)
+    gain: 1        # ±4.096V range (needed for 2.5-4.2V signals)
     data_rate: 32  # Samples per second (slowest rate for maximum stability)
   
   # Potentiometer channels on ADS1115
