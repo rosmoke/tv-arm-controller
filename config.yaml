@@ -20,7 +20,7 @@ hardware:
   ads1115:
     address: 0x48  # Default I2C address
     gain: 1        # ±4.096V range (keep same for compatibility)
-    data_rate: 128 # Samples per second (reduced from 860 for much better noise filtering)
+    data_rate: 64  # Samples per second (reduced further to minimize cross-talk and noise)
   
   # Potentiometer channels on ADS1115
   potentiometer:
@@ -49,9 +49,9 @@ hardware:
       max_voltage: 4.20  # X-axis maximum voltage (correct value)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 40.0  # Increased to allow normal movement without false rejections
+      max_drift_percent: 15.0  # Reduced to reject extreme glitches (0V, 4.096V)
       enable_filtering: true   # Enable filtering for stable readings during movement
-      max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
+      max_retries: 5  # Increase retries to get valid readings through glitches
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit (2.35V and 4.20V)
       slow_zone_margin: 0.1 # Start slowing down at 2.45V (100mV from 2.35V minimum)

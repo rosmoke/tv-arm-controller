@@ -520,6 +520,16 @@ class PositionSensor:
     
     def _is_voltage_valid(self, voltage: float) -> bool:
         """Check if voltage reading is valid with enhanced glitch detection"""
+        
+        # Specific detection for common ADC glitches
+        if abs(voltage) < 0.01:  # 0.000V readings (ADC failure)
+            logging.warning(f"Channel {self.channel}: ADC glitch detected - 0V reading: {voltage:.3f}V")
+            return False
+        
+        if abs(voltage - 4.096) < 0.01:  # 4.096V readings (ADC saturation)
+            logging.warning(f"Channel {self.channel}: ADC saturation detected: {voltage:.3f}V")
+            return False
+        
         # Check if voltage is within expected range (with very generous bounds)
         min_allowed = self.min_voltage * 0.5
         max_allowed = self.max_voltage * 1.5
@@ -538,10 +548,10 @@ class PositionSensor:
                 logging.warning(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
                 return False
             
-            # Additional glitch detection for channel cross-talk (relaxed for movement)
-            # Only catch extreme cross-talk glitches, allow normal movement
-            voltage_threshold = 0.5  # 500mV threshold (relaxed from 200mV)
-            position_threshold = 35.0  # 35% threshold (relaxed from 15%)
+            # Additional glitch detection for channel cross-talk (aggressive for X-axis glitches)
+            # Catch extreme cross-talk glitches like 0V and 4.096V readings
+            voltage_threshold = 0.3  # 300mV threshold (tighter to catch glitches)
+            position_threshold = 20.0  # 20% threshold (tighter to catch glitches)
             
             if voltage_diff > voltage_threshold:
                 position_old = ((self.last_valid_voltage - self.min_voltage) / voltage_range) * 100
