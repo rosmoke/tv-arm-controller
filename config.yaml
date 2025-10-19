@@ -19,13 +19,13 @@ hardware:
   # ADS1115 ADC configuration
   ads1115:
     address: 0x48  # Default I2C address
-    gain: 1        # ±4.096V range (needed for 2.5-4.2V signals)
-    data_rate: 32  # Samples per second (slowest rate for maximum stability)
+    gain: 1        # ±4.096V range (keep same for compatibility)
+    data_rate: 128 # Samples per second (reduced from 860 for much better noise filtering)
   
   # Potentiometer channels on ADS1115
   potentiometer:
     x_axis_channel: 0  # A0 - X-axis position feedback
-    y_axis_channel: 3  # A3 - Y-axis position feedback (maximum separation from A0)
+    y_axis_channel: 2  # A2 - Y-axis position feedback (back to original working setup)
   
   # DC Motor configuration
   dc_motor:
@@ -49,9 +49,9 @@ hardware:
       max_voltage: 4.20  # X-axis maximum voltage (correct value)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
-      max_drift_percent: 15.0  # Reduced to reject extreme glitches (0V, 4.096V)
+      max_drift_percent: 40.0  # Increased to allow normal movement without false rejections
       enable_filtering: true   # Enable filtering for stable readings during movement
-      max_retries: 5  # Increase retries to get valid readings through glitches
+      max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit (2.35V and 4.20V)
       slow_zone_margin: 0.1 # Start slowing down at 2.45V (100mV from 2.35V minimum)

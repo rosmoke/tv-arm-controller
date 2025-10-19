@@ -467,15 +467,15 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Extended settling time to prevent multiplexer cross-talk
-                time.sleep(0.050)  # Much longer settling time (50ms - aggressive cross-talk prevention)
+                # Simple consistent filtering - works for both movement and stationary
+                time.sleep(0.005)  # Moderate settling time (5ms - compromise)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
                 for i in range(2):
                     readings.append(self.analog_in.voltage)
                     if i < 1:
-                        time.sleep(0.010)  # Longer delay between readings (10ms)
+                        time.sleep(0.005)  # Short delay between readings
                 
                 # Average the readings to reduce noise
                 voltage = sum(readings) / len(readings)
@@ -526,13 +526,8 @@ class PositionSensor:
             logging.warning(f"Channel {self.channel}: ADC glitch detected - 0V reading: {voltage:.3f}V")
             return False
         
-        if voltage > 4.0:  # Any reading above 4.0V is invalid (ADC saturation/cross-talk)
-            logging.warning(f"Channel {self.channel}: ADC saturation/cross-talk detected: {voltage:.3f}V")
-            return False
-        
-        # Detect cross-talk patterns for X-axis (channel 0)
-        if self.channel == 0 and 3.0 <= voltage <= 3.2:  # X reading Y voltage (~3.15V)
-            logging.warning(f"Channel {self.channel}: Cross-talk detected - reading Y voltage: {voltage:.3f}V")
+        if abs(voltage - 4.096) < 0.01:  # 4.096V readings (ADC saturation)
+            logging.warning(f"Channel {self.channel}: ADC saturation detected: {voltage:.3f}V")
             return False
         
         # Check if voltage is within expected range (with very generous bounds)
@@ -553,10 +548,10 @@ class PositionSensor:
                 logging.warning(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
                 return False
             
-            # Additional glitch detection for channel cross-talk (aggressive for X-axis glitches)
-            # Catch extreme cross-talk glitches like 0V and 4.096V readings
-            voltage_threshold = 0.3  # 300mV threshold (tighter to catch glitches)
-            position_threshold = 20.0  # 20% threshold (tighter to catch glitches)
+            # Additional glitch detection for channel cross-talk (relaxed for movement)
+            # Only catch extreme cross-talk glitches, allow normal movement
+            voltage_threshold = 0.5  # 500mV threshold (relaxed from 200mV)
+            position_threshold = 35.0  # 35% threshold (relaxed from 15%)
             
             if voltage_diff > voltage_threshold:
                 position_old = ((self.last_valid_voltage - self.min_voltage) / voltage_range) * 100
