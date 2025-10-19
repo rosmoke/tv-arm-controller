@@ -932,25 +932,35 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Check for real overshoot - only if motor went SIGNIFICANTLY past target
-        # Use much larger overshoot tolerance to prevent false positives
-        overshoot_tolerance = 2.0  # 2% overshoot tolerance - much larger than normal tolerance
+        # Check for REAL overshoot - only if motor went past target in movement direction
+        # Must consider actual motor movement direction, not just position difference
+        overshoot_tolerance = 3.0  # 3% overshoot tolerance to prevent false positives
         
         if hasattr(self, 'initial_direction_x') and axis == 'X':
-            if self.initial_direction_x > 0 and current > target + overshoot_tolerance:  # Real forward overshoot
-                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (significant forward overshoot)")
-                return True
-            elif self.initial_direction_x < 0 and current < target - overshoot_tolerance:  # Real reverse overshoot  
-                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (significant reverse overshoot)")
-                return True
+            # For X motor: check if it went past target in the direction it was moving
+            if self.initial_direction_x > 0:  # Moving forward (increasing)
+                # Only overshoot if current > target + tolerance (went too far forward)
+                if current > target + overshoot_tolerance:
+                    logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (went too far forward)")
+                    return True
+            elif self.initial_direction_x < 0:  # Moving reverse (decreasing)
+                # Only overshoot if current < target - tolerance (went too far backward)
+                if current < target - overshoot_tolerance:
+                    logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (went too far backward)")
+                    return True
                 
         if hasattr(self, 'initial_direction_y') and axis == 'Y':
-            if self.initial_direction_y > 0 and current > target + overshoot_tolerance:  # Real forward overshoot
-                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (significant forward overshoot)")
-                return True
-            elif self.initial_direction_y < 0 and current < target - overshoot_tolerance:  # Real reverse overshoot
-                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (significant reverse overshoot)")
-                return True
+            # For Y motor: check if it went past target in the direction it was moving
+            if self.initial_direction_y > 0:  # Moving forward (increasing)
+                # Only overshoot if current > target + tolerance (went too far forward)
+                if current > target + overshoot_tolerance:
+                    logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (went too far forward)")
+                    return True
+            elif self.initial_direction_y < 0:  # Moving reverse (decreasing)
+                # Only overshoot if current < target - tolerance (went too far backward)
+                if current < target - overshoot_tolerance:
+                    logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (went too far backward)")
+                    return True
         
         # Only log debug info if error is very large (debugging tolerance issues)
         if error > 10.0:

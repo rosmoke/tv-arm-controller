@@ -45,7 +45,7 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 2.48  # X-axis minimum voltage set to 2.485V
+      min_voltage: 2.5  # X-axis minimum voltage set to 2.485V
       max_voltage: 4.0   # X-axis maximum voltage set to 3.95V
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
