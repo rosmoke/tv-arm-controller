@@ -538,6 +538,11 @@ class PathRecorder:
         consecutive_x_reversals = 0
         consecutive_y_reversals = 0
         max_consecutive_reversals = 3  # Require 3 consecutive bad readings before locking
+        
+        # Initialize overshoot detection counters
+        consecutive_x_overshoot = 0
+        consecutive_y_overshoot = 0
+        max_consecutive_overshoot = 2  # Require 2 consecutive overshoot readings before stopping
         y_command_count = 0
         max_commands_per_axis = 15  # Emergency stop after 15 commands per axis (more attempts)
 
@@ -596,18 +601,22 @@ class PathRecorder:
                 y_error = abs(current_y - target_y)
                 
                 # Check each axis independently - stop when reached OR OVERSHOT target
-                # Handle sensor reading errors gracefully
+                # Handle sensor reading errors gracefully with resilient overshoot detection
                 try:
-                    x_at_target = self._is_axis_at_target(current_x, target_x, x_tolerance, 'X')
+                    x_at_target, consecutive_x_overshoot = self._is_axis_at_target_resilient(
+                        current_x, target_x, x_tolerance, 'X', consecutive_x_overshoot, max_consecutive_overshoot)
                 except Exception as e:
                     logging.warning(f"X sensor error in target check: {e}")
                     x_at_target = False  # Assume not at target if sensor fails
+                    consecutive_x_overshoot = 0  # Reset on sensor error
                 
                 try:
-                    y_at_target = self._is_axis_at_target(current_y, target_y, y_tolerance, 'Y')
+                    y_at_target, consecutive_y_overshoot = self._is_axis_at_target_resilient(
+                        current_y, target_y, y_tolerance, 'Y', consecutive_y_overshoot, max_consecutive_overshoot)
                 except Exception as e:
                     logging.warning(f"Y sensor error in target check: {e}")
                     y_at_target = False  # Assume not at target if sensor fails
+                    consecutive_y_overshoot = 0  # Reset on sensor error
                 
                 # TEMPORARILY DISABLED: Overshoot detection - preventing X motor from moving
                 # TODO: Fix overshoot detection logic - it's blocking initial movement
@@ -993,6 +1002,71 @@ class PathRecorder:
                 
         logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% hasn't reached {target:.1f}% yet")
         return False
+
+    def _is_axis_at_target_resilient(self, current: float, target: float, tolerance: float, axis: str, 
+                                   consecutive_overshoot: int, max_consecutive_overshoot: int) -> tuple[bool, int]:
+        """
+        Check if axis has reached target with resilient overshoot detection that requires consecutive bad readings
+        Returns: (at_target, updated_consecutive_overshoot_count)
+        """
+        error = abs(current - target)
+        
+        # Simple overshoot detection based on path direction
+        # Retract = going towards 0, Extend = going towards 100
+        overshoot_tolerance = 3.0  # 3% overshoot tolerance
+        
+        # Get path type to determine movement direction
+        path_name = getattr(self, 'current_path_name', 'unknown')
+        is_retract_path = 'retract' in path_name.lower()
+        
+        # Check for potential overshoot
+        potential_overshoot = False
+        if is_retract_path:
+            # Retract: going towards 0 - only overshoot if went BELOW target
+            if current < target - overshoot_tolerance:
+                potential_overshoot = True
+        else:
+            # Extend: going towards 100 - only overshoot if went ABOVE target  
+            if current > target + overshoot_tolerance:
+                potential_overshoot = True
+        
+        # Handle overshoot detection with consecutive readings requirement
+        if potential_overshoot:
+            consecutive_overshoot += 1
+            logging.warning(f"⚠️ {axis} POTENTIAL OVERSHOOT {consecutive_overshoot}/{max_consecutive_overshoot}: {current:.1f}% (target: {target:.1f}%)")
+            
+            if consecutive_overshoot >= max_consecutive_overshoot:
+                if is_retract_path:
+                    logging.warning(f"🚨 {axis} OVERSHOOT CONFIRMED: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (retract went too far towards 0)")
+                else:
+                    logging.warning(f"🚨 {axis} OVERSHOOT CONFIRMED: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (extend went too far towards 100)")
+                return True, consecutive_overshoot
+            else:
+                logging.info(f"🔄 {axis} CONTINUING with caution - need {max_consecutive_overshoot - consecutive_overshoot} more overshoot readings to stop")
+        else:
+            # Reset counter on good reading
+            if consecutive_overshoot > 0:
+                logging.info(f"✅ {axis} OVERSHOOT COUNTER RESET: Was {consecutive_overshoot}, now 0 (good reading)")
+                consecutive_overshoot = 0
+        
+        # Only log debug info if error is very large (debugging tolerance issues)
+        if error > 10.0:
+            logging.warning(f"🔍 {axis} LARGE ERROR: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
+        
+        # Precise target detection - must actually reach target or go slightly past it
+        if is_retract_path:
+            # Retract: going towards 0 - at target if reached target or went below it
+            if current <= target + tolerance:
+                logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (retract)")
+                return True, consecutive_overshoot
+        else:
+            # Extend: going towards 100 - at target if reached target or went above it  
+            if current >= target - tolerance:
+                logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (extend)")
+                return True, consecutive_overshoot
+                
+        logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% hasn't reached {target:.1f}% yet")
+        return False, consecutive_overshoot
     
     def _check_overshoot(self, current: float, target: float, axis: str, expected_direction: int) -> bool:
         """
