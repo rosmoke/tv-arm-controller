@@ -773,7 +773,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ X CONTINUING: {current_x:.1f}% → {target_x:.1f}% (error: {x_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_x_speed = 18.0  # Default speed for X motor (reduced significantly to prevent overshoot)
+                        base_x_speed = 45.0  # Default speed for X motor (increased for much faster movement)
                         new_x_speed = calculate_x_approach_speed(x_error, base_x_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed
@@ -869,7 +869,7 @@ class PathRecorder:
                             if iteration_count <= 5:  # Only log first few iterations
                                 logging.info(f"⏳ Y CONTINUING: {current_y:.1f}% → {target_y:.1f}% (error: {y_error:.1f}%, first check)")
                         # Send speed adjustment commands based on distance to target
-                        base_y_speed = 18.0  # Default speed for Y motor (reduced significantly to prevent overshoot)
+                        base_y_speed = 45.0  # Default speed for Y motor (increased for much faster movement)
                         new_y_speed = calculate_y_approach_speed(y_error, base_y_speed)
                         
                         # SAFETY CHECK: Apply safety limits before setting speed

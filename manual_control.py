@@ -23,7 +23,7 @@ class ManualController:
         
         # Control settings
         self.step_size = 2.0  # Percentage to move per key press
-        self.continuous_speed = 30.0  # Speed for continuous movement (reduced further for precision)
+        self.continuous_speed = 60.0  # Speed for continuous movement (increased for faster manual control)
         self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
         self.position_update_interval = 0.3  # How often to show position (balance between accuracy and I2C load)
         
