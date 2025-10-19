@@ -932,35 +932,24 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Check for REAL overshoot - only if motor went past target in movement direction
-        # Must consider actual motor movement direction, not just position difference
-        overshoot_tolerance = 3.0  # 3% overshoot tolerance to prevent false positives
+        # Simple overshoot detection based on path direction
+        # Retract = going towards 0, Extend = going towards 100
+        overshoot_tolerance = 3.0  # 3% overshoot tolerance
         
-        if hasattr(self, 'initial_direction_x') and axis == 'X':
-            # For X motor: check if it went past target in the direction it was moving
-            if self.initial_direction_x > 0:  # Moving forward (increasing)
-                # Only overshoot if current > target + tolerance (went too far forward)
-                if current > target + overshoot_tolerance:
-                    logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (went too far forward)")
-                    return True
-            elif self.initial_direction_x < 0:  # Moving reverse (decreasing)
-                # Only overshoot if current < target - tolerance (went too far backward)
-                if current < target - overshoot_tolerance:
-                    logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (went too far backward)")
-                    return True
-                
-        if hasattr(self, 'initial_direction_y') and axis == 'Y':
-            # For Y motor: check if it went past target in the direction it was moving
-            if self.initial_direction_y > 0:  # Moving forward (increasing)
-                # Only overshoot if current > target + tolerance (went too far forward)
-                if current > target + overshoot_tolerance:
-                    logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (went too far forward)")
-                    return True
-            elif self.initial_direction_y < 0:  # Moving reverse (decreasing)
-                # Only overshoot if current < target - tolerance (went too far backward)
-                if current < target - overshoot_tolerance:
-                    logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (went too far backward)")
-                    return True
+        # Get path type to determine movement direction
+        path_name = getattr(self, 'current_path_name', 'unknown')
+        is_retract_path = 'retract' in path_name.lower()
+        
+        if is_retract_path:
+            # Retract: going towards 0 - only overshoot if went BELOW target
+            if current < target - overshoot_tolerance:
+                logging.warning(f"🚨 {axis} OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (retract went too far towards 0)")
+                return True
+        else:
+            # Extend: going towards 100 - only overshoot if went ABOVE target  
+            if current > target + overshoot_tolerance:
+                logging.warning(f"🚨 {axis} OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (extend went too far towards 100)")
+                return True
         
         # Only log debug info if error is very large (debugging tolerance issues)
         if error > 10.0:
