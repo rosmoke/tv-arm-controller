@@ -711,13 +711,13 @@ class PathRecorder:
                     def calculate_x_approach_speed(x_error, base_speed):
                         """Calculate X motor speed with aggressive deceleration to prevent overshoot"""
                         if x_error <= 0.1:  # Very close to target - ultra slow
-                            approach_speed = max(15.0, base_speed * 0.2)  # 20% speed, min 15%
+                            approach_speed = max(20.0, base_speed * 0.2)  # 20% speed, min 20%
                             logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
                         elif x_error <= 0.3:  # Close to target - very slow
-                            approach_speed = max(18.0, base_speed * 0.3)  # 30% speed, min 18%
+                            approach_speed = max(25.0, base_speed * 0.3)  # 30% speed, min 25%
                             logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (30% - precision zone)")
                         elif x_error <= 0.8:  # Approaching target - moderate slow
-                            approach_speed = base_speed * 0.5  # 50% speed
+                            approach_speed = max(30.0, base_speed * 0.5)  # 50% speed, min 30%
                             logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - deceleration)")
                         elif x_error <= 2.0:  # Getting closer - slight slow
                             approach_speed = base_speed * 0.7  # 70% speed
