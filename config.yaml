@@ -45,7 +45,7 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 2.57  # X-axis minimum voltage set to 2.485V
+      min_voltage: 2.35  # X-axis minimum voltage updated to actual measured minimum (was reaching 2.374V)
       max_voltage: 4.0   # X-axis maximum voltage set to 3.95V
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
@@ -54,7 +54,7 @@ hardware:
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
       safety_margin: 0.0  # No margin - stop exactly at limit (2.485V and 3.95V)
-      slow_zone_margin: 0.1 # Start slowing down at 2.585V (100mV from 2.485V minimum)
+      slow_zone_margin: 0.1 # Start slowing down at 2.45V (100mV from 2.35V minimum)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
       min_voltage: 1.38   # Y-axis minimum voltage set to actual measured minimum

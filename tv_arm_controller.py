@@ -120,16 +120,22 @@ class DCMotorController:
         min_slow_zone = min_voltage + slow_zone_margin  
         max_slow_zone = max_voltage - slow_zone_margin
         
+        # Initialize consecutive bad reading counters if not exists
+        if not hasattr(self, '_safety_bad_readings'):
+            self._safety_bad_readings = 0
+        
         # ONLY restrict movement TOWARD dangerous limits, not away from them
+        potential_safety_issue = False
+        safety_message = ""
         
         if direction == 'forward':
             # Moving forward (increasing voltage) - only check MAX limits
             if current_voltage >= max_voltage:
-                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MAX limit ({max_voltage:.3f}V)")
-                return True, 0
+                potential_safety_issue = True
+                safety_message = f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MAX limit ({max_voltage:.3f}V)"
             elif current_voltage >= max_safety_limit:
-                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V in MAX safety margin ({max_safety_limit:.3f}V)")
-                return True, 0
+                potential_safety_issue = True
+                safety_message = f"SAFETY STOP: Voltage {current_voltage:.3f}V in MAX safety margin ({max_safety_limit:.3f}V)"
             elif current_voltage >= max_slow_zone:
                 logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching MAX limit, reducing to {safety_slow_speed}%")
                 return False, safety_slow_speed
@@ -137,14 +143,31 @@ class DCMotorController:
         elif direction == 'reverse':
             # Moving reverse (decreasing voltage) - only check MIN limits
             if current_voltage <= min_voltage:
-                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MIN limit ({min_voltage:.3f}V)")
-                return True, 0
+                potential_safety_issue = True
+                safety_message = f"SAFETY STOP: Voltage {current_voltage:.3f}V at absolute MIN limit ({min_voltage:.3f}V)"
             elif current_voltage <= min_safety_limit:
-                logging.warning(f"SAFETY STOP: Voltage {current_voltage:.3f}V in MIN safety margin ({min_safety_limit:.3f}V)")
-                return True, 0
+                potential_safety_issue = True
+                safety_message = f"SAFETY STOP: Voltage {current_voltage:.3f}V in MIN safety margin ({min_safety_limit:.3f}V)"
             elif current_voltage <= min_slow_zone:
                 logging.warning(f"SAFETY SLOW: Voltage {current_voltage:.3f}V approaching MIN limit, reducing to {safety_slow_speed}%")
                 return False, safety_slow_speed
+        
+        # Handle potential safety issues with consecutive reading requirement
+        if potential_safety_issue:
+            self._safety_bad_readings += 1
+            logging.warning(f"⚠️ POTENTIAL SAFETY ISSUE {self._safety_bad_readings}/3: {safety_message}")
+            
+            if self._safety_bad_readings >= 3:  # Require 3 consecutive bad readings
+                logging.warning(safety_message)
+                return True, 0
+            else:
+                logging.info(f"🔄 SAFETY CONTINUING with caution - need {3 - self._safety_bad_readings} more bad readings to stop")
+                return False, safety_slow_speed  # Slow down but don't stop yet
+        else:
+            # Reset counter on good reading
+            if self._safety_bad_readings > 0:
+                logging.info(f"✅ SAFETY COUNTER RESET: Was {self._safety_bad_readings}, now 0 (good reading)")
+                self._safety_bad_readings = 0
         
         # All clear - no safety restrictions
         return False, 100
