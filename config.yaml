@@ -46,7 +46,7 @@ hardware:
   calibration:
     x_axis:
       min_voltage: 2.5  # X-axis minimum voltage set to 2.485V
-      max_voltage: 4.1   # X-axis maximum voltage set to 3.95V
+      max_voltage: 4.0   # X-axis maximum voltage set to 3.95V
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 20.0  # Reduced to catch large glitches more effectively
@@ -57,7 +57,7 @@ hardware:
       slow_zone_margin: 0.1 # Start slowing down at 2.585V (100mV from 2.485V minimum)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
-      min_voltage: 1.29  # Y-axis minimum voltage set to 1.255V
+      min_voltage: 1.35  # Y-axis minimum voltage set to 1.255V
       max_voltage: 4.0   # Y-axis maximum voltage set to 4.09V
       min_position: 0
       max_position: 100
