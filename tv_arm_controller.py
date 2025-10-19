@@ -492,10 +492,10 @@ class PositionSensor:
                     self.last_valid_voltage = voltage
                     self.consecutive_errors = 0
                     return voltage
-                else:
-                    logging.warning(f"Invalid voltage reading on channel {self.channel}: {voltage:.3f}V (attempt {attempt + 1})")
-                    if attempt < self.max_retries - 1:
-                        time.sleep(0.01)  # Small delay before retry
+               else:
+                   logging.debug(f"Invalid voltage reading on channel {self.channel}: {voltage:.3f}V (attempt {attempt + 1})")
+                   if attempt < self.max_retries - 1:
+                       time.sleep(0.01)  # Small delay before retry
                     
             except Exception as e:
                 # Reduce retry error logging to prevent spam
@@ -507,7 +507,7 @@ class PositionSensor:
         # All retries failed - use last valid voltage if available
         self.consecutive_errors += 1
         if self.last_valid_voltage is not None and self.consecutive_errors <= self.max_consecutive_errors:
-            logging.warning(f"Using last valid voltage for channel {self.channel}: {self.last_valid_voltage:.3f}V")
+            logging.debug(f"Using last valid voltage for channel {self.channel}: {self.last_valid_voltage:.3f}V")
             return self.last_valid_voltage
         
         # Return last valid voltage if available, otherwise safe default
@@ -521,13 +521,13 @@ class PositionSensor:
     def _is_voltage_valid(self, voltage: float) -> bool:
         """Check if voltage reading is valid with enhanced glitch detection"""
         
-        # Specific detection for common ADC glitches
+        # Specific detection for common ADC glitches (reduced logging)
         if abs(voltage) < 0.01:  # 0.000V readings (ADC failure)
-            logging.warning(f"Channel {self.channel}: ADC glitch detected - 0V reading: {voltage:.3f}V")
+            logging.debug(f"Channel {self.channel}: ADC glitch detected - 0V reading: {voltage:.3f}V")
             return False
         
         if abs(voltage - 4.096) < 0.01:  # 4.096V readings (ADC saturation)
-            logging.warning(f"Channel {self.channel}: ADC saturation detected: {voltage:.3f}V")
+            logging.debug(f"Channel {self.channel}: ADC saturation detected: {voltage:.3f}V")
             return False
         
         # Check if voltage is within expected range (with very generous bounds)
@@ -535,7 +535,7 @@ class PositionSensor:
         max_allowed = self.max_voltage * 1.5
         
         if voltage < min_allowed or voltage > max_allowed:
-            logging.warning(f"Channel {self.channel}: Voltage {voltage:.3f}V outside range [{min_allowed:.3f}V - {max_allowed:.3f}V]")
+            logging.debug(f"Channel {self.channel}: Voltage {voltage:.3f}V outside range [{min_allowed:.3f}V - {max_allowed:.3f}V]")
             return False
         
         # If we have a previous reading, check for sudden drift
@@ -545,7 +545,7 @@ class PositionSensor:
             drift_percent = (voltage_diff / voltage_range) * 100
             
             if drift_percent > self.max_drift_percent:
-                logging.warning(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
+                logging.debug(f"Channel {self.channel}: Voltage drift too large: {drift_percent:.1f}% > {self.max_drift_percent:.1f}%")
                 return False
             
             # Additional glitch detection for channel cross-talk (relaxed for movement)
@@ -559,7 +559,7 @@ class PositionSensor:
                 position_diff = abs(position_new - position_old)
                 
                 if position_diff > position_threshold:
-                    logging.warning(f"🚨 EXTREME CROSS-TALK on channel {self.channel}: {position_old:.1f}% → {position_new:.1f}% ({position_diff:.1f}% jump, {voltage_diff:.3f}V)")
+                    logging.debug(f"🚨 EXTREME CROSS-TALK on channel {self.channel}: {position_old:.1f}% → {position_new:.1f}% ({position_diff:.1f}% jump, {voltage_diff:.3f}V)")
                     return False
         
         return True
