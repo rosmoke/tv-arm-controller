@@ -1288,7 +1288,7 @@ class PathRecorder:
 
 # Helper functions for motor speed calculation
 def calculate_x_approach_speed(x_error, base_speed):
-    """Calculate X motor speed - VERY fast when far, slow when close for precision"""
+    """Calculate X motor speed - BLAZING fast when far, slow when close for precision"""
     if x_error <= 0.1:  # Very close to target - ultra slow but with minimum power
         approach_speed = max(15.0, base_speed * 0.2)  # 20% speed, min 15%
         logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (20% - final approach)")
@@ -1298,23 +1298,23 @@ def calculate_x_approach_speed(x_error, base_speed):
     elif x_error <= 1.5:  # Approaching target - moderate slow
         approach_speed = max(20.0, base_speed * 0.4)  # 40% speed, min 20%
         logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - deceleration)")
-    elif x_error <= 5.0:  # Getting closer - faster
-        approach_speed = base_speed * 0.8  # 80% speed (increased from 70%)
-        logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
+    elif x_error <= 5.0:  # Getting closer - much faster
+        approach_speed = base_speed * 1.2  # 120% speed (increased from 80%)
+        logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (120% - approaching)")
     elif x_error <= 10.0:  # Medium distance - very fast
-        approach_speed = base_speed * 1.1  # 110% speed (increased from 85%)
-        logging.info(f"X FAST: {x_error:.2f}% error → {approach_speed:.0f}% speed (110% - medium distance)")
-    elif x_error <= 20.0:  # Far distance - maximum speed
-        approach_speed = base_speed * 1.3  # 130% speed (new zone)
-        logging.info(f"X VERY FAST: {x_error:.2f}% error → {approach_speed:.0f}% speed (130% - far distance)")
-    else:  # Very far from target - turbo speed
-        approach_speed = base_speed * 1.5  # 150% speed (increased from 100%)
-        logging.info(f"X TURBO: {x_error:.2f}% error → {approach_speed:.0f}% speed (150% - very far from target)")
+        approach_speed = base_speed * 1.6  # 160% speed (increased from 110%)
+        logging.info(f"X FAST: {x_error:.2f}% error → {approach_speed:.0f}% speed (160% - medium distance)")
+    elif x_error <= 20.0:  # Far distance - blazing fast
+        approach_speed = base_speed * 2.0  # 200% speed (increased from 130%)
+        logging.info(f"X VERY FAST: {x_error:.2f}% error → {approach_speed:.0f}% speed (200% - far distance)")
+    else:  # Very far from target - maximum turbo
+        approach_speed = base_speed * 2.5  # 250% speed (increased from 150%)
+        logging.info(f"X TURBO MAX: {x_error:.2f}% error → {approach_speed:.0f}% speed (250% - maximum speed)")
     return approach_speed
 
 
 def calculate_y_approach_speed(y_error, base_speed):
-    """Calculate Y motor speed - VERY fast when far, controlled when close with filtering"""
+    """Calculate Y motor speed - BLAZING fast when far, controlled when close with filtering"""
     if y_error <= 0.1:  # Very close to target - ultra slow
         approach_speed = max(8.0, base_speed * 0.15)  # 15% speed, min 8%
         logging.info(f"Y ULTRA PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (15% - final approach)")
@@ -1324,16 +1324,16 @@ def calculate_y_approach_speed(y_error, base_speed):
     elif y_error <= 1.5:  # Approaching target - moderate slow
         approach_speed = max(12.0, base_speed * 0.3)  # 30% speed, min 12%
         logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (30% - deceleration)")
-    elif y_error <= 3.0:  # Getting closer - moderate speed
-        approach_speed = base_speed * 0.5  # 50% speed (increased from 45%)
-        logging.info(f"Y MODERATE: {y_error:.2f}% error → {approach_speed:.0f}% speed (50% - approaching)")
-    elif y_error <= 8.0:  # Medium distance - faster
-        approach_speed = base_speed * 0.8  # 80% speed (increased from 70%)
-        logging.info(f"Y FAST: {y_error:.2f}% error → {approach_speed:.0f}% speed (80% - medium distance)")
-    elif y_error <= 15.0:  # Far distance - very fast
-        approach_speed = base_speed * 1.2  # 120% speed (new zone)
-        logging.info(f"Y VERY FAST: {y_error:.2f}% error → {approach_speed:.0f}% speed (120% - far distance)")
-    else:  # Very far from target - turbo speed
-        approach_speed = base_speed * 1.4  # 140% speed (increased from 100%)
-        logging.info(f"Y TURBO: {y_error:.2f}% error → {approach_speed:.0f}% speed (140% - very far from target)")
+    elif y_error <= 3.0:  # Getting closer - much faster
+        approach_speed = base_speed * 0.8  # 80% speed (increased from 50%)
+        logging.info(f"Y MODERATE: {y_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
+    elif y_error <= 8.0:  # Medium distance - very fast
+        approach_speed = base_speed * 1.4  # 140% speed (increased from 80%)
+        logging.info(f"Y FAST: {y_error:.2f}% error → {approach_speed:.0f}% speed (140% - medium distance)")
+    elif y_error <= 15.0:  # Far distance - blazing fast
+        approach_speed = base_speed * 1.8  # 180% speed (increased from 120%)
+        logging.info(f"Y VERY FAST: {y_error:.2f}% error → {approach_speed:.0f}% speed (180% - far distance)")
+    else:  # Very far from target - maximum turbo
+        approach_speed = base_speed * 2.2  # 220% speed (increased from 140%)
+        logging.info(f"Y TURBO MAX: {y_error:.2f}% error → {approach_speed:.0f}% speed (220% - maximum speed)")
     return approach_speed
