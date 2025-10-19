@@ -1053,15 +1053,15 @@ class PathRecorder:
         if error > 10.0:
             logging.warning(f"🔍 {axis} LARGE ERROR: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
         
-        # Precise target detection - must actually reach target or go slightly past it
+        # Precise target detection - must be within tolerance range, not just on one side
         if is_retract_path:
-            # Retract: going towards 0 - at target if reached target or went below it
-            if current <= target + tolerance:
+            # Retract: going towards 0 - at target if within tolerance range
+            if target - tolerance <= current <= target + tolerance:
                 logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (retract)")
                 return True, consecutive_overshoot
         else:
-            # Extend: going towards 100 - at target if reached target or went above it  
-            if current >= target - tolerance:
+            # Extend: going towards 100 - at target if within tolerance range  
+            if target - tolerance <= current <= target + tolerance:
                 logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (extend)")
                 return True, consecutive_overshoot
                 
