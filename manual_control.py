@@ -39,7 +39,7 @@ class ManualController:
         
         # I2C deadlock prevention
         self.last_safety_check = 0
-        self.safety_check_interval = 0.5  # Only check safety every 500ms to reduce I2C calls
+        self.safety_check_interval = 0.05  # Check safety every 50ms for responsive manual control
         self.i2c_lock = threading.Lock()  # Serialize I2C operations to prevent deadlock
         
         # Terminal settings for raw key input
