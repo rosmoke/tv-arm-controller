@@ -467,8 +467,8 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Normal settling time - cross-talk eliminated with common 3.3V supply
-                time.sleep(0.020)  # Slightly longer settling time (20ms - I2C bus protection)
+                # Faster settling time for path playback functionality
+                time.sleep(0.010)  # Faster settling time (10ms - balance speed and stability)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
