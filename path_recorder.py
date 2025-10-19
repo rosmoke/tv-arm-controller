@@ -618,8 +618,8 @@ class PathRecorder:
                 #     self.controller.y_motor.set_speed(0)
                 #     self.y_stopped = True
                 
-                # Only log position every 20 iterations to reduce spam
-                if iteration_count % 20 == 0 or x_at_target or y_at_target:
+                # Only log position every 25 iterations to reduce log spam
+                if iteration_count % 25 == 0 or x_error > 5.0 or y_error > 5.0:
                     logging.info(f"Position: X={current_x:.1f}%→{target_x:.1f}% (Δ{x_error:.1f}%), Y={current_y:.1f}%→{target_y:.1f}% (Δ{y_error:.1f}%) [iter {iteration_count}]")
                 
                 # Stop motors that have reached their targets (but don't reset counter)  
@@ -635,7 +635,7 @@ class PathRecorder:
                     if x_error < x_tolerance:  # Only stop if actually at target
                         self.controller.x_motor.stop_motor()
                         self.controller.x_motor.set_speed(0)
-                        logging.info(f"X motor properly stopped - at target with {x_error:.1f}% error")
+                        logging.debug(f"X motor stopped - at target with {x_error:.1f}% error")
                     else:
                         # IGNORE premature stop - motor not at target yet
                         logging.warning(f"X motor marked as stopped but still {x_error:.1f}% away from target - ALLOWING MOVEMENT")
@@ -654,7 +654,7 @@ class PathRecorder:
                     if y_error < y_tolerance:  # Only stop if actually at target
                         self.controller.y_motor.stop_motor()
                         self.controller.y_motor.set_speed(0)
-                        logging.info(f"Y motor properly stopped - at target with {y_error:.1f}% error")
+                        logging.debug(f"Y motor stopped - at target with {y_error:.1f}% error")
                     else:
                         # IGNORE premature stop - motor not at target yet
                         logging.warning(f"Y motor marked as stopped but still {y_error:.1f}% away from target - ALLOWING MOVEMENT")
@@ -786,7 +786,7 @@ class PathRecorder:
                         # Update last position for next check
                         self.x_last_position = current_x
                     elif x_at_target:
-                        logging.info(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
+                        logging.debug(f"X axis OK: {current_x:.1f}% (within {x_tolerance}% of {target_x:.1f}%)")
                     
                     # Only send commands to Y motor if it hasn't been stopped yet
                     if hasattr(self, 'y_stopped') and self.y_stopped:
@@ -846,7 +846,7 @@ class PathRecorder:
                         # Update last position for next check
                         self.y_last_position = current_y
                     elif y_at_target:
-                        logging.info(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
+                        logging.debug(f"Y axis OK: {current_y:.1f}% (within {y_tolerance}% of {target_y:.1f}%)")
                     
                     # Close the disabled code block
                     

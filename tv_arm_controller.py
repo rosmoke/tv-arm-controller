@@ -69,14 +69,14 @@ class DCMotorController:
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.HIGH)
             GPIO.output(self.ain2_pin, GPIO.LOW)
-        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set FORWARD (AIN1=HIGH, AIN2=LOW)")
+        logging.debug(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set FORWARD (AIN1=HIGH, AIN2=LOW)")
     
     def set_direction_reverse(self):
         """Set motor direction to reverse"""
         if GPIO:
             GPIO.output(self.ain1_pin, GPIO.LOW)
             GPIO.output(self.ain2_pin, GPIO.HIGH)
-        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set REVERSE (AIN1=LOW, AIN2=HIGH)")
+        logging.debug(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set REVERSE (AIN1=LOW, AIN2=HIGH)")
     
     def stop_motor(self):
         """Stop motor (coast)"""
@@ -102,7 +102,10 @@ class DCMotorController:
         speed = max(0.0, min(100.0, abs(speed)))
         if self.pwm:
             self.pwm.ChangeDutyCycle(speed)
-        logging.info(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Set speed {speed:.1f}%")
+        # Only log significant speed changes to reduce log spam
+        if not hasattr(self, '_last_logged_speed') or abs(speed - self._last_logged_speed) > 20.0:
+            logging.debug(f"Motor pins {self.ain1_pin}/{self.ain2_pin}: Speed {speed:.1f}%")
+            self._last_logged_speed = speed
     
     def check_safety_limits(self, current_voltage: float, min_voltage: float, max_voltage: float, 
                            safety_margin: float, slow_zone_margin: float, safety_slow_speed: float,
@@ -430,7 +433,12 @@ class PositionSensor:
                 logging.debug(f"Raw voltage reading for channel {self.channel}: {voltage:.3f}V (filtering disabled)")
                 return voltage
             except Exception as e:
-                logging.error(f"Error reading voltage from channel {self.channel}: {e}")
+                # Only log sensor errors occasionally to prevent spam
+                if not hasattr(self, '_error_count'):
+                    self._error_count = 0
+                self._error_count += 1
+                if self._error_count % 10 == 1:  # Log every 10th error
+                    logging.error(f"Error reading voltage from channel {self.channel}: {e} (error #{self._error_count})")
                 return (self.min_voltage + self.max_voltage) / 2
         
         # Try reading voltage with retries
@@ -456,7 +464,9 @@ class PositionSensor:
                         time.sleep(0.01)  # Small delay before retry
                     
             except Exception as e:
-                logging.error(f"Error reading voltage from channel {self.channel} (attempt {attempt + 1}): {e}")
+                # Reduce retry error logging to prevent spam
+                if attempt == self.max_retries - 1:  # Only log final failure
+                    logging.error(f"Error reading voltage from channel {self.channel} after {self.max_retries} attempts: {e}")
                 if attempt < self.max_retries - 1:
                     time.sleep(0.01)  # Small delay before retry
         
