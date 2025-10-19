@@ -46,7 +46,7 @@ hardware:
   calibration:
     x_axis:
       min_voltage: 1.69  # X-axis minimum voltage (actual measured minimum)  
-      max_voltage: 2.77  # X-axis maximum voltage (correct value)
+      max_voltage: 2.58  # X-axis maximum voltage (correct value)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
       max_drift_percent: 90.0  # Emergency high tolerance to handle severe cross-talk
@@ -58,7 +58,7 @@ hardware:
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
       min_voltage: 0.928  # Y-axis minimum voltage (3.3V power supply)
-      max_voltage: 2.91    # Y-axis maximum voltage (3.3V power supply)
+      max_voltage: 2.64    # Y-axis maximum voltage (3.3V power supply)
       min_position: 0
       max_position: 100
       max_drift_percent: 90.0  # Emergency high tolerance to handle severe cross-talk
