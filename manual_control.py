@@ -25,17 +25,22 @@ class ManualController:
         self.step_size = 2.0  # Percentage to move per key press
         self.continuous_speed = 30.0  # Speed for continuous movement (reduced further for precision)
         self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
-        self.position_update_interval = 0.4  # How often to show position (reduced from 0.2s)
+        self.position_update_interval = 0.3  # How often to show position (balance between accuracy and I2C load)
         
         # Current movement state
         self.moving_x = 0  # -1 = left, 0 = stop, 1 = right
         self.moving_y = 0  # -1 = down, 0 = stop, 1 = up
         
-        # Position caching to reduce I2C calls
+        # Position caching to reduce I2C calls and prevent deadlock
         self.last_position_read = 0
         self.cached_x_pos = 0
         self.cached_y_pos = 0
-        self.position_cache_duration = 0.2  # Cache position for 500ms
+        self.position_cache_duration = 0.2  # Cache position for 200ms (balance between accuracy and I2C load)
+        
+        # I2C deadlock prevention
+        self.last_safety_check = 0
+        self.safety_check_interval = 0.5  # Only check safety every 500ms to reduce I2C calls
+        self.i2c_lock = threading.Lock()  # Serialize I2C operations to prevent deadlock
         
         # Terminal settings for raw key input
         self.old_settings = None
@@ -137,30 +142,60 @@ class ManualController:
         return True
     
     def _get_cached_position(self):
-        """Get position with caching to reduce I2C calls"""
+        """Get position with caching and I2C deadlock prevention"""
         current_time = time.time()
         if current_time - self.last_position_read > self.position_cache_duration:
-            try:
-                self.cached_x_pos, self.cached_y_pos = self.tv_controller.get_current_position()
-                self.last_position_read = current_time
-            except Exception as e:
-                print(f"❌ Position read error: {e}")
-                # Keep using cached values on error
+            # Use lock to serialize I2C operations and prevent deadlock
+            if self.i2c_lock.acquire(blocking=False):  # Non-blocking acquire
+                try:
+                    self.cached_x_pos, self.cached_y_pos = self.tv_controller.get_current_position()
+                    self.last_position_read = current_time
+                except Exception as e:
+                    print(f"❌ Position read error: {e}")
+                    # Keep using cached values on error - prevents deadlock
+                finally:
+                    self.i2c_lock.release()
+            # If lock not available, use cached values (prevents blocking)
         return self.cached_x_pos, self.cached_y_pos
     
     def _check_motor_safety(self, axis: str, direction: str, requested_speed: float) -> float:
         """Check safety limits and return safe speed (0 = stop)"""
         try:
+            # Throttle safety checks to prevent I2C deadlock
+            current_time = time.time()
+            if current_time - self.last_safety_check < self.safety_check_interval:
+                return requested_speed  # Skip safety check, use last known safe speed
+            
+            self.last_safety_check = current_time
+            
             # Get cached position to reduce I2C calls
             x_pos, y_pos = self._get_cached_position()
             
             if axis == 'x':
-                # Get X sensor voltage
-                current_voltage = self.tv_controller.x_sensor.read_voltage()
+                # Get X sensor voltage with I2C lock protection
+                if self.i2c_lock.acquire(blocking=False):  # Non-blocking acquire
+                    try:
+                        current_voltage = self.tv_controller.x_sensor.read_voltage()
+                    except Exception as e:
+                        print(f"❌ X voltage read error: {e}")
+                        return requested_speed  # Allow movement on sensor error
+                    finally:
+                        self.i2c_lock.release()
+                else:
+                    return requested_speed  # Skip safety check if I2C busy
                 config = self.tv_controller.config['hardware']['calibration']['x_axis']
             else:
-                # Get Y sensor voltage  
-                current_voltage = self.tv_controller.y_sensor.read_voltage()
+                # Get Y sensor voltage with I2C lock protection
+                if self.i2c_lock.acquire(blocking=False):  # Non-blocking acquire
+                    try:
+                        current_voltage = self.tv_controller.y_sensor.read_voltage()
+                    except Exception as e:
+                        print(f"❌ Y voltage read error: {e}")
+                        return requested_speed  # Allow movement on sensor error
+                    finally:
+                        self.i2c_lock.release()
+                else:
+                    return requested_speed  # Skip safety check if I2C busy
                 config = self.tv_controller.config['hardware']['calibration']['y_axis']
             
             # Get safety settings
@@ -216,7 +251,7 @@ class ManualController:
                     except:
                         pass
                 
-                time.sleep(0.05)  # Much faster response (50ms for quick motor stopping)
+                time.sleep(0.1)  # Balanced response time (100ms)
                 
             except Exception as e:
                 print(f"\n❌ Error in control loop: {e}")
