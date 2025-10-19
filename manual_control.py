@@ -25,7 +25,7 @@ class ManualController:
         self.step_size = 2.0  # Percentage to move per key press
         self.continuous_speed = 60.0  # Speed for continuous movement (increased for faster manual control)
         self.speed_multiplier = 1.5  # Internal multiplier for actual motor speed
-        self.position_update_interval = 0.3  # How often to show position (balance between accuracy and I2C load)
+        self.position_update_interval = 1.0  # How often to show position (much slower for responsiveness)
         
         # Current movement state
         self.moving_x = 0  # -1 = left, 0 = stop, 1 = right
@@ -39,7 +39,7 @@ class ManualController:
         
         # I2C deadlock prevention
         self.last_safety_check = 0
-        self.safety_check_interval = 0.05  # Check safety every 50ms for responsive manual control
+        self.safety_check_interval = 999.0  # Disable safety checks during manual control (immediate response)
         self.i2c_lock = threading.Lock()  # Serialize I2C operations to prevent deadlock
         
         # Terminal settings for raw key input
@@ -251,7 +251,7 @@ class ManualController:
                     except:
                         pass
                 
-                time.sleep(0.1)  # Balanced response time (100ms)
+                time.sleep(0.02)  # Much faster response time (20ms for immediate stop)
                 
             except Exception as e:
                 print(f"\n❌ Error in control loop: {e}")
