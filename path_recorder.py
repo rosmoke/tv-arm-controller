@@ -851,9 +851,9 @@ class PathRecorder:
                     # Close the disabled code block
                     
                     if corrections_sent:
-                        time.sleep(0.05)  # Ultra fast checking when corrections sent
+                        time.sleep(0.2)  # Increased from 0.05s to reduce I2C bus pressure
                     else:
-                        time.sleep(0.02)  # Extremely frequent checking for precise target detection
+                        time.sleep(0.2)  # Increased from 0.02s to prevent I2C bus saturation
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
