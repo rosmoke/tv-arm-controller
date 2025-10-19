@@ -467,15 +467,15 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Simple consistent filtering - works for both movement and stationary
-                time.sleep(0.005)  # Moderate settling time (5ms - compromise)
+               # Extended settling time to prevent multiplexer cross-talk
+               time.sleep(0.020)  # Longer settling time (20ms - prevents cross-talk)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
                 for i in range(2):
                     readings.append(self.analog_in.voltage)
                     if i < 1:
-                        time.sleep(0.005)  # Short delay between readings
+                        time.sleep(0.010)  # Longer delay between readings (10ms)
                 
                 # Average the readings to reduce noise
                 voltage = sum(readings) / len(readings)
