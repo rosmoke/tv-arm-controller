@@ -955,13 +955,20 @@ class PathRecorder:
         if error > 10.0:
             logging.warning(f"🔍 {axis} LARGE ERROR: current={current:.1f}%, target={target:.1f}%, error={error:.1f}%, tolerance={tolerance}%")
         
-        # Only accept if strictly within tolerance - prevent boundary edge cases
-        if error < tolerance:
-            logging.info(f"{axis} AT TARGET: {current:.1f}% within {tolerance}% of {target:.1f}%")
-            return True
+        # Precise target detection - must actually reach target or go slightly past it
+        if is_retract_path:
+            # Retract: going towards 0 - at target if reached target or went below it
+            if current <= target + tolerance:
+                logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (retract)")
+                return True
         else:
-            logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% error {error:.1f}% > tolerance {tolerance}%")
-            return False
+            # Extend: going towards 100 - at target if reached target or went above it  
+            if current >= target - tolerance:
+                logging.info(f"{axis} AT TARGET: {current:.1f}% reached/passed {target:.1f}% (extend)")
+                return True
+                
+        logging.debug(f"{axis} NOT AT TARGET: {current:.1f}% hasn't reached {target:.1f}% yet")
+        return False
     
     def _check_overshoot(self, current: float, target: float, axis: str, expected_direction: int) -> bool:
         """
