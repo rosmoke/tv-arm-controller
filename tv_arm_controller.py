@@ -467,8 +467,8 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-               # Extended settling time to prevent multiplexer cross-talk
-               time.sleep(0.020)  # Longer settling time (20ms - prevents cross-talk)
+                # Extended settling time to prevent multiplexer cross-talk
+                time.sleep(0.020)  # Longer settling time (20ms - prevents cross-talk)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
