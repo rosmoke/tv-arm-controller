@@ -297,14 +297,14 @@ class PathRecorder:
                 adjusted_x_tolerance = x_tolerance
                 adjusted_y_tolerance = y_tolerance
                 
-                # For targets near 0%, use much tighter tolerance for better accuracy
+                # For targets near 0%, use achievable tolerance for mechanical precision
                 if target_x <= 1.0:
-                    adjusted_x_tolerance = max(0.02, target_x * 0.1)  # 10% of target, minimum 0.02%
-                    logging.info(f"🎯 X NEAR ZERO: Using tight tolerance {adjusted_x_tolerance:.3f}% for target {target_x}% (normal: {x_tolerance}%)")
+                    adjusted_x_tolerance = max(0.1, target_x * 0.4)  # 40% of target, minimum 0.1%
+                    logging.info(f"🎯 X NEAR ZERO: Using achievable tolerance {adjusted_x_tolerance:.3f}% for target {target_x}% (normal: {x_tolerance}%)")
                 
                 if target_y <= 1.0:
-                    adjusted_y_tolerance = max(0.02, target_y * 0.1)  # 10% of target, minimum 0.02%
-                    logging.info(f"🎯 Y NEAR ZERO: Using tight tolerance {adjusted_y_tolerance:.3f}% for target {target_y}% (normal: {y_tolerance}%)")
+                    adjusted_y_tolerance = max(0.1, target_y * 0.4)  # 40% of target, minimum 0.1%
+                    logging.info(f"🎯 Y NEAR ZERO: Using achievable tolerance {adjusted_y_tolerance:.3f}% for target {target_y}% (normal: {y_tolerance}%)")
                 
                 # Only log tolerances if they seem unusual
                 if adjusted_x_tolerance > 1.0 or adjusted_y_tolerance > 1.0:
@@ -920,22 +920,24 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Check for overshoot - if motor went past target, consider it "at target" to stop it
-        # This prevents runaway motors that go too far past the target
+        # Check for real overshoot - only if motor went SIGNIFICANTLY past target
+        # Use much larger overshoot tolerance to prevent false positives
+        overshoot_tolerance = 2.0  # 2% overshoot tolerance - much larger than normal tolerance
+        
         if hasattr(self, 'initial_direction_x') and axis == 'X':
-            if self.initial_direction_x > 0 and current > target + tolerance:  # Forward overshoot
-                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {tolerance:.1f}% (forward overshoot)")
+            if self.initial_direction_x > 0 and current > target + overshoot_tolerance:  # Real forward overshoot
+                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (significant forward overshoot)")
                 return True
-            elif self.initial_direction_x < 0 and current < target - tolerance:  # Reverse overshoot  
-                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {tolerance:.1f}% (reverse overshoot)")
+            elif self.initial_direction_x < 0 and current < target - overshoot_tolerance:  # Real reverse overshoot  
+                logging.warning(f"🚨 X OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (significant reverse overshoot)")
                 return True
                 
         if hasattr(self, 'initial_direction_y') and axis == 'Y':
-            if self.initial_direction_y > 0 and current > target + tolerance:  # Forward overshoot
-                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {tolerance:.1f}% (forward overshoot)")
+            if self.initial_direction_y > 0 and current > target + overshoot_tolerance:  # Real forward overshoot
+                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% > {target:.1f}% + {overshoot_tolerance:.1f}% (significant forward overshoot)")
                 return True
-            elif self.initial_direction_y < 0 and current < target - tolerance:  # Reverse overshoot
-                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {tolerance:.1f}% (reverse overshoot)")
+            elif self.initial_direction_y < 0 and current < target - overshoot_tolerance:  # Real reverse overshoot
+                logging.warning(f"🚨 Y OVERSHOOT: {current:.1f}% < {target:.1f}% - {overshoot_tolerance:.1f}% (significant reverse overshoot)")
                 return True
         
         # Only log debug info if error is very large (debugging tolerance issues)
