@@ -25,7 +25,7 @@ hardware:
   # Potentiometer channels on ADS1115
   potentiometer:
     x_axis_channel: 0  # A0 - X-axis position feedback
-    y_axis_channel: 2  # A2 - Y-axis position feedback
+    y_axis_channel: 1  # A1 - Y-axis position feedback (changed from A2 to avoid cross-talk)
   
   # DC Motor configuration
   dc_motor:

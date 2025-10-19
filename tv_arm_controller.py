@@ -468,7 +468,7 @@ class PositionSensor:
         for attempt in range(self.max_retries):
             try:
                 # Extended settling time to prevent multiplexer cross-talk
-                time.sleep(0.020)  # Longer settling time (20ms - prevents cross-talk)
+                time.sleep(0.050)  # Much longer settling time (50ms - aggressive cross-talk prevention)
                 
                 # Take 2 readings and average (faster than 3, more stable than 1)
                 readings = []
@@ -526,8 +526,13 @@ class PositionSensor:
             logging.warning(f"Channel {self.channel}: ADC glitch detected - 0V reading: {voltage:.3f}V")
             return False
         
-        if abs(voltage - 4.096) < 0.01:  # 4.096V readings (ADC saturation)
-            logging.warning(f"Channel {self.channel}: ADC saturation detected: {voltage:.3f}V")
+        if voltage > 4.0:  # Any reading above 4.0V is invalid (ADC saturation/cross-talk)
+            logging.warning(f"Channel {self.channel}: ADC saturation/cross-talk detected: {voltage:.3f}V")
+            return False
+        
+        # Detect cross-talk patterns for X-axis (channel 0)
+        if self.channel == 0 and 3.0 <= voltage <= 3.2:  # X reading Y voltage (~3.15V)
+            logging.warning(f"Channel {self.channel}: Cross-talk detected - reading Y voltage: {voltage:.3f}V")
             return False
         
         # Check if voltage is within expected range (with very generous bounds)
