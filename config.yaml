@@ -19,8 +19,8 @@ hardware:
   # ADS1115 ADC configuration
   ads1115:
     address: 0x48  # Default I2C address
-    gain: 1        # ±4.096V range
-    data_rate: 860 # Samples per second
+    gain: 1        # ±4.096V range (keep same for compatibility)
+    data_rate: 128 # Samples per second (reduced from 860 for much better noise filtering)
   
   # Potentiometer channels on ADS1115
   potentiometer:

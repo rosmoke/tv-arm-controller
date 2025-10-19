@@ -464,14 +464,22 @@ class PositionSensor:
                     logging.error(f"Error reading voltage from channel {self.channel}: {e} (error #{self._error_count})")
                 return (self.min_voltage + self.max_voltage) / 2
         
-        # Try reading voltage with retries
+        # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                voltage = self.analog_in.voltage
+                # Take multiple readings and average them for noise reduction
+                readings = []
+                for i in range(3):  # Take 3 quick readings
+                    readings.append(self.analog_in.voltage)
+                    if i < 2:  # Small delay between readings
+                        time.sleep(0.005)
+                
+                # Average the readings to reduce noise
+                voltage = sum(readings) / len(readings)
                 
                 # For the first reading, accept any reasonable voltage to establish baseline
                 if self.last_valid_voltage is None and self.min_voltage * 0.2 <= voltage <= self.max_voltage * 2.0:
-                    logging.info(f"Initial voltage reading for channel {self.channel}: {voltage:.3f}V")
+                    logging.info(f"Initial voltage reading for channel {self.channel}: {voltage:.3f}V (averaged from {len(readings)} readings)")
                     self.last_valid_voltage = voltage
                     self.consecutive_errors = 0
                     return voltage
