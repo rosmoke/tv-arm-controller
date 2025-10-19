@@ -492,10 +492,10 @@ class PositionSensor:
                     self.last_valid_voltage = voltage
                     self.consecutive_errors = 0
                     return voltage
-               else:
-                   logging.debug(f"Invalid voltage reading on channel {self.channel}: {voltage:.3f}V (attempt {attempt + 1})")
-                   if attempt < self.max_retries - 1:
-                       time.sleep(0.01)  # Small delay before retry
+                else:
+                    logging.debug(f"Invalid voltage reading on channel {self.channel}: {voltage:.3f}V (attempt {attempt + 1})")
+                    if attempt < self.max_retries - 1:
+                        time.sleep(0.01)  # Small delay before retry
                     
             except Exception as e:
                 # Reduce retry error logging to prevent spam
