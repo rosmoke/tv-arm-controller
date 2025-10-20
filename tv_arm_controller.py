@@ -467,22 +467,15 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Faster settling time for path playback functionality
-                time.sleep(0.100)  # Emergency settling time (100ms - I2C bus protection)
+                # Critical settling time for ADS1115 multiplexer channel switching
+                time.sleep(0.020)  # 20ms settling - balance between speed and stability
                 
-                # Take 2 readings and average (faster than 3, more stable than 1)
-                readings = []
-                for i in range(2):
-                    readings.append(self.analog_in.voltage)
-                    if i < 1:
-                        time.sleep(0.050)  # Much longer delay between readings (emergency I2C protection)
-                
-                # Average the readings to reduce noise
-                voltage = sum(readings) / len(readings)
+                # SINGLE reading to minimize I2C bus access and prevent crosstalk
+                voltage = self.analog_in.voltage
                 
                 # For the first reading, accept any reasonable voltage to establish baseline
                 if self.last_valid_voltage is None and self.min_voltage * 0.2 <= voltage <= self.max_voltage * 2.0:
-                    logging.info(f"Initial voltage reading for channel {self.channel}: {voltage:.3f}V (averaged from {len(readings)} readings)")
+                    logging.info(f"Initial voltage reading for channel {self.channel}: {voltage:.3f}V")
                     self.last_valid_voltage = voltage
                     self.consecutive_errors = 0
                     return voltage

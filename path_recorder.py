@@ -477,11 +477,11 @@ class PathRecorder:
                 else:
                     logging.warning(f"❌ Position reading attempt {attempt + 1}: X={current_x:.1f}%, Y={current_y:.1f}% (invalid)")
                     if attempt < 4:
-                        time.sleep(1.0)  # Longer wait before retry
+                        time.sleep(0.3)  # Brief wait before retry
             except Exception as e:
                 logging.warning(f"❌ Position reading attempt {attempt + 1} failed: {e}")
                 if attempt < 4:
-                    time.sleep(1.0)  # Longer wait before retry
+                    time.sleep(0.3)  # Brief wait before retry
                 else:
                     # Final fallback - use a reasonable middle position
                     current_x, current_y = 25.0, 25.0
@@ -576,18 +576,15 @@ class PathRecorder:
                 readings_x = []
                 readings_y = []
                 
-                for i in range(3):
-                    try:
-                        x_reading, y_reading = self.controller.get_current_position()
-                        readings_x.append(x_reading)
-                        readings_y.append(y_reading)
-                        if i < 2:  # Longer delay between readings to reduce I2C bus pressure
-                            time.sleep(0.05)  # 50ms between readings (5x longer)
-                    except Exception as e:
-                        logging.warning(f"Sensor reading {i+1} failed: {e}")
-                        continue
+                # SINGLE reading (no averaging) to minimize I2C bus access
+                try:
+                    x_reading, y_reading = self.controller.get_current_position()
+                    readings_x.append(x_reading)
+                    readings_y.append(y_reading)
+                except Exception as e:
+                    logging.warning(f"Sensor reading failed: {e}")
                 
-                # Check if we have enough readings to continue safely
+                # Check if we got a valid reading
                 if len(readings_x) == 0 or len(readings_y) == 0:
                     consecutive_sensor_failures += 1
                     logging.warning(f"⚠️ SENSOR GLITCH {consecutive_sensor_failures}/{max_consecutive_failures} - NO VALID READINGS!")
@@ -605,7 +602,7 @@ class PathRecorder:
                     else:
                         logging.info(f"🔄 CONTINUING WITH CAUTION - Will retry sensor reading")
                         # Use last known position if available, otherwise skip this iteration
-                        time.sleep(0.3)  # Longer pause to let I2C bus and sensors recover
+                        time.sleep(0.2)  # Brief pause to let sensors recover
                         continue
                 else:
                     # Reset failure counter on successful reading
@@ -974,13 +971,13 @@ class PathRecorder:
                     # Close the disabled code block
                     
                     if corrections_sent:
-                        time.sleep(1.5)  # Emergency I2C protection - much longer delays
+                        time.sleep(0.1)  # Fast loop for responsive motor control
                     else:
-                        time.sleep(1.0)  # Emergency I2C protection - longer delays
+                        time.sleep(0.05)  # Even faster when just monitoring
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
-                time.sleep(1.0)  # Emergency I2C protection
+                time.sleep(0.5)  # Brief pause on error
         
         # Timeout - stop both motors
         self.controller.x_motor.stop_motor()
