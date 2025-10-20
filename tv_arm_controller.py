@@ -748,25 +748,24 @@ class TVArmController:
     def get_current_position(self) -> Tuple[float, float]:
         """Get current position from potentiometers with I2C bus protection
         
-        Simple approach: Double-read each channel with delays to prevent I2C contention
+        Simple approach: Single read per channel with delays BEFORE reading
+        to let multiplexer switch and settle
         """
         try:
-            # Double-read X channel (discard 1st = stale, use 2nd = fresh)
+            # Wait before X read to let multiplexer switch from previous channel
+            time.sleep(0.100)  # 100ms pre-read delay
             logging.debug("Reading X sensor...")
-            self.x_sensor.read_position_percent()  # Discard 1st reading
-            time.sleep(0.050)  # 50ms settling time
-            x_pos = self.x_sensor.read_position_percent()  # Use 2nd reading
+            x_pos = self.x_sensor.read_position_percent()
             logging.debug(f"X sensor read: {x_pos:.1f}%")
             
-            # Delay between channels to clear I2C bus
-            time.sleep(0.050)  # 50ms inter-channel delay
-            
-            # Double-read Y channel (discard 1st = stale, use 2nd = fresh)
+            # Wait before Y read to let multiplexer switch from X to Y
+            time.sleep(0.100)  # 100ms inter-channel delay
             logging.debug("Reading Y sensor...")
-            self.y_sensor.read_position_percent()  # Discard 1st reading
-            time.sleep(0.050)  # 50ms settling time
-            y_pos = self.y_sensor.read_position_percent()  # Use 2nd reading
+            y_pos = self.y_sensor.read_position_percent()
             logging.debug(f"Y sensor read: {y_pos:.1f}%")
+            
+            # Final delay after Y read to clear bus for motor commands
+            time.sleep(0.100)  # 100ms post-read delay
             
             return x_pos, y_pos
         except Exception as e:
