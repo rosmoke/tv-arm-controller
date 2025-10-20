@@ -1345,19 +1345,19 @@ class PathRecorder:
 
 # Helper functions for motor speed calculation
 def calculate_x_approach_speed(x_error, base_speed):
-    """Calculate X motor speed - BLAZING fast when far, slow when close for precision"""
-    if x_error <= 0.1:  # Very close to target - ultra slow but with minimum power
-        approach_speed = max(30.0, base_speed * 0.4)  # 40% speed, min 30% (higher minimum for static friction)
-        logging.info(f"X ULTRA PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - final approach)")
-    elif x_error <= 0.5:  # Close to target - very slow but with sufficient power
-        approach_speed = max(35.0, base_speed * 0.5)  # 50% speed, min 35% (much higher for tiny movements)
-        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - precision zone)")
-    elif x_error <= 1.5:  # Approaching target - slow but reliable
-        approach_speed = max(25.0, base_speed * 0.4)  # 40% speed, min 25% (reduced for precision)
-        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (40% - small movement)")
-    elif x_error <= 3.0:  # Small movements - need sufficient power
-        approach_speed = max(30.0, base_speed * 0.5)  # 50% speed, min 30% (reduced to prevent overshoot)
-        logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (50% - small movement)")
+    """Calculate X motor speed - DRAMATIC slowdown when close"""
+    if x_error <= 0.5:  # Very close to target - CRAWL
+        approach_speed = 15.0  # Fixed 15% - ultra slow crawl
+        logging.info(f"X CRAWL: {x_error:.2f}% error → {approach_speed:.0f}% speed (ULTRA SLOW)")
+    elif x_error <= 1.0:  # Close to target - very slow
+        approach_speed = 18.0  # Fixed 18% - very slow
+        logging.info(f"X PRECISION: {x_error:.2f}% error → {approach_speed:.0f}% speed (VERY SLOW)")
+    elif x_error <= 2.0:  # Approaching target - slow
+        approach_speed = 22.0  # Fixed 22% - slow approach
+        logging.info(f"X APPROACH: {x_error:.2f}% error → {approach_speed:.0f}% speed (SLOW)")
+    elif x_error <= 3.0:  # Small movements - moderate slow
+        approach_speed = 28.0  # Fixed 28% - moderate
+        logging.info(f"X SMALL: {x_error:.2f}% error → {approach_speed:.0f}% speed (MODERATE)")
     elif x_error <= 5.0:  # Getting closer - moderate
         approach_speed = base_speed * 0.8  # 80% speed (reduced from 120%)
         logging.info(f"X MODERATE: {x_error:.2f}% error → {approach_speed:.0f}% speed (80% - approaching)")
@@ -1374,19 +1374,19 @@ def calculate_x_approach_speed(x_error, base_speed):
 
 
 def calculate_y_approach_speed(y_error, base_speed):
-    """Calculate Y motor speed - BLAZING fast when far, controlled when close with filtering"""
-    if y_error <= 0.1:  # Very close to target - ultra slow
-        approach_speed = max(8.0, base_speed * 0.15)  # 15% speed, min 8%
-        logging.info(f"Y ULTRA PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (15% - final approach)")
-    elif y_error <= 0.5:  # Close to target - very slow
-        approach_speed = max(20.0, base_speed * 0.25)  # 25% speed, min 20% (increased for reliability)
-        logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (25% - precision zone)")
-    elif y_error <= 1.5:  # Approaching target - moderate slow  
-        approach_speed = max(20.0, base_speed * 0.25)  # 25% speed, min 20% (reduced for precision)
-        logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (25% - deceleration)")
-    elif y_error <= 3.0:  # Getting closer - much faster
-        approach_speed = max(25.0, base_speed * 0.4)  # 40% speed, min 25% (reduced to prevent overshoot)
-        logging.info(f"Y MODERATE: {y_error:.2f}% error → {approach_speed:.0f}% speed (40% - approaching)")
+    """Calculate Y motor speed - DRAMATIC slowdown when close"""
+    if y_error <= 0.5:  # Very close to target - CRAWL
+        approach_speed = 12.0  # Fixed 12% - ultra slow crawl
+        logging.info(f"Y CRAWL: {y_error:.2f}% error → {approach_speed:.0f}% speed (ULTRA SLOW)")
+    elif y_error <= 1.0:  # Close to target - very slow
+        approach_speed = 15.0  # Fixed 15% - very slow
+        logging.info(f"Y PRECISION: {y_error:.2f}% error → {approach_speed:.0f}% speed (VERY SLOW)")
+    elif y_error <= 2.0:  # Approaching target - slow
+        approach_speed = 18.0  # Fixed 18% - slow approach
+        logging.info(f"Y APPROACH: {y_error:.2f}% error → {approach_speed:.0f}% speed (SLOW)")
+    elif y_error <= 3.0:  # Small movements - moderate slow
+        approach_speed = 22.0  # Fixed 22% - moderate
+        logging.info(f"Y MODERATE: {y_error:.2f}% error → {approach_speed:.0f}% speed (MODERATE)")
     elif y_error <= 8.0:  # Medium distance - very fast
         approach_speed = base_speed * 1.4  # 140% speed (increased from 80%)
         logging.info(f"Y FAST: {y_error:.2f}% error → {approach_speed:.0f}% speed (140% - medium distance)")
