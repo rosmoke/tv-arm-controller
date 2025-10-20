@@ -467,8 +467,9 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # Critical settling time for ADS1115 multiplexer channel switching
-                time.sleep(0.020)  # 20ms settling - balance between speed and stability
+                # CRITICAL: At 32 SPS, each conversion takes 31.25ms
+                # Must wait for full conversion + multiplexer settling
+                time.sleep(0.040)  # 40ms = 31.25ms conversion + 8.75ms multiplexer settling
                 
                 # SINGLE reading to minimize I2C bus access and prevent crosstalk
                 voltage = self.analog_in.voltage
@@ -750,6 +751,9 @@ class TVArmController:
             logging.debug("Reading X sensor...")
             x_pos = self.x_sensor.read_position_percent()
             logging.debug(f"X sensor read: {x_pos:.1f}%")
+            
+            # CRITICAL: Wait between channel reads to prevent ADS1115 multiplexer crosstalk
+            time.sleep(0.050)  # 50ms gap between X and Y reads
             
             logging.debug("Reading Y sensor...")
             y_pos = self.y_sensor.read_position_percent()
