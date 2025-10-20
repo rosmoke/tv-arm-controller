@@ -746,28 +746,32 @@ class TVArmController:
         return x_success and y_success
     
     def get_current_position(self) -> Tuple[float, float]:
-        """Get current position from potentiometers with double-read and I2C bus clearing"""
+        """Get current position from potentiometers with TRIPLE-read and extreme I2C bus clearing"""
         try:
-            # CRITICAL: ADS1115 multiplexer may hold previous channel's value
+            # CRITICAL: ADS1115 multiplexer is VERY sticky - holds previous channel's value
             # Solution: 
-            # 1. Read channel TWICE (discard first = old data, use second = fresh data)
-            # 2. Clear I2C bus between channels (100ms gap)
+            # 1. Read channel THREE times (discard first two = stale data, use third = fresh data)
+            # 2. Extreme I2C bus clearing between channels (200ms gap)
             # 3. Ensure full conversion time at 32 SPS (31.25ms per reading)
             
-            logging.debug("Reading X sensor (double-read for clean channel switch)...")
-            self.x_sensor.read_position_percent()  # Discard first reading (may be from Y channel)
-            time.sleep(0.050)  # Wait for new conversion (32 SPS = 31.25ms)
-            x_pos = self.x_sensor.read_position_percent()  # Use second reading (clean X data)
+            logging.debug("Reading X sensor (triple-read for absolute clean channel switch)...")
+            self.x_sensor.read_position_percent()  # Discard 1st (may be from Y channel)
+            time.sleep(0.100)  # 100ms wait
+            self.x_sensor.read_position_percent()  # Discard 2nd (still may be stale)
+            time.sleep(0.100)  # 100ms wait
+            x_pos = self.x_sensor.read_position_percent()  # Use 3rd reading (definitely clean X data)
             logging.debug(f"X sensor read: {x_pos:.1f}%")
             
-            # CRITICAL: Clear I2C bus between channels
-            # Give multiplexer and bus time to fully settle and clear any residual data
-            time.sleep(0.100)  # 100ms gap to clear I2C bus and switch channels
+            # EXTREME: Clear I2C bus between channels
+            # Give multiplexer and bus maximum time to fully settle
+            time.sleep(0.200)  # 200ms gap to completely clear I2C bus and switch channels
             
-            logging.debug("Reading Y sensor (double-read for clean channel switch)...")
-            self.y_sensor.read_position_percent()  # Discard first reading (may be from X channel)
-            time.sleep(0.050)  # Wait for new conversion (32 SPS = 31.25ms)
-            y_pos = self.y_sensor.read_position_percent()  # Use second reading (clean Y data)
+            logging.debug("Reading Y sensor (triple-read for absolute clean channel switch)...")
+            self.y_sensor.read_position_percent()  # Discard 1st (may be from X channel)
+            time.sleep(0.100)  # 100ms wait
+            self.y_sensor.read_position_percent()  # Discard 2nd (still may be stale)
+            time.sleep(0.100)  # 100ms wait
+            y_pos = self.y_sensor.read_position_percent()  # Use 3rd reading (definitely clean Y data)
             logging.debug(f"Y sensor read: {y_pos:.1f}%")
             
             return x_pos, y_pos
