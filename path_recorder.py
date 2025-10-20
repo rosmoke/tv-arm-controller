@@ -1040,9 +1040,15 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Simple overshoot detection based on path direction
-        # Retract = going towards 0, Extend = going towards 100
-        overshoot_tolerance = 1.5  # 1.5% overshoot tolerance (tighter detection)
+        # ADAPTIVE overshoot tolerance based on distance to target
+        # Larger tolerance for larger movements to account for momentum
+        distance_to_target = abs(current - target)
+        if distance_to_target > 10.0:
+            overshoot_tolerance = 5.0  # 5% tolerance for large movements (>10%)
+        elif distance_to_target > 5.0:
+            overshoot_tolerance = 3.0  # 3% tolerance for medium movements (5-10%)
+        else:
+            overshoot_tolerance = 1.5  # 1.5% tolerance for small movements (<5%)
         
         # Get path type to determine movement direction
         path_name = getattr(self, 'current_path_name', 'unknown')
@@ -1086,9 +1092,15 @@ class PathRecorder:
         """
         error = abs(current - target)
         
-        # Simple overshoot detection based on path direction
-        # Retract = going towards 0, Extend = going towards 100
-        overshoot_tolerance = 1.5  # 1.5% overshoot tolerance (tighter detection)
+        # ADAPTIVE overshoot tolerance based on distance to target
+        # Larger tolerance for larger movements to account for momentum
+        distance_to_target = abs(current - target)
+        if distance_to_target > 10.0:
+            overshoot_tolerance = 5.0  # 5% tolerance for large movements (>10%)
+        elif distance_to_target > 5.0:
+            overshoot_tolerance = 3.0  # 3% tolerance for medium movements (5-10%)
+        else:
+            overshoot_tolerance = 1.5  # 1.5% tolerance for small movements (<5%)
         
         # Get path type to determine movement direction
         path_name = getattr(self, 'current_path_name', 'unknown')
@@ -1154,11 +1166,14 @@ class PathRecorder:
             axis: 'X' or 'Y'
             expected_direction: 1 for forward/increasing, -1 for reverse/decreasing, 0 for no movement
         """
-        # Conservative overshoot tolerance - only for real runaway motors
-        if axis == 'X':
-            overshoot_tolerance = 1.5  # 1.5% overshoot tolerance for X axis (tighter detection) 
-        else:  # Y axis  
-            overshoot_tolerance = 1.5  # 1.5% overshoot tolerance for Y axis (tighter detection)
+        # ADAPTIVE overshoot tolerance based on distance to target
+        distance_to_target = abs(current_position - target_position)
+        if distance_to_target > 10.0:
+            overshoot_tolerance = 5.0  # 5% tolerance for large movements (>10%)
+        elif distance_to_target > 5.0:
+            overshoot_tolerance = 3.0  # 3% tolerance for medium movements (5-10%)
+        else:
+            overshoot_tolerance = 1.5  # 1.5% tolerance for small movements (<5%)
         
         # Only check for overshoot in the direction of movement
         if expected_direction > 0:  # Moving forward/increasing (extend)
