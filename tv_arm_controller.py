@@ -746,16 +746,26 @@ class TVArmController:
         return x_success and y_success
     
     def get_current_position(self) -> Tuple[float, float]:
-        """Get current position from potentiometers - SIMPLE direct read (like read_potentiometers.py)"""
+        """Get current position from potentiometers with I2C bus protection
+        
+        Simple approach: Double-read each channel with delays to prevent I2C contention
+        """
         try:
-            # SIMPLE APPROACH - just read directly, no delays, no retries
-            # This is exactly how read_potentiometers.py does it (which works perfectly!)
+            # Double-read X channel (discard 1st = stale, use 2nd = fresh)
             logging.debug("Reading X sensor...")
-            x_pos = self.x_sensor.read_position_percent()
+            self.x_sensor.read_position_percent()  # Discard 1st reading
+            time.sleep(0.050)  # 50ms settling time
+            x_pos = self.x_sensor.read_position_percent()  # Use 2nd reading
             logging.debug(f"X sensor read: {x_pos:.1f}%")
             
+            # Delay between channels to clear I2C bus
+            time.sleep(0.050)  # 50ms inter-channel delay
+            
+            # Double-read Y channel (discard 1st = stale, use 2nd = fresh)
             logging.debug("Reading Y sensor...")
-            y_pos = self.y_sensor.read_position_percent()
+            self.y_sensor.read_position_percent()  # Discard 1st reading
+            time.sleep(0.050)  # 50ms settling time
+            y_pos = self.y_sensor.read_position_percent()  # Use 2nd reading
             logging.debug(f"Y sensor read: {y_pos:.1f}%")
             
             return x_pos, y_pos
