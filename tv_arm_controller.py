@@ -467,9 +467,8 @@ class PositionSensor:
         # Try reading voltage with retries and averaging for noise reduction
         for attempt in range(self.max_retries):
             try:
-                # CRITICAL: At 32 SPS, each conversion takes 31.25ms
-                # Must wait for full conversion + multiplexer settling
-                time.sleep(0.040)  # 40ms = 31.25ms conversion + 8.75ms multiplexer settling
+                # NO DELAY HERE - get_current_position() already waits 200ms before calling us!
+                # The multiplexer has had plenty of time to settle
                 
                 # SINGLE reading to minimize I2C bus access and prevent crosstalk
                 voltage = self.analog_in.voltage
