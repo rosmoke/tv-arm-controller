@@ -45,7 +45,7 @@ hardware:
   # Position limits and calibration
   calibration:
     x_axis:
-      min_voltage: 1.693  # X-axis minimum voltage (actual measured minimum)  
+      min_voltage: 1.66  # X-axis minimum voltage (lowered to 1.65V to capture 1.66V+ readings)
       max_voltage: 2.58  # X-axis maximum voltage (correct value)
       min_position: 0     # Minimum position (%)
       max_position: 100   # Maximum position (%)
@@ -53,11 +53,11 @@ hardware:
       enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
-      safety_margin: 0.0  # No margin - stop exactly at limit (1.69V and 2.77V)
-      slow_zone_margin: 0.05 # Start slowing down at 1.74V (50mV from 1.69V minimum)
+      safety_margin: 0.0  # No margin - stop exactly at limit (1.65V and 2.58V)
+      slow_zone_margin: 0.05 # Start slowing down at 1.70V (50mV from 1.65V minimum)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
     y_axis:
-      min_voltage: 0.928  # Y-axis minimum voltage (3.3V power supply)
+      min_voltage: 0.84   # Y-axis minimum voltage (lowered to 0.84V to capture 0.84V+ readings)
       max_voltage: 2.64    # Y-axis maximum voltage (3.3V power supply)
       min_position: 0
       max_position: 100
@@ -65,8 +65,8 @@ hardware:
       enable_filtering: true   # Enable filtering for stable readings during movement
       max_retries: 2  # Reduce I2C retry attempts to prevent bus congestion
       # Safety limits
-      safety_margin: 0.0  # No margin - stop exactly at limit (0.925V and 2.91V)
-      slow_zone_margin: 0.05 # Start slowing down at 0.975V (50mV from 0.925V minimum)
+      safety_margin: 0.0  # No margin - stop exactly at limit (0.84V and 2.64V)
+      slow_zone_margin: 0.05 # Start slowing down at 0.89V (50mV from 0.84V minimum)
       safety_slow_speed: 15 # Very slow speed when in slow zone (%)
   
   # Actual TV mount positions (calibrated)
