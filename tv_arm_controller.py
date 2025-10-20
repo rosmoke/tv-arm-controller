@@ -746,26 +746,25 @@ class TVArmController:
         return x_success and y_success
     
     def get_current_position(self) -> Tuple[float, float]:
-        """Get current position from potentiometers with I2C bus protection
+        """Get current position from potentiometers with EXTREME I2C bus protection
         
-        Simple approach: Single read per channel with delays BEFORE reading
-        to let multiplexer switch and settle
+        The ADS1115 multiplexer crosstalk is so severe we need VERY long delays
         """
         try:
-            # Wait before X read to let multiplexer switch from previous channel
-            time.sleep(0.100)  # 100ms pre-read delay
+            # EXTREME wait before X read - let multiplexer fully switch
+            time.sleep(0.200)  # 200ms pre-read delay
             logging.debug("Reading X sensor...")
             x_pos = self.x_sensor.read_position_percent()
             logging.debug(f"X sensor read: {x_pos:.1f}%")
             
-            # Wait before Y read to let multiplexer switch from X to Y
-            time.sleep(0.100)  # 100ms inter-channel delay
+            # EXTREME wait before Y read - let multiplexer fully switch from X to Y
+            time.sleep(0.200)  # 200ms inter-channel delay
             logging.debug("Reading Y sensor...")
             y_pos = self.y_sensor.read_position_percent()
             logging.debug(f"Y sensor read: {y_pos:.1f}%")
             
-            # Final delay after Y read to clear bus for motor commands
-            time.sleep(0.100)  # 100ms post-read delay
+            # EXTREME final delay - clear bus completely for motor commands
+            time.sleep(0.200)  # 200ms post-read delay
             
             return x_pos, y_pos
         except Exception as e:

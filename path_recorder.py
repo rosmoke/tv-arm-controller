@@ -980,10 +980,10 @@ class PathRecorder:
                     
                     # Close the disabled code block
                     
-                    if corrections_sent:
-                        time.sleep(0.1)  # Fast loop for responsive motor control
-                    else:
-                        time.sleep(0.05)  # Even faster when just monitoring
+                    # CRITICAL: Match read_potentiometers.py timing!
+                    # It reads with 200ms gaps and has stable readings
+                    # We need the same gap to let I2C bus fully settle
+                    time.sleep(0.200)  # 200ms loop delay to match read_potentiometers.py
                     
             except Exception as e:
                 logging.error(f"Error during simultaneous movement: {e}")
