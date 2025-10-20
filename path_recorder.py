@@ -694,10 +694,15 @@ class PathRecorder:
                         self.controller.x_motor.set_speed(0)
                         logging.debug(f"X motor stopped - at target with {x_error:.1f}% error")
                     else:
-                        # IGNORE premature stop - motor not at target yet
-                        logging.warning(f"X motor marked as stopped but still {x_error:.1f}% away from target - ALLOWING MOVEMENT")
-                        # Clear the stopped flag so motor can continue
-                        delattr(self, 'x_stopped')
+                        # Check if this was an emergency brake (overshoot)
+                        if consecutive_x_overshoot > 0:
+                            # DO NOT RESTART after emergency brake - stay stopped!
+                            logging.error(f"🛑 X MOTOR STAYS STOPPED after emergency brake - {x_error:.1f}% from target (overshoot count: {consecutive_x_overshoot})")
+                        else:
+                            # IGNORE premature stop - motor not at target yet (normal stop, not overshoot)
+                            logging.warning(f"X motor marked as stopped but still {x_error:.1f}% away from target - ALLOWING MOVEMENT")
+                            # Clear the stopped flag so motor can continue
+                            delattr(self, 'x_stopped')
                 
                 if y_at_target and not hasattr(self, 'y_stopped'):
                     logging.info(f"🎯 Y motor reached target {target_y:.1f}% (current: {current_y:.1f}%)")
@@ -715,10 +720,15 @@ class PathRecorder:
                         self.controller.y_motor.set_speed(0)
                         logging.debug(f"Y motor stopped - at target with {y_error:.1f}% error")
                     else:
-                        # IGNORE premature stop - motor not at target yet
-                        logging.warning(f"Y motor marked as stopped but still {y_error:.1f}% away from target - ALLOWING MOVEMENT")
-                        # Clear the stopped flag so motor can continue
-                        delattr(self, 'y_stopped')
+                        # Check if this was an emergency brake (overshoot)
+                        if consecutive_y_overshoot > 0:
+                            # DO NOT RESTART after emergency brake - stay stopped!
+                            logging.error(f"🛑 Y MOTOR STAYS STOPPED after emergency brake - {y_error:.1f}% from target (overshoot count: {consecutive_y_overshoot})")
+                        else:
+                            # IGNORE premature stop - motor not at target yet (normal stop, not overshoot)
+                            logging.warning(f"Y motor marked as stopped but still {y_error:.1f}% away from target - ALLOWING MOVEMENT")
+                            # Clear the stopped flag so motor can continue
+                            delattr(self, 'y_stopped')
                 
                 # Check if both axes are at target (but NOT stopped due to overshoot)
                 x_success = x_at_target and x_error < x_tolerance  # Actually at target, not just stopped
